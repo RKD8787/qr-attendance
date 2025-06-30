@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance - QR System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1><strong>Dayananda Sagar College Of Engineering</strong></h1>
+        <p>Student Attendance Portal</p>
+    </div>
+    <div class="container">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showPage('admin')">Student View</button>
+        </div>
+        <!-- Student Selection Page -->
+        <div id="student-selection-page" class="page active">
+            <div class="student-selection">
+                <h2>Mark Your Attendance</h2>
+                
+                <!-- Search Section -->
+                <div class="search-section">
+                    <div class="search-container">
+                        <input type="text" id="student-search" placeholder="Search your name..." autocomplete="off">
+                        <div class="search-icon">🔍</div>
+                    </div>
+                </div>
+
+                <!-- Student List -->
+                <div class="student-list" id="student-list">
+                    <!-- Students will be populated here by JavaScript -->
+                </div>
+
+                <!-- Submit Button -->
+                <button class="submit-btn" id="submit-attendance" disabled>
+                    Submit Attendance
+                </button>
+            </div>
+        </div>
+
+        <!-- Success Page -->
+        <div id="success-page" class="page hidden">
+            <div class="success-message">
+                <div class="checkmark">✓</div>
+                <h2>Attendance Submitted Successfully!</h2>
+                <p>Your attendance has been recorded. Thank you!</p>
+                <button class="submit-btn" id="close-success">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const supabase = supabase.createClient(
+    'https://zpesqzstorixfsmpntsx.supabase.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
+  );
+</script>
+
+</body>
+</html>

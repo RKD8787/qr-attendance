@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Faculty Login - QR Attendance</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .login-box {
+      background: white;
+      padding: 40px 35px;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.8s ease;
+    }
+
+    .login-box h2 {
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: #2a5298;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 15px 20px;
+      margin: 15px 0;
+      border-radius: 10px;
+      border: 2px solid #e0e0e0;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+
+    .login-box input:focus {
+      border-color: #2a5298;
+      outline: none;
+      box-shadow: 0 0 10px rgba(42,82,152,0.2);
+    }
+
+    .login-box button {
+      background: linear-gradient(135deg, #28a745, #1e7e34);
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 10px;
+      width: 100%;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(40,167,69,0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .login-box button:hover {
+      background: linear-gradient(135deg, #1e7e34, #155724);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(40,167,69,0.4);
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Faculty Login</h2>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Enter Username" required />
+      <input type="password" id="password" placeholder="Enter Password" required />
+      <button type="submit">Login</button>
+      
+    </form>
+  </div>
+
+  <script>
+  document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
+
+    if (u === 'admin' && p === 'admin123') {
+      try {
+        const response = await fetch('/api/session');
+        const data = await response.json();
+
+        localStorage.setItem('authenticated', 'true');
+        localStorage.setItem('facultySessionId', data.sessionId);  // ✅ Save session ID
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error("Failed to get session ID:", err);
+        alert("Login failed. Please try again.");
+      }
+    } else {
+      alert('Invalid credentials');
+    }
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const supabase = supabase.createClient(
+    'https://zpesqzstorixfsmpntsx.supabase.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
+  );
+</script>
+
+</body>
+</html>
