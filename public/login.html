@@ -96,29 +96,22 @@
     </form>
   </div>
 
-  <script>
-  document.getElementById('login-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const u = document.getElementById('username').value.trim();
-    const p = document.getElementById('password').value.trim();
+ <script>
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
 
-    if (u === 'admin' && p === 'admin123') {
-      try {
-        const response = await fetch('/api/session');
-        const data = await response.json();
-
-        localStorage.setItem('authenticated', 'true');
-        localStorage.setItem('facultySessionId', data.sessionId);  // ✅ Save session ID
-        window.location.href = 'index.html';
-      } catch (err) {
-        console.error("Failed to get session ID:", err);
-        alert("Login failed. Please try again.");
-      }
-    } else {
-      alert('Invalid credentials');
-    }
-  });
+  if (u === 'admin' && p === 'admin123') {
+    localStorage.setItem('authenticated', 'true');
+    localStorage.setItem('facultySessionId', 'demo-session-001');
+    window.location.href = 'index.html';
+  } else {
+    alert('Invalid credentials');
+  }
+});
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
   const supabase = supabase.createClient(
