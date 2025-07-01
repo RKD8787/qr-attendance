@@ -96,7 +96,7 @@
     </form>
   </div>
 
- <script>
+<script>
 document.getElementById('login-form').addEventListener('submit', function(e) {
   e.preventDefault();
   const u = document.getElementById('username').value.trim();
@@ -104,7 +104,8 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
 
   if (u === 'admin' && p === 'admin@123') {
     localStorage.setItem('authenticated', 'true');
-    localStorage.setItem('facultySessionId', 'demo-session-001');
+    // Generate a simple session ID for QR code uniqueness
+    localStorage.setItem('sessionId', Date.now().toString());
     window.location.href = 'index.html';
   } else {
     alert('Invalid credentials');
