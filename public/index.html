@@ -312,11 +312,13 @@
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <script src="script.js"></script>
     <script>
-  function logout() {
+ function logout() {
     localStorage.removeItem('authenticated');
-    localStorage.removeItem('loginExpiry');
+    localStorage.removeItem('sessionId');
+    localStorage.removeItem('attendanceSubmitted');
+    localStorage.removeItem('lastSessionTime');
     window.location.href = 'login.html';
-  }
+}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
