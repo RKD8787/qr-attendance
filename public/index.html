@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-  // ✅ Prevent unauthorized access
-  if (localStorage.getItem('authenticated') !== 'true') {
-    window.location.href = 'login.html';
-  }
-</script>
-  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Attendance System</title>
@@ -197,6 +190,13 @@
     </style>
 </head>
 <body>
+    <script>
+        // ✅ Prevent unauthorized access
+        if (localStorage.getItem('authenticated') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+    
     <div class="header">
         <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
         <h2>Attendance Portal</h2>
@@ -309,24 +309,28 @@
         </div>
     </div>
 
+    <!-- Load scripts in correct order -->
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase client globally
+        const { createClient } = supabase;
+        window.supabaseClient = createClient(
+            'https://zpesqzstorixfsmpntsx.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
+        );
+        
+        console.log('✅ Supabase client initialized:', window.supabaseClient);
+    </script>
     <script src="script.js"></script>
     <script>
- function logout() {
-    localStorage.removeItem('authenticated');
-    localStorage.removeItem('sessionId');
-    localStorage.removeItem('attendanceSubmitted');
-    localStorage.removeItem('lastSessionTime');
-    window.location.href = 'login.html';
-}
-</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://zpesqzstorixfsmpntsx.supabase.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
-  );
-</script>
-
+        function logout() {
+            localStorage.removeItem('authenticated');
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('attendanceSubmitted');
+            localStorage.removeItem('lastSessionTime');
+            window.location.href = 'login.html';
+        }
+    </script>
 </body>
 </html>
