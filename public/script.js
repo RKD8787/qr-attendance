@@ -39,8 +39,39 @@ let presentStudents = [];
 let selectedStudents = [];
 let filteredStudents = [...allStudents];
 
+// Global Supabase client - FIXED: Proper initialization
+let supabaseClient = null;
+
+// Initialize Supabase client
+function initSupabase() {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        try {
+            supabaseClient = supabase.createClient(
+                'https://zpesqzstorixfsmpntsx.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
+            );
+            console.log('✅ Supabase client initialized');
+            return true;
+        } catch (error) {
+            console.error('❌ Supabase initialization error:', error);
+            return false;
+        }
+    } else {
+        console.error('❌ Supabase library not loaded');
+        return false;
+    }
+}
+
 // ✅ MAIN INITIALIZATION - Only one entry point
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 DOM Content Loaded');
+    
+    // Initialize Supabase first
+    if (!initSupabase()) {
+        console.error('❌ Failed to initialize Supabase');
+        return;
+    }
+    
     const currentPage = window.location.pathname;
     
     if (currentPage.includes('student.html')) {
@@ -54,20 +85,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ✅ FACULTY VIEW INITIALIZATION
 function initFacultyView() {
+    console.log('🔄 Starting faculty view initialization...');
+    
     loadStudentList(); // Load saved student list
-    generateQR();
-    setInterval(generateQR, 30000); // Refresh QR every 30 sec
-    fetchAttendance();
     
-    // Auto-refresh attendance every 5 seconds
-    setInterval(fetchAttendance, 5000);
-    
-    console.log('✅ Faculty view initialized');
+    // Wait a bit for DOM to be fully ready
+    setTimeout(() => {
+        generateQR();
+        fetchAttendance();
+        
+        // Auto-refresh QR code every 30 seconds
+        setInterval(generateQR, 30000);
+        
+        // Auto-refresh attendance every 5 seconds
+        setInterval(fetchAttendance, 5000);
+        
+        console.log('✅ Faculty view initialized');
+    }, 100);
 }
 
 // ✅ FIXED QR CODE GENERATION - Now uses network IP with larger size
-// ✅ FIXED: Generate QR code without network API call
- async function generateQR() {
+async function generateQR() {
     console.log('🔄 Generating QR code...');
 
     const qrCode = document.getElementById('qr-code');
@@ -79,6 +117,13 @@ function initFacultyView() {
     qrCode.innerHTML = '<p>Generating QR code...</p>';
 
     try {
+        // Check if QRious is available
+        if (typeof QRious === 'undefined') {
+            console.error('❌ QRious library not loaded');
+            qrCode.innerHTML = '<p style="color: red;">QR library not loaded. Please refresh the page.</p>';
+            return;
+        }
+
         // ✅ Use current domain for student URL
         const currentDomain = window.location.origin;
         const studentUrl = `${currentDomain}/student.html`;
@@ -114,7 +159,6 @@ function initFacultyView() {
 }
 
 // ✅ STUDENT VIEW INITIALIZATION - Fixed session handling
-// ✅ SIMPLIFIED: Student view initialization
 async function initStudentView() {
     // Check if it's a new session and clear submission flag if needed
     isNewSession();
@@ -136,6 +180,7 @@ async function initStudentView() {
     
     console.log('✅ Student view initialized');
 }
+
 // ✅ NEW: Setup student search functionality
 function setupStudentSearch() {
     const searchInput = document.getElementById('student-search');
@@ -243,7 +288,7 @@ function setupStudentEventListeners() {
         closeSuccessBtn.addEventListener('click', function() {
             // Reset and show selection page again
             resetStudentSelection();
-            document.getElementById('success-page').style.display = 'none'; // ✅ FIXED
+            document.getElementById('success-page').style.display = 'none';
             document.getElementById('success-page').classList.add('hidden');
             document.getElementById('student-selection-page').style.display = 'block';
         });
@@ -251,7 +296,6 @@ function setupStudentEventListeners() {
 }
 
 // ✅ FIXED: Submit attendance with proper session checking and success page display
-// ✅ FIXED: Submit attendance with Supabase
 async function submitAttendance() {
     if (localStorage.getItem('attendanceSubmitted') === 'true') {
         alert("Attendance already submitted from this device!");
@@ -260,6 +304,11 @@ async function submitAttendance() {
 
     if (selectedStudents.length === 0) {
         alert("Please select your name first!");
+        return;
+    }
+
+    if (!supabaseClient) {
+        alert("Database connection not available. Please refresh the page.");
         return;
     }
 
@@ -274,7 +323,7 @@ async function submitAttendance() {
 
     try {
         // ✅ Insert into Supabase
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('attendance')
             .insert([
                 { 
@@ -312,12 +361,16 @@ async function submitAttendance() {
 }
 
 // ✅ FIXED: Start fresh attendance with proper session handling
-// ✅ FIXED: Start fresh attendance
 async function startFreshAttendance() {
     if (!confirm("⚠️ This will clear all attendance and allow fresh submissions. Continue?")) return;
 
+    if (!supabaseClient) {
+        alert("Database connection not available. Please refresh the page.");
+        return;
+    }
+
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('attendance')
             .delete()
             .neq('student', ''); // Delete all records
@@ -352,7 +405,7 @@ function showSuccessPage() {
     }
     
     if (successPage) {
-        successPage.style.display = 'block'; // ✅ FIXED: Use display block
+        successPage.style.display = 'block';
         successPage.classList.remove('hidden');
     }
     
@@ -380,8 +433,13 @@ function resetStudentSelection() {
 
 // ✅ FIXED: Fetch attendance - Handle new response structure
 async function fetchAttendance() {
+    if (!supabaseClient) {
+        console.error("❌ Supabase client not available");
+        return;
+    }
+
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('attendance')
             .select('student, timestamp')
             .order('timestamp', { ascending: false });
@@ -390,6 +448,7 @@ async function fetchAttendance() {
             console.error("❌ Failed to fetch attendance:", error);
             return;
         }
+        
         presentStudents = data.map(record => record.student);
         
         updatePresentStudentsList();
@@ -436,53 +495,80 @@ function updatePresentCount() {
     }
 }
 
-// ✅ REMOVE STUDENT (Faculty View)
-function removeStudent(student) {
-    // ✅ FIXED: Remove student using Supabase
-function removeStudent(student) {
+// ✅ FIXED: Remove student using Supabase
+async function removeStudent(student) {
     if (!confirm(`Are you sure you want to remove ${student} from attendance?`)) return;
 
-    supabase
-        .from('attendance')
-        .delete()
-        .eq('student', student)
-        .then(({ error }) => {
-            if (error) {
-                console.error("❌ Remove error:", error);
-                alert("Failed to remove student from attendance.");
-            } else {
-                alert(`${student} has been removed.`);
-                fetchAttendance(); // Refresh list
-            }
-        });
+    if (!supabaseClient) {
+        alert("Database connection not available. Please refresh the page.");
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('attendance')
+            .delete()
+            .eq('student', student);
+
+        if (error) {
+            console.error("❌ Remove error:", error);
+            alert("Failed to remove student from attendance.");
+        } else {
+            alert(`${student} has been removed.`);
+            fetchAttendance(); // Refresh list
+        }
+    } catch (err) {
+        console.error("❌ Remove student error:", err);
+        alert("Failed to remove student from attendance.");
+    }
 }
 
-// ✅ FIXED: Export attendance CSV
-function exportAttendanceCSV() {
-    fetch('/api/attendance')
-        .then(res => res.json())
-        .then(response => {
-            const data = response.attendanceData || {};
-            const csvRows = ['Name,Timestamp'];
-            for (const student in data) {
-                csvRows.push(`"${student}","${data[student]}"`);
-            }
+// ✅ FIXED: Export attendance CSV using Supabase data
+async function exportAttendanceCSV() {
+    if (!supabaseClient) {
+        alert("Database connection not available. Please refresh the page.");
+        return;
+    }
 
-            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('student, timestamp')
+            .order('timestamp', { ascending: false });
 
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
+        if (error) {
+            console.error("❌ Export fetch error:", error);
+            alert("Failed to fetch attendance data for export.");
+            return;
+        }
 
-            URL.revokeObjectURL(url);
-            console.log('📤 Attendance exported');
-        })
-        .catch(err => {
-            console.error('❌ Export error:', err);
-            alert('Failed to export attendance');
+        if (data.length === 0) {
+            alert("No attendance data to export.");
+            return;
+        }
+
+        const csvRows = ['Name,Timestamp'];
+        data.forEach(record => {
+            const timestamp = new Date(record.timestamp).toLocaleString();
+            csvRows.push(`"${record.student}","${timestamp}"`);
         });
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+        console.log('📤 Attendance exported');
+        alert('Attendance exported successfully!');
+
+    } catch (err) {
+        console.error('❌ Export error:', err);
+        alert('Failed to export attendance');
+    }
 }
 
 // ✅ FIXED: Faculty Add Student Manually Modal Functions
@@ -547,8 +633,8 @@ function populateFacultyStudentDropdown() {
     });
 }
 
-// ✅ FIXED: Add student manually function
-function addStudentManually(studentName) {
+// ✅ FIXED: Add student manually function using Supabase
+async function addStudentManually(studentName) {
     if (!studentName) return;
 
     // Check if student is already present
@@ -557,27 +643,37 @@ function addStudentManually(studentName) {
         return;
     }
 
-    fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student: studentName })
-    })
-    .then(res => res.json().then(data => ({ status: res.status, data })))
-    .then(({ status, data }) => {
-        if (status === 409) {
-            alert('Student is already marked present!');
-        } else if (status === 200) {
+    if (!supabaseClient) {
+        alert("Database connection not available. Please refresh the page.");
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .insert([
+                { 
+                    student: studentName,
+                    timestamp: new Date().toISOString()
+                }
+            ]);
+
+        if (error) {
+            if (error.code === '23505') { // Unique constraint violation
+                alert('Student is already marked present!');
+            } else {
+                console.error("❌ Add manually error:", error);
+                alert('Failed to add student');
+            }
+        } else {
             alert(`${studentName} added successfully!`);
             fetchAttendance(); // Refresh the list
             closeAddManuallyModal();
-        } else {
-            throw new Error('Failed to add student');
         }
-    })
-    .catch(err => {
+    } catch (err) {
         console.error('❌ Add manually error:', err);
         alert('Failed to add student');
-    });
+    }
 }
 
 // ✅ STUDENT LIST MANAGEMENT FUNCTIONS
@@ -646,7 +742,6 @@ function addNewStudent() {
     
     alert(`${studentName} added successfully!`);
 }
-
 
 function deleteStudent(studentName) {
     if (!confirm(`Are you sure you want to delete ${studentName} from the student list?`)) {
@@ -749,8 +844,10 @@ function loadStudentList() {
     }
 }
 
-// ✅ MODAL EVENT LISTENERS
+// ✅ MODAL EVENT LISTENERS - Enhanced with better error handling
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 Setting up modal event listeners...');
+    
     // Load student list from localStorage
     loadStudentList();
     
@@ -805,4 +902,6 @@ document.addEventListener('DOMContentLoaded', function() {
             closeStudentListModal();
         }
     };
+    
+    console.log('✅ Modal event listeners set up');
 });
