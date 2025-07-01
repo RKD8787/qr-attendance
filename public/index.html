@@ -7,36 +7,7 @@
     window.location.href = 'login.html';
   }
 </script>
-
-    <script>
- (async () => {
-  const auth = localStorage.getItem('authenticated');
-  const storedSession = localStorage.getItem('facultySessionId');
-
-  if (auth !== 'true' || !storedSession) {
-    window.location.href = 'login.html';
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/session');
-    const data = await res.json();
-
-    if (data.sessionId.toString() !== storedSession) {
-      // Session expired or server restarted
-      localStorage.removeItem('authenticated');
-      localStorage.removeItem('facultySessionId');
-      window.location.href = 'login.html';
-    }
-  } catch (e) {
-    console.error("Session check failed", e);
-    window.location.href = 'login.html';
-  }
-})();
-
-</script>
-    
-
+  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Attendance System</title>
