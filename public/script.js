@@ -1,28 +1,30 @@
 let sessionId = null;
 
 // ✅ FIXED: Proper session check with localStorage clearing
-async function checkSessionVersion() {
-    try {
-        const res = await fetch('/api/session');
-        const data = await res.json();
-        const newSessionId = data.sessionId;
-
-        const storedSession = localStorage.getItem('sessionId');
-
-        if (storedSession !== newSessionId.toString()) {
-            console.log("🌀 New session detected. Clearing localStorage.");
-            localStorage.removeItem('attendanceSubmitted');
-            localStorage.setItem('sessionId', newSessionId);
-            sessionId = newSessionId;
-            return true; // Session changed
-        }
-        
-        sessionId = newSessionId;
-        return false; // Session unchanged
-    } catch (err) {
-        console.error("❌ Failed to check session version:", err);
-        return false;
+// ✅ SIMPLIFIED: Generate session ID locally
+function generateSessionId() {
+    const existingSession = localStorage.getItem('sessionId');
+    if (!existingSession) {
+        const newSession = Date.now().toString();
+        localStorage.setItem('sessionId', newSession);
+        return newSession;
     }
+    return existingSession;
+}
+
+// ✅ SIMPLIFIED: Check if it's a new session (for clearing attendance)
+function isNewSession() {
+    const currentTime = Date.now();
+    const lastSessionTime = localStorage.getItem('lastSessionTime') || '0';
+    const timeDiff = currentTime - parseInt(lastSessionTime);
+    
+    // Consider it a new session if more than 1 hour has passed
+    if (timeDiff > 3600000) { // 1 hour in milliseconds
+        localStorage.setItem('lastSessionTime', currentTime.toString());
+        localStorage.removeItem('attendanceSubmitted');
+        return true;
+    }
+    return false;
 }
 
 // Student data - This will be loaded from localStorage if available
@@ -64,7 +66,8 @@ function initFacultyView() {
 }
 
 // ✅ FIXED QR CODE GENERATION - Now uses network IP with larger size
-async function generateQR() {
+// ✅ FIXED: Generate QR code without network API call
+ async function generateQR() {
     console.log('🔄 Generating QR code...');
 
     const qrCode = document.getElementById('qr-code');
@@ -76,12 +79,9 @@ async function generateQR() {
     qrCode.innerHTML = '<p>Generating QR code...</p>';
 
     try {
-        const response = await fetch('/api/network-info');
-        const data = await response.json();
-
-        if (!data.networkIp) throw new Error("Network IP not found");
-
-        const studentUrl = `http://${data.networkIp}:${data.port}/student.html`;
+        // ✅ Use current domain for student URL
+        const currentDomain = window.location.origin;
+        const studentUrl = `${currentDomain}/student.html`;
 
         qrCode.innerHTML = '';
 
@@ -91,7 +91,7 @@ async function generateQR() {
         new QRious({
             element: canvas,
             value: studentUrl,
-            size: 300, // ✅ Increased QR code size
+            size: 300,
             background: 'white',
             foreground: 'black',
             level: 'M'
@@ -114,18 +114,15 @@ async function generateQR() {
 }
 
 // ✅ STUDENT VIEW INITIALIZATION - Fixed session handling
+// ✅ SIMPLIFIED: Student view initialization
 async function initStudentView() {
-    const sessionChanged = await checkSessionVersion(); // ✅ Check session freshness
+    // Check if it's a new session and clear submission flag if needed
+    isNewSession();
     
-    // ✅ If session changed, clear the submission flag
-    if (sessionChanged) {
-        console.log("🔄 Session changed, allowing new submission");
-    }
-    
-    loadStudentList(); // Load saved student list
+    loadStudentList();
     populateStudentList();
     setupStudentEventListeners();
-    setupStudentSearch(); // ✅ Initialize search functionality
+    setupStudentSearch();
     
     // Show selection page, hide success page
     const selectionPage = document.getElementById('student-selection-page');
@@ -133,13 +130,12 @@ async function initStudentView() {
     
     if (selectionPage) selectionPage.style.display = 'block';
     if (successPage) {
-        successPage.style.display = 'none'; // ✅ FIXED: Use display instead of classList
+        successPage.style.display = 'none';
         successPage.classList.add('hidden');
     }
     
     console.log('✅ Student view initialized');
 }
-
 // ✅ NEW: Setup student search functionality
 function setupStudentSearch() {
     const searchInput = document.getElementById('student-search');
@@ -255,10 +251,8 @@ function setupStudentEventListeners() {
 }
 
 // ✅ FIXED: Submit attendance with proper session checking and success page display
+// ✅ FIXED: Submit attendance with Supabase
 async function submitAttendance() {
-    // ✅ Check for fresh session before checking localStorage
-    await checkSessionVersion();
-    
     if (localStorage.getItem('attendanceSubmitted') === 'true') {
         alert("Attendance already submitted from this device!");
         return;
@@ -279,32 +273,31 @@ async function submitAttendance() {
     }
 
     try {
-       const { error } = await supabase.from('attendance').insert([
-  { student: student }  // 👈 insert student name
-]);
+        // ✅ Insert into Supabase
+        const { data, error } = await supabase
+            .from('attendance')
+            .insert([
+                { 
+                    student: student,
+                    timestamp: new Date().toISOString()
+                }
+            ]);
 
-if (error) {
-  console.error("Supabase insert error:", error);
-  alert("Failed to submit attendance.");
-  return;
-}
- 
-
-        console.log("📥 Response status:", res.status);
-        const data = await res.json();
-
-        if (res.status === 409) {
-            alert("You have already submitted attendance!");
-            return;
-        } else if (res.status !== 200) {
-            throw new Error(`Server error: ${res.status}`);
+        if (error) {
+            console.error("Supabase insert error:", error);
+            if (error.code === '23505') { // Unique constraint violation
+                alert("You have already submitted attendance!");
+                return;
+            }
+            throw error;
         }
 
-        // ✅ Save submission status in localStorage
+        console.log("✅ Attendance submitted successfully");
+        
+        // Save submission status in localStorage
         localStorage.setItem('attendanceSubmitted', 'true');
         
-        // ✅ FIXED: Show success page with proper display handling
-        console.log('✅ Attendance submitted successfully, showing success page');
+        // Show success page
         showSuccessPage();
 
     } catch (err) {
@@ -319,17 +312,32 @@ if (error) {
 }
 
 // ✅ FIXED: Start fresh attendance with proper session handling
+// ✅ FIXED: Start fresh attendance
 async function startFreshAttendance() {
     if (!confirm("⚠️ This will clear all attendance and allow fresh submissions. Continue?")) return;
 
- const { error } = await supabase.from('attendance').delete().neq('student', '');
+    try {
+        const { error } = await supabase
+            .from('attendance')
+            .delete()
+            .neq('student', ''); // Delete all records
 
-if (error) {
-  console.error("Failed to clear attendance:", error);
-} else {
-  alert("All attendance cleared!");
-}
-   
+        if (error) {
+            console.error("Failed to clear attendance:", error);
+            alert("Failed to clear attendance. Please try again.");
+        } else {
+            // Clear local storage flags
+            localStorage.removeItem('attendanceSubmitted');
+            localStorage.setItem('sessionId', Date.now().toString());
+            localStorage.setItem('lastSessionTime', Date.now().toString());
+            
+            alert("✅ All attendance cleared! Fresh session started.");
+            fetchAttendance(); // Refresh the display
+        }
+    } catch (err) {
+        console.error("❌ Clear attendance error:", err);
+        alert("Failed to clear attendance. Please try again.");
+    }
 }
 
 // ✅ FIXED: Show success page with proper display handling
@@ -372,13 +380,27 @@ function resetStudentSelection() {
 
 // ✅ FIXED: Fetch attendance - Handle new response structure
 async function fetchAttendance() {
-   const { error } = await supabase.from('attendance').delete().eq('student', student);
+    try {
+        const { data, error } = await supabase
+            .from('attendance')
+            .select('student, timestamp')
+            .order('timestamp', { ascending: false });
 
-if (error) {
-  console.error("Error removing student:", error);
-}
+        if (error) {
+            console.error("❌ Failed to fetch attendance:", error);
+            return;
+        }
+        presentStudents = data.map(record => record.student);
+        
+        updatePresentStudentsList();
+        updatePresentCount();
+        
+        console.log(`✅ Fetched ${presentStudents.length} present students`);
 
-}
+    } catch (err) {
+        console.error("❌ Fetch attendance error:", err);
+    }
+} 
 
 // ✅ UPDATE PRESENT STUDENTS LIST (Faculty View)
 function updatePresentStudentsList() {
@@ -416,25 +438,23 @@ function updatePresentCount() {
 
 // ✅ REMOVE STUDENT (Faculty View)
 function removeStudent(student) {
+    // ✅ FIXED: Remove student using Supabase
+function removeStudent(student) {
     if (!confirm(`Are you sure you want to remove ${student} from attendance?`)) return;
 
-    fetch(`/api/attendance/${encodeURIComponent(student)}`, {
-        method: 'DELETE'
-    })
-    .then(res => {
-        if (!res.ok) {
-            throw new Error(`Failed to delete ${student}`);
-        }
-        return res.json();
-    })
-    .then(() => {
-        alert(`${student} has been removed.`);
-        fetchAttendance(); // Refresh list
-    })
-    .catch(err => {
-        console.error("❌ Remove error:", err);
-        alert("Failed to remove student from attendance.");
-    });
+    supabase
+        .from('attendance')
+        .delete()
+        .eq('student', student)
+        .then(({ error }) => {
+            if (error) {
+                console.error("❌ Remove error:", error);
+                alert("Failed to remove student from attendance.");
+            } else {
+                alert(`${student} has been removed.`);
+                fetchAttendance(); // Refresh list
+            }
+        });
 }
 
 // ✅ FIXED: Export attendance CSV
