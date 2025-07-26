@@ -190,6 +190,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <script>
@@ -200,7 +201,6 @@
     </script>
 
     <div class="header">
-        <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
         <h1><big><strong> Dayananda Sagar College Of Engineering</strong></big></h1>
         <h2>Attendance Portal</h2>
     </div>
@@ -224,19 +224,24 @@
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button class="add-manually-btn" onclick="showAddManuallyModal()">
-                                <i class="icon">👤</i> Add Attendance Manually
-                            </button>
-                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
-                                <i class="icon">📤</i> Export Attendance
-                            </button>
-                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
-                                <i class="icon">📋</i> Student List
-                            </button>
-                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
-                                <i class="icon">🚀</i> Start Fresh Session
-                            </button>
-                        </div>
+                           
+                               <button class="add-manually-btn" onclick="showAddManuallyModal()">
+    <i class="fas fa-user-plus"></i> Add Attendance Manually
+</button>
+
+<button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+    <i class="fas fa-file-csv"></i> Export Attendance
+</button>
+
+<button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+    <i class="fas fa-users"></i> Student List
+</button>
+
+<button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+    <i class="fas fa-rocket"></i> Start Fresh Session
+</button>
+                    
+                     </div>  
                     </div>
                 </div>
 
