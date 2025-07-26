@@ -126,7 +126,7 @@ async function generateQR() {
 
         // ✅ Use current domain for student URL
         const currentDomain = window.location.origin;
-        const studentUrl = `${currentDomain}/student.html`;
+        const studentUrl = `${currentDomain}/student`;
 
         qrCode.innerHTML = '';
 
