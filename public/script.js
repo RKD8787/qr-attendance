@@ -73,31 +73,34 @@ function initStudentView() {
 // ✅ QR CODE GENERATION (WITH SESSION ID)
 async function generateQR() {
     const qrCodeContainer = document.getElementById('qr-code');
-    if (!qrCodeContainer) return;
+    if (!qrCodeContainer) {
+        console.error("QR container not found!");
+        return;
+    }
+
+    // Clear previous content and show a loading message
+    qrCodeContainer.innerHTML = '<p>Generating QR code...</p>';
 
     const sessionId = localStorage.getItem('sessionId');
-    
-    // Clear previous QR code and show status
-    qrCodeContainer.innerHTML = '<p>Generating new QR code...</p>';
-
     if (!sessionId) {
-        qrCodeContainer.innerHTML = '<p style="color: red;">No active session. Please start a fresh session.</p>';
+        qrCodeContainer.innerHTML = '<p style="color: red;">No active session. Please click "Start Fresh Session".</p>';
         return;
     }
 
     if (typeof QRious === 'undefined') {
-        qrCodeContainer.innerHTML = '<p style="color: red;">QR library not loaded.</p>';
+        qrCodeContainer.innerHTML = '<p style="color: red;">QR library is not loaded. Please refresh.</p>';
         return;
     }
-    
+
     const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
 
-    // Clear status message before drawing
-    qrCodeContainer.innerHTML = '';
-    
-    // The QRious library draws a <canvas> element inside the provided container
+    // THE FIX: Create a <canvas> element for QRious to draw on
+    qrCodeContainer.innerHTML = ''; // Clear the "Generating..." message
+    const canvas = document.createElement('canvas');
+    qrCodeContainer.appendChild(canvas);
+
     new QRious({
-        element: qrCodeContainer,
+        element: canvas, // Give the library the <canvas> element
         value: studentUrl,
         size: 300,
         padding: 20
