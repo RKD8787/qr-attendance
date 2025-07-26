@@ -102,23 +102,16 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value.trim();
 
+  // In a real application, you would send this to a server.
+  // For this project, we are keeping the simple check.
   if (u === 'admin' && p === 'admin@123') {
     localStorage.setItem('authenticated', 'true');
-    // Generate a simple session ID for QR code uniqueness
     localStorage.setItem('sessionId', Date.now().toString());
     window.location.href = 'index.html';
   } else {
     alert('Invalid credentials');
   }
 });
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script>
-  const supabase = supabase.createClient(
-    'https://zpesqzstorixfsmpntsx.supabase.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
-  );
 </script>
 
 </body>
