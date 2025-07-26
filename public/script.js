@@ -38,7 +38,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // ✅ FETCH ALL STUDENTS FROM SUPABASE
-async function fetchAllStudents() { /* ... (no changes needed in this function) ... */ }
+async function fetchAllStudents() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient.from('students').select('name').order('name', { ascending: true });
+        if (error) throw error;
+        allStudents = data.map(s => s.name);
+        filteredStudents = [...allStudents];
+    } catch (err) {
+        console.error('❌ Error fetching master student list:', err);
+    }
+}
 
 // ✅ FACULTY VIEW INITIALIZATION
 function initFacultyView() {
@@ -54,37 +64,75 @@ function initFacultyView() {
 }
 
 // ✅ STUDENT VIEW INITIALIZATION
-function initStudentView() { /* ... (no changes needed in this function) ... */ }
+function initStudentView() {
+    populateStudentList();
+    setupStudentEventListeners();
+    setupStudentSearch();
+}
 
-// ✅ QR CODE GENERATION (NOW INCLUDES SESSION ID)
+// ✅ QR CODE GENERATION (WITH SESSION ID)
 async function generateQR() {
-    const qrCode = document.getElementById('qr-code');
-    if (!qrCode) return;
+    const qrCodeContainer = document.getElementById('qr-code');
+    if (!qrCodeContainer) return;
+
     const sessionId = localStorage.getItem('sessionId');
+    
+    // Clear previous QR code and show status
+    qrCodeContainer.innerHTML = '<p>Generating new QR code...</p>';
+
     if (!sessionId) {
-        qrCode.innerHTML = '<p style="color: red;">No active session. Please start a fresh session.</p>';
+        qrCodeContainer.innerHTML = '<p style="color: red;">No active session. Please start a fresh session.</p>';
         return;
     }
-    qrCode.innerHTML = '';
-    // NEW: Add session ID to the QR code URL
+
+    if (typeof QRious === 'undefined') {
+        qrCodeContainer.innerHTML = '<p style="color: red;">QR library not loaded.</p>';
+        return;
+    }
+    
     const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
-    new QRious({ element: qrCode, value: studentUrl, size: 300 });
+
+    // Clear status message before drawing
+    qrCodeContainer.innerHTML = '';
+    
+    // The QRious library draws a <canvas> element inside the provided container
+    new QRious({
+        element: qrCodeContainer,
+        value: studentUrl,
+        size: 300,
+        padding: 20
+    });
+
     console.log('✅ QR code generated for session:', sessionId);
 }
 
 // ✅ STUDENT SEARCH
-function setupStudentSearch() { /* ... (no changes needed in this function) ... */ }
+function setupStudentSearch() {
+    const searchInput = document.getElementById('student-search');
+    if (!searchInput) return;
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        filteredStudents = allStudents.filter(s => s.toLowerCase().includes(searchTerm));
+        populateStudentList();
+    });
+}
 
 // ✅ POPULATE STUDENT LIST
-function populateStudentList() { /* ... (no changes needed in this function) ... */ }
+function populateStudentList() {
+    // ... (This function remains unchanged)
+}
 
 // ✅ HANDLE STUDENT SELECTION
-function updateStudentSelection() { /* ... (no changes needed in this function) ... */ }
+function updateStudentSelection() {
+    // ... (This function remains unchanged)
+}
 
 // ✅ SETUP STUDENT EVENT LISTENERS
-function setupStudentEventListeners() { /* ... (no changes needed in this function) ... */ }
+function setupStudentEventListeners() {
+    // ... (This function remains unchanged)
+}
 
-// ✅ SUBMIT ATTENDANCE (NOW CHECKS AND SAVES SESSION)
+// ✅ SUBMIT ATTENDANCE (WITH SESSION VALIDATION)
 async function submitAttendance() {
     const selectedRadio = document.querySelector('input[name="student"]:checked');
     if (!selectedRadio) {
@@ -92,21 +140,19 @@ async function submitAttendance() {
         return;
     }
     
-    // NEW: Session validation logic
     const urlParams = new URLSearchParams(window.location.search);
     const currentSessionId = urlParams.get('session');
-    const submittedSessionId = localStorage.getItem('submittedSessionId');
-
+    
     if (!currentSessionId) {
-        alert("Invalid session. Please scan the QR code again.");
+        alert("Invalid or missing session. Please scan the QR code again.");
         return;
     }
 
-    if (submittedSessionId === currentSessionId) {
+    const submittedSessions = JSON.parse(localStorage.getItem('submittedSessions') || '[]');
+    if (submittedSessions.includes(currentSessionId)) {
         alert("You have already submitted attendance for this session from this device.");
         return;
     }
-    // End of new logic
 
     const studentName = selectedRadio.value;
     const submitBtn = document.getElementById('submit-attendance');
@@ -116,52 +162,41 @@ async function submitAttendance() {
     try {
         const { error } = await supabaseClient
             .from('attendance')
-            // NEW: Insert session_id along with student name
-            .insert({ student: studentName, session_id: currentSessionId, timestamp: new Date().toISOString() });
+            .insert({ student: studentName, session_id: currentSessionId });
 
         if (error) {
-            // Error code 23505 means a unique constraint violation (student + session_id already exists)
             if (error.code === '23505') {
                 alert("Attendance for this session has already been recorded for you.");
             } else {
                 throw error;
             }
         } else {
-            // NEW: On success, save the session ID to local storage to prevent resubmission
-            localStorage.setItem('submittedSessionId', currentSessionId);
-            console.log("✅ Attendance submitted successfully for session:", currentSessionId);
+            submittedSessions.push(currentSessionId);
+            localStorage.setItem('submittedSessions', JSON.stringify(submittedSessions));
             document.getElementById('student-selection-page').style.display = 'none';
             document.getElementById('success-page').style.display = 'block';
         }
     } catch (err) {
         console.error("❌ Submission error:", err);
-        alert("Failed to submit attendance. Please check the console and try again.");
+        alert("Failed to submit attendance.");
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Attendance';
     }
 }
 
-// ✅ FETCH ATTENDANCE
-async function fetchAttendance() { /* ... (no changes needed in this function) ... */ }
-
-// ✅ UPDATE PRESENT STUDENTS LIST
-function updatePresentStudentsList() { /* ... (no changes needed in this function) ... */ }
-
-// ✅ REMOVE STUDENT FROM ATTENDANCE
-async function removeStudent(studentName) { /* ... (no changes needed in this function) ... */ }
-
-// ✅ START FRESH SESSION (NOW GENERATES NEW SESSION ID)
+// ✅ START FRESH SESSION (RE-GENERATES QR)
 async function startFreshAttendance() {
-    if (!confirm("⚠️ This will clear all attendance records and start a new session with a new QR code. Continue?")) return;
+    if (!confirm("⚠️ This will clear ALL attendance records and start a new session. Continue?")) return;
     try {
-        const { error } = await supabaseClient.from('attendance').delete().neq('student', 'placeholder');
+        const { error } = await supabaseClient.from('attendance').delete().neq('student', 'placeholder_to_delete_all');
         if (error) throw error;
         
-        // NEW: Generate a new session ID and regenerate the QR code
         const newSessionId = Date.now().toString();
         localStorage.setItem('sessionId', newSessionId);
-        generateQR(); // Immediately create the new QR code
+        
+        // Immediately regenerate the QR code with the new session
+        await generateQR();
         
         alert("✅ All attendance cleared! A new session has started.");
         fetchAttendance();
@@ -171,5 +206,4 @@ async function startFreshAttendance() {
     }
 }
 
-// ALL OTHER FUNCTIONS (MODALS, STUDENT LIST MANAGEMENT, LOGOUT) REMAIN THE SAME
-// ... (rest of your script.js code) ...
+// ... (All other functions for modals, fetching, deleting, etc., remain the same) ...
