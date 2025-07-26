@@ -10,8 +10,8 @@ let filteredStudents = [];
 function initSupabase() {
     try {
         supabaseClient = supabase.createClient(
-            'https://zpesqzstorixfsmpntsx.supabase.co', //  Make sure your URL is correct!
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ' //  Make sure your Key is correct!
+            'YOUR_SUPABASE_URL_HERE', // 👈 Make sure your URL is correct!
+            'YOUR_SUPABASE_ANON_KEY_HERE' // 👈 Make sure your Key is correct!
         );
         console.log('✅ Supabase client initialized');
         return true;
@@ -97,7 +97,7 @@ async function generateQR() {
     qrCode.appendChild(canvas);
     new QRious({ element: canvas, value: studentUrl, size: 300 });
     const urlDisplay = document.createElement('p');
-   // urlDisplay.textContent = `URL: ${studentUrl}`;
+    urlDisplay.textContent = `URL: ${studentUrl}`;
     qrCode.appendChild(urlDisplay);
 }
 
@@ -307,70 +307,7 @@ async function addNewStudent() {
         alert('Failed to add new student.');
     }
 }
-// ✅ REVISED: Export attendance CSV with a more reliable download method
-async function exportAttendanceCSV() {
-    console.log('📤 Export process started...');
 
-    if (!supabaseClient) {
-        alert("Database connection not available. Please refresh the page.");
-        return;
-    }
-
-    try {
-        console.log('🔄 Fetching data from Supabase for export...');
-        const { data, error } = await supabaseClient
-            .from('attendance')
-            .select('student, timestamp')
-            .order('timestamp', { ascending: false });
-
-        if (error) {
-            console.error("❌ Export fetch error:", error);
-            alert("Failed to fetch attendance data for export. Check the console for details.");
-            return;
-        }
-
-        if (data.length === 0) {
-            alert("No attendance data to export.");
-            return;
-        }
-        console.log(`✅ Found ${data.length} records to export.`);
-
-        // Create CSV content
-        const csvRows = ['"Name","Timestamp"']; // Header row
-        data.forEach(record => {
-            const timestamp = new Date(record.timestamp).toLocaleString('en-US');
-            csvRows.push(`"${record.student}","${timestamp}"`);
-        });
-
-        // Create a Blob for the CSV data
-        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-
-        // --- THE FIX ---
-        // Create a temporary link element to trigger the download
-        const a = document.createElement('a');
-        a.style.display = 'none'; // Keep the link hidden
-        a.href = url;
-        a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
-        
-        // Append the link to the body, click it, and then remove it
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        // --- END OF FIX ---
-
-        // Clean up the object URL to free up memory
-        URL.revokeObjectURL(url);
-        
-        console.log('✅ Attendance exported successfully!');
-        // Provide clear feedback to the user
-        alert('Attendance has been exported! Check your downloads folder.');
-
-    } catch (err) {
-        console.error('❌ A critical error occurred during export:', err);
-        alert('Failed to export attendance. Please check the console for critical errors.');
-    }
-}
 // ✅ DELETE STUDENT FROM DATABASE
 async function deleteStudent(studentName) {
     if (!confirm(`This will permanently delete ${studentName} from the master list. Continue?`)) return;
@@ -403,7 +340,7 @@ function populateFacultyStudentDropdown() {
     if (!dropdown) return;
     dropdown.innerHTML = '';
     const unpresentStudents = allStudents.filter(s => !presentStudents.includes(s));
-
+    
     unpresentStudents.forEach(student => {
         const item = document.createElement('div');
         item.className = 'dropdown-item';
