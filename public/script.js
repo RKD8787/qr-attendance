@@ -10,8 +10,8 @@ let filteredStudents = [];
 function initSupabase() {
     try {
         supabaseClient = supabase.createClient(
-            'YOUR_SUPABASE_URL_HERE', // 👈 Make sure your URL is correct!
-            'YOUR_SUPABASE_ANON_KEY_HERE' // 👈 Make sure your Key is correct!
+            'https://zpesqzstorixfsmpntsx.supabase.co', // 👈 Make sure your URL is correct!
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ' // 👈 Make sure your Key is correct!
         );
         console.log('✅ Supabase client initialized');
         return true;
