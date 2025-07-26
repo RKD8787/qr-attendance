@@ -390,15 +390,29 @@ async function submitAttendance() {
 }
 
 // ✅ START FRESH SESSION (RE-GENERATES QR)
+// ✅ START FRESH SESSION (RE-GENERATES QR) - FIXED VERSION
 async function startFreshAttendance() {
     if (!confirm("⚠️ This will clear ALL attendance records and start a new session. Continue?")) return;
     
     try {
-        // Delete all attendance records
+        // Option 1: Delete all attendance records using a column that exists
+        // Replace 'student' with any column that exists in your attendance table
         const { error } = await supabaseClient
             .from('attendance')
             .delete()
-            .neq('id', 0); // This will delete all records
+            .neq('student', ''); // This will match all records since student names are never empty
+        
+        // Alternative Option 2: If the above doesn't work, you can try:
+        // const { error } = await supabaseClient
+        //     .from('attendance')
+        //     .delete()
+        //     .not('student', 'is', null);
+        
+        // Alternative Option 3: If you know your table structure, you can use:
+        // const { error } = await supabaseClient
+        //     .from('attendance')
+        //     .delete()
+        //     .gte('timestamp', '1900-01-01'); // Deletes all records with timestamp after 1900
         
         if (error) throw error;
         
@@ -423,7 +437,6 @@ async function startFreshAttendance() {
         alert("Failed to clear attendance: " + err.message);
     }
 }
-
 // === STUDENT LIST MANAGEMENT (MODAL) === //
 
 function showStudentListModal() {
