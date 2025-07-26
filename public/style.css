@@ -7,23 +7,34 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-family: 'Poppins', sans-serif; /* Professional Font */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    color: #333;
 }
 
 .header {
-@@ -21,7 +22,7 @@
+    background: linear-gradient(135deg, #1e5aa8, #2d6bb5);
+    color: white;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
 
 .header h1 {
     font-size: 2.4rem;
     font-weight: 300;
-    font-weight: 600; /* Bolder for more impact */
     margin-bottom: 8px;
     letter-spacing: 1px;
 }
-@@ -38,118 +39,57 @@
+
+.header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
     padding: 40px 20px;
 }
 
@@ -62,35 +73,15 @@ body {
 .page {
     display: none;
     animation: fadeIn 0.6s ease-in;
-/* Glassmorphism Cards */
-.present-count-card, .qr-section, .student-selection {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 }
 
 .page.active {
     display: block;
-.qr-section {
-    padding: 40px;
-    text-align: center;
-    min-height: 500px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-.student-selection {
-    padding: 45px;
-    max-width: 800px;
-    margin: 0 auto;
-    min-height: 90vh;
 }
 
 /* Admin Page Styles - Improved Layout */
@@ -162,18 +153,17 @@ body {
 }
 
 .student-item {
-@@ -158,38 +98,14 @@
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     padding: 18px 22px;
     margin-bottom: 12px;
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    background: rgba(255, 255, 255, 0.4);
     border-radius: 15px;
     border-left: 5px solid #007bff;
     transition: all 0.3s ease;
     box-shadow: 0 3px 10px rgba(0,0,0,0.06);
     font-weight: 500;
-    transition: all 0.2s ease-in-out; /* Smoother hover */
 }
 
 .student-item:hover {
@@ -200,12 +190,26 @@ body {
     background: linear-gradient(135deg, #c82333, #a71e2a);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(220,53,69,0.4);
-    background: rgba(255, 255, 255, 0.7);
-    transform: scale(1.02);
 }
 
 .action-buttons {
-@@ -213,369 +129,23 @@
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.add-manually-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 18px 24px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
@@ -280,8 +284,6 @@ body {
 @keyframes shimmer {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
-.add-manually-btn .fa-solid {
-    margin-right: 8px;
 }
 
 .qr-section h3 {
@@ -574,27 +576,21 @@ body {
 }
 
 /* Modal Styles - Enhanced */
-/* Modal Styling */
 .modal {
     display: none;
     position: fixed;
-@@ -584,211 +154,41 @@
+    z-index: 1000;
+    left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.7);
     animation: fadeIn 0.3s ease;
-    background-color: rgba(0,0,0,0.5); /* Darker overlay */
     backdrop-filter: blur(8px);
-    animation: fadeIn 0.3s ease;
 }
 
 .modal-content {
     background: white;
-    background: rgba(30, 30, 40, 0.85); /* Dark Glass */
-    color: #fff;
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
     margin: 6% auto;
     padding: 40px;
     border-radius: 25px;
@@ -612,8 +608,6 @@ body {
     margin-bottom: 30px;
     padding-bottom: 20px;
     border-bottom: 3px solid #e9ecef;
-.modal-header h3, .add-student-section h4 {
-    color: #fff;
 }
 
 .modal-header h3 {
@@ -737,8 +731,6 @@ body {
     background: linear-gradient(135deg, #545b62, #454c52);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(108,117,125,0.35);
-.student-list-item .student-name {
-    color: #eee;
 }
 
 /* Responsive Design */
@@ -799,5 +791,4 @@ body {
     .admin-content {
         gap: 30px;
     }
-}
 }
