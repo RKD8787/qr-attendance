@@ -31,13 +31,13 @@
         }
 
         .add-student-form {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
             gap: 15px;
             align-items: center;
         }
 
         .add-student-form input {
-            flex: 1;
             padding: 15px 20px;
             border: 2px solid #dee2e6;
             border-radius: 10px;
@@ -118,7 +118,6 @@
             border-bottom: 1px solid #f1f1f1;
             transition: all 0.3s ease;
             font-weight: 500;
-            transition: all 0.2s ease-in-out;
         }
 
         .student-list-item:hover {
@@ -180,8 +179,8 @@
             }
 
             .add-student-form {
-                flex-direction: column;
-                align-items: stretch;
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
 
             .add-student-btn {
@@ -203,10 +202,9 @@
 
     <div class="header">
         <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
-       
         <h2>Attendance Portal</h2>
     </div>
-   <button onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
+    <button onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
     <div class="container">
         <div class="nav-buttons">
@@ -226,21 +224,21 @@
                             </div>
                         </div>
                         <div class="action-buttons">
-                           <button class="add-manually-btn" onclick="showAddManuallyModal()">
-    <i class="fas fa-user-plus"></i> Add Attendance Manually
-</button>
+                            <button class="add-manually-btn" onclick="showAddManuallyModal()">
+                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                            </button>
 
-<button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
-    <i class="fas fa-file-csv"></i> Export Attendance
-</button>
+                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+                                <i class="fas fa-file-csv"></i> Export Attendance
+                            </button>
 
-<button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
-    <i class="fas fa-users"></i> Student List
-</button>
+                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+                                <i class="fas fa-users"></i> Student List
+                            </button>
 
-<button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
-    <i class="fas fa-rocket"></i> Start Fresh Session
-</button>
+                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+                                <i class="fas fa-rocket"></i> Start Fresh Session
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -264,7 +262,7 @@
                 <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
             </div>
             <div class="search-container">
-                <input type="text" id="student-search" placeholder="Search student name...">
+                <input type="text" id="student-search" placeholder="Search student name or USN...">
                 <div class="search-icon">🔍</div>
             </div>
             <div class="student-dropdown" id="student-dropdown">
@@ -289,6 +287,7 @@
                 <h4>Add New Student</h4>
                 <div class="add-student-form">
                     <input type="text" id="new-student-name" placeholder="Enter student name..." maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Enter USN (optional)..." maxlength="20">
                     <button class="add-student-btn" onclick="addNewStudent()">
                         <i class="icon">➕</i> Add Student
                     </button>
@@ -297,7 +296,7 @@
 
             <!-- Search Students Section -->
             <div class="search-container">
-                <input type="text" id="student-list-search" placeholder="Search students...">
+                <input type="text" id="student-list-search" placeholder="Search students or USN...">
                 <div class="search-icon">🔍</div>
             </div>
 
