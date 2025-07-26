@@ -14,7 +14,6 @@
 </head>
 <body>
     <script>
-        // Prevent unauthorized access
         if (localStorage.getItem('authenticated') !== 'true') {
             window.location.href = 'login.html';
         }
@@ -33,14 +32,10 @@
                     <div class="present-count">Present Count: <span id="present-count">0</span></div>
                     <div class="present-students">
                         <h3>Present Students</h3>
-                        <div id="present-students-list">
-                            <div class="student-item" style="opacity: 0.5; font-style: italic;">
-                                No students marked present yet
-                            </div>
-                        </div>
+                        <div id="present-students-list"></div>
                         <div class="action-buttons">
                             <button class="add-manually-btn" onclick="showAddManuallyModal()">
-                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                                <i class="fas fa-user-plus"></i> Add Manually
                             </button>
                             <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
                                 <i class="fas fa-file-csv"></i> Export Attendance
@@ -54,20 +49,41 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="qr-section">
                     <h3>Student Attendance Portal</h3>
-                    <div class="qr-container">
-                        <div id="qr-code"></div>
-                    </div>
-                    <p class="qr-instruction">Students can scan this QR code to mark their attendance</p>
+                    <div id="qr-code" class="qr-container"></div>
+                    <p class="qr-instruction">Students scan this QR to mark attendance</p>
                 </div> 
             </div>
         </div>
     </div>
 
-    <div id="add-manually-modal" class="modal"></div>
-    <div id="student-list-modal" class="modal"></div>
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+            </div>
+            <div id="student-dropdown"></div>
+        </div>
+    </div>
+
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Student List</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Enter student name...">
+                    <button class="add-student-btn" onclick="addNewStudent()">Add Student</button>
+                </div>
+            </div>
+            <div id="student-list-display"></div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
