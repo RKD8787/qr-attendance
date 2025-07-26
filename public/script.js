@@ -97,7 +97,7 @@ async function generateQR() {
     qrCode.appendChild(canvas);
     new QRious({ element: canvas, value: studentUrl, size: 300 });
     const urlDisplay = document.createElement('p');
-    urlDisplay.textContent = `URL: ${studentUrl}`;
+   // urlDisplay.textContent = `URL: ${studentUrl}`;
     qrCode.appendChild(urlDisplay);
 }
 
