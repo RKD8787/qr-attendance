@@ -7,212 +7,15 @@
     <link rel="stylesheet" href="style.css">
     <style>
         /* Student List Management Modal Styles */
-        .student-list-modal-content {
-            max-width: 700px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .add-student-section {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 2px solid #e9ecef;
-        }
-
-        .add-student-section h4 {
-            color: #333;
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .add-student-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .add-student-form input {
-            padding: 15px 20px;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .add-student-form input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-        }
-
-        .add-student-btn {
-            background: linear-gradient(135deg, #28a745, #1e7e34);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-
-        .add-student-btn:hover {
-            background: linear-gradient(135deg, #1e7e34, #155724);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
-        }
-
-        .student-count-header {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .student-list-container {
-            margin: 20px 0;
-        }
-
-        .student-list-display {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 2px solid #e9ecef;
-            border-radius: 15px;
-            background: white;
-        }
-
-        .student-list-display::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .student-list-display::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .student-list-display::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            border-radius: 10px;
-        }
-
-        .student-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 22px;
-            border-bottom: 1px solid #f1f1f1;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .student-list-item:hover {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        }
-
-        .student-list-item:last-child {
-            border-bottom: none;
-        }
-
-        .student-list-item .student-name {
-            flex: 1;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .delete-student-btn {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .delete-student-btn:hover {
-            background: linear-gradient(135deg, #c82333, #a71e2a);
-            transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(220,53,69,0.3);
-        }
-
-        .no-students-message {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-            font-style: italic;
-            font-size: 16px;
-        }
-
-        .add-manually-btn.student-list-btn {
-            background: linear-gradient(135deg, #6f42c1, #5a2d91);
-        }
-
-        .add-manually-btn.student-list-btn:hover {
-            box-shadow: 0 8px 25px rgba(111,66,193,0.35);
-        }
-
-        @media (max-width: 768px) {
-            .student-list-modal-content {
-                width: 95%;
-                margin: 5% auto;
-                max-height: 95vh;
-            }
-
-            .add-student-form {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .add-student-btn {
-                justify-content: center;
-            }
-        }
+        .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script>
-    // ✅ Prevent unauthorized access using Supabase Auth
-    const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function checkAuth() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            // No user is logged in, redirect to login page
-            window.location.href = 'login.html';
-        }
-    }
-    checkAuth();
-</script>
-
     <div class="header">
         <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
-       
         <h2>Attendance Portal</h2>
     </div>
    <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
@@ -222,7 +25,6 @@
             <button class="nav-btn active" onclick="showPage('admin')">Faculty View</button>
         </div>
 
-        <!-- Admin/Faculty Page -->
         <div id="admin-page" class="page active">
             <div class="admin-content">
                 <div class="present-count-card">
@@ -231,25 +33,22 @@
                         <h3>Present Students</h3>
                         <div id="present-students-list">
                             <div class="student-item" style="opacity: 0.5; font-style: italic;">
-                                No students marked present yet
+                                Loading...
                             </div>
                         </div>
                         <div class="action-buttons">
                            <button class="add-manually-btn" onclick="showAddManuallyModal()">
-    <i class="fas fa-user-plus"></i> Add Attendance Manually
-</button>
-
-<button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
-    <i class="fas fa-file-csv"></i> Export Attendance
-</button>
-
-<button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
-    <i class="fas fa-users"></i> Student List
-</button>
-
-<button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
-    <i class="fas fa-rocket"></i> Start Fresh Session
-</button>
+                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                            </button>
+                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+                                <i class="fas fa-file-csv"></i> Export Attendance
+                            </button>
+                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+                                <i class="fas fa-users"></i> Student List
+                            </button>
+                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+                                <i class="fas fa-rocket"></i> Start Fresh Session
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -265,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Add Manually Modal -->
     <div id="add-manually-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -273,27 +71,22 @@
                 <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
             </div>
             <div class="search-container">
-                <input type="text" id="student-search" placeholder="Search student name or USN...">
+                <input type="text" id="student-search-manual" placeholder="Search student name or USN...">
                 <div class="search-icon">🔍</div>
             </div>
-            <div class="student-dropdown" id="student-dropdown">
-                <!-- Students will be populated here -->
-            </div>
+            <div class="student-dropdown" id="student-dropdown"></div>
             <div class="modal-buttons">
                 <button class="modal-btn secondary" onclick="closeAddManuallyModal()">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Student List Management Modal -->
     <div id="student-list-modal" class="modal">
         <div class="modal-content student-list-modal-content">
             <div class="modal-header">
                 <h3>Manage Student List</h3>
                 <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
             </div>
-
-            <!-- Add New Student Section -->
             <div class="add-student-section">
                 <h4>Add New Student</h4>
                 <div class="add-student-form">
@@ -304,31 +97,373 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Search Students Section -->
             <div class="search-container">
                 <input type="text" id="student-list-search" placeholder="Search students or USN...">
                 <div class="search-icon">🔍</div>
             </div>
-
-            <!-- Student List Display -->
             <div class="student-list-container">
                 <div class="student-count-header">
                     Total Students: <span id="total-student-count">0</span>
                 </div>
-                <div class="student-list-display" id="student-list-display">
-                    <!-- Students will be populated here -->
-                </div>
+                <div class="student-list-display" id="student-list-display"></div>
             </div>
-
             <div class="modal-buttons">
                 <button class="modal-btn secondary" onclick="closeStudentListModal()">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Load scripts in correct order -->
     <script src="script.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Student List Management Modal Styles */
+        .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
+        <h2>Attendance Portal</h2>
+    </div>
+   <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
+    <div class="container">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showPage('admin')">Faculty View</button>
+        </div>
+
+        <div id="admin-page" class="page active">
+            <div class="admin-content">
+                <div class="present-count-card">
+                    <div class="present-count">Present Count: <span id="present-count">0</span></div>
+                    <div class="present-students">
+                        <h3>Present Students</h3>
+                        <div id="present-students-list">
+                            <div class="student-item" style="opacity: 0.5; font-style: italic;">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                           <button class="add-manually-btn" onclick="showAddManuallyModal()">
+                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                            </button>
+                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+                                <i class="fas fa-file-csv"></i> Export Attendance
+                            </button>
+                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+                                <i class="fas fa-users"></i> Student List
+                            </button>
+                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+                                <i class="fas fa-rocket"></i> Start Fresh Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qr-section">
+                    <h3>Student Attendance Portal</h3>
+                    <div class="qr-container">
+                        <div id="qr-code"></div>
+                    </div>
+                    <p class="qr-instruction">Students can scan this QR code to mark their attendance</p>
+                </div> 
+            </div>
+        </div>
+    </div>
+
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-search-manual" placeholder="Search student name or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-dropdown" id="student-dropdown"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeAddManuallyModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Manage Student List</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Enter student name..." maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Enter USN (optional)..." maxlength="20">
+                    <button class="add-student-btn" onclick="addNewStudent()">
+                        <i class="icon">➕</i> Add Student
+                    </button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-list-search" placeholder="Search students or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-list-container">
+                <div class="student-count-header">
+                    Total Students: <span id="total-student-count">0</span>
+                </div>
+                <div class="student-list-display" id="student-list-display"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeStudentListModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Student List Management Modal Styles */
+        .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
+        <h2>Attendance Portal</h2>
+    </div>
+   <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
+
+    <div class="container">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showPage('admin')">Faculty View</button>
+        </div>
+
+        <div id="admin-page" class="page active">
+            <div class="admin-content">
+                <div class="present-count-card">
+                    <div class="present-count">Present Count: <span id="present-count">0</span></div>
+                    <div class="present-students">
+                        <h3>Present Students</h3>
+                        <div id="present-students-list">
+                            <div class="student-item" style="opacity: 0.5; font-style: italic;">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                           <button class="add-manually-btn" onclick="showAddManuallyModal()">
+                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                            </button>
+                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+                                <i class="fas fa-file-csv"></i> Export Attendance
+                            </button>
+                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+                                <i class="fas fa-users"></i> Student List
+                            </button>
+                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+                                <i class="fas fa-rocket"></i> Start Fresh Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qr-section">
+                    <h3>Student Attendance Portal</h3>
+                    <div class="qr-container">
+                        <div id="qr-code"></div>
+                    </div>
+                    <p class="qr-instruction">Students can scan this QR code to mark their attendance</p>
+                </div> 
+            </div>
+        </div>
+    </div>
+
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-search-manual" placeholder="Search student name or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-dropdown" id="student-dropdown"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeAddManuallyModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Manage Student List</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Enter student name..." maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Enter USN (optional)..." maxlength="20">
+                    <button class="add-student-btn" onclick="addNewStudent()">
+                        <i class="icon">➕</i> Add Student
+                    </button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-list-search" placeholder="Search students or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-list-container">
+                <div class="student-count-header">
+                    Total Students: <span id="total-student-count">0</span>
+                </div>
+                <div class="student-list-display" id="student-list-display"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeStudentListModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Student List Management Modal Styles */
+        .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
+        <h2>Attendance Portal</h2>
+    </div>
+   <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
+
+    <div class="container">
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showPage('admin')">Faculty View</button>
+        </div>
+
+        <div id="admin-page" class="page active">
+            <div class="admin-content">
+                <div class="present-count-card">
+                    <div class="present-count">Present Count: <span id="present-count">0</span></div>
+                    <div class="present-students">
+                        <h3>Present Students</h3>
+                        <div id="present-students-list">
+                            <div class="student-item" style="opacity: 0.5; font-style: italic;">
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                           <button class="add-manually-btn" onclick="showAddManuallyModal()">
+                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                            </button>
+                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+                                <i class="fas fa-file-csv"></i> Export Attendance
+                            </button>
+                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+                                <i class="fas fa-users"></i> Student List
+                            </button>
+                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+                                <i class="fas fa-rocket"></i> Start Fresh Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qr-section">
+                    <h3>Student Attendance Portal</h3>
+                    <div class="qr-container">
+                        <div id="qr-code"></div>
+                    </div>
+                    <p class="qr-instruction">Students can scan this QR code to mark their attendance</p>
+                </div> 
+            </div>
+        </div>
+    </div>
+
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-search-manual" placeholder="Search student name or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-dropdown" id="student-dropdown"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeAddManuallyModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Manage Student List</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Enter student name..." maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Enter USN (optional)..." maxlength="20">
+                    <button class="add-student-btn" onclick="addNewStudent()">
+                        <i class="icon">➕</i> Add Student
+                    </button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-list-search" placeholder="Search students or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-list-container">
+                <div class="student-count-header">
+                    Total Students: <span id="total-student-count">0</span>
+                </div>
+                <div class="student-list-display" id="student-list-display"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeStudentListModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
