@@ -190,7 +190,6 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -330,14 +329,6 @@
 
     <!-- Load scripts in correct order -->
     <script src="script.js"></script>
-    <script>
-        function logout() {
-            localStorage.removeItem('authenticated');
-            localStorage.removeItem('sessionId');
-            localStorage.removeItem('attendanceSubmitted');
-            localStorage.removeItem('lastSessionTime');
-            window.location.href = 'login.html';
-        }
-    </script>
+
 </body>
 </html>
