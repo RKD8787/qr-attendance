@@ -13,7 +13,6 @@
       justify-content: center;
       height: 100vh;
     }
-
     .login-box {
       background: white;
       padding: 40px 35px;
@@ -24,7 +23,6 @@
       text-align: center;
       animation: fadeIn 0.8s ease;
     }
-
     .login-box h2 {
       margin-bottom: 30px;
       font-size: 2rem;
@@ -33,7 +31,6 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-
     .login-box input {
       width: 100%;
       padding: 15px 20px;
@@ -43,13 +40,11 @@
       font-size: 16px;
       transition: 0.3s;
     }
-
     .login-box input:focus {
       border-color: #2a5298;
       outline: none;
       box-shadow: 0 0 10px rgba(42,82,152,0.2);
     }
-
     .login-box button {
       background: linear-gradient(135deg, #28a745, #1e7e34);
       color: white;
@@ -66,54 +61,66 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-
     .login-box button:hover {
       background: linear-gradient(135deg, #1e7e34, #155724);
       transform: translateY(-2px);
       box-shadow: 0 10px 30px rgba(40,167,69,0.4);
     }
-
-    .footer-note {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #666;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
- 
 <body>
   <div class="login-box">
     <h2>Faculty Login</h2>
     <form id="login-form">
-      <input type="text" id="username" placeholder="Enter Username" required />
+      <input type="email" id="email" placeholder="Enter Email" required />
       <input type="password" id="password" placeholder="Enter Password" required />
       <button type="submit">Login</button>
-      
     </form>
   </div>
 
-<script>
-document.getElementById('login-form').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const u = document.getElementById('username').value.trim();
-  const p = document.getElementById('password').value.trim();
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+  <script>
+    // Handle the login form submission
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const loginButton = e.target.querySelector('button');
 
-  // In a real application, you would send this to a server.
-  // For this project, we are keeping the simple check.
-  if (u === 'admin' && p === 'admin@123') {
-    localStorage.setItem('authenticated', 'true');
-    localStorage.setItem('sessionId', Date.now().toString());
-    window.location.href = 'index.html';
-  } else {
-    alert('Invalid credentials');
-  }
-});
-</script>
+      loginButton.disabled = true;
+      loginButton.textContent = 'Logging in...';
 
+      // Initialize Supabase client first
+      if (!initSupabase()) {
+          alert('Could not connect to the database.');
+          loginButton.disabled = false;
+          loginButton.textContent = 'Login';
+          return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        if (error) throw error;
+
+        // On successful login, redirect to the main faculty page
+        window.location.href = 'index.html';
+
+      } catch (error) {
+        alert('Login failed: ' + error.message);
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'Login';
+      }
+    });
+  </script>
 </body>
 </html>
