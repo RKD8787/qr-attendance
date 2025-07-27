@@ -135,7 +135,7 @@ function generateQR() {
 
     const canvas = document.createElement('canvas');
     qrCodeContainer.appendChild(canvas);
-    new QRious({ element: canvas, value: studentUrl, size: 340, padding: 15 });
+    new QRious({ element: canvas, value: studentUrl, size: 340, padding: 18 });
     console.log('✅ QR code generated for session:', sessionId);
 }
 
