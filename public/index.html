@@ -194,12 +194,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <script>
-        // ✅ Prevent unauthorized access
-        if (localStorage.getItem('authenticated') !== 'true') {
+   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+    // ✅ Prevent unauthorized access using Supabase Auth
+    const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function checkAuth() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            // No user is logged in, redirect to login page
             window.location.href = 'login.html';
         }
-    </script>
+    }
+    checkAuth();
+</script>
 
     <div class="header">
         <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
