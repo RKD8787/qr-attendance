@@ -153,16 +153,50 @@ async function removeStudent(studentName) {
     }
 }
 
+// =================================================================
+// ... keep all the code above this line the same ...
+// =================================================================
+
 async function startFreshAttendance() {
-    if (!confirm("⚠️ This will start a new session. Continue?")) return;
-    const newSessionId = Date.now().toString();
-    localStorage.setItem('sessionId', newSessionId);
-    presentStudents = [];
-    updatePresentCount();
-    updatePresentStudentsList([]);
-    await generateQR();
-    alert("✅ A new, fresh session has started.");
+    // 1. Prompt the faculty to name the new session
+    const sessionName = prompt("Please enter a name for this new session (e.g., 'Monday Class - Section A'):");
+    if (!sessionName || sessionName.trim() === '') {
+        alert("Session creation cancelled. A name is required.");
+        return;
+    }
+
+    try {
+        // 2. Create a new record in the `sessions` table
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .insert({ session_name: sessionName })
+            .select('id') // Important: select the ID of the new row
+            .single(); // We expect only one row back
+
+        if (error) throw error;
+        
+        const newSessionId = data.id; // The ID from our new sessions table
+        
+        // 3. Update localStorage with the new session ID
+        localStorage.setItem('sessionId', newSessionId);
+        
+        // 4. Reset the UI for the new session
+        presentStudents = [];
+        updatePresentCount();
+        updatePresentStudentsList([]); // Clears the list on the screen
+        await generateQR(); // Generate the new QR code
+        
+        alert(`✅ New session "${sessionName}" has started successfully!`);
+
+    } catch (err) {
+        console.error("❌ Error starting new session:", err);
+        alert("Failed to create a new session: " + err.message);
+    }
 }
+
+// =================================================================
+// ... keep all the code below this line the same ...
+// =================================================================
 
 // =================================================================
 // STUDENT VIEW FUNCTIONS (`student.html`)
