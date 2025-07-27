@@ -3,720 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance Portal</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <title>QR Attendance System</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Student List Management Modal Styles */
+        .student-list-modal-content {
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1e5aa8, #2d6bb5);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px 20px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            margin-bottom: 20px;
-        }
-
-        .session-info {
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        .add-student-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
             border-radius: 15px;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .session-info h3 {
-            color: #1976d2;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-        }
-
-        .session-detail {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .session-detail strong {
-            color: #1976d2;
-        }
-
-        .search-container {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .search-container input {
-            width: 100%;
-            padding: 15px 20px;
             border: 2px solid #e9ecef;
-            border-radius: 12px;
+        }
+
+        .add-student-section h4 {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .add-student-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .add-student-form input {
+            padding: 15px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
             font-size: 16px;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
 
-        .search-container input:focus {
+        .add-student-form input:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
 
-        .search-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            font-size: 18px;
-        }
-
-        .student-list {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 10px;
-            margin-bottom: 25px;
-        }
-
-        .student-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .student-list::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .student-list::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            border-radius: 10px;
-        }
-
-        .student-option {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .student-option:hover {
-            background: linear-gradient(135deg, #e9ecef, #dee2e6);
-            transform: translateX(5px);
-        }
-
-        .student-option.selected {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            border-color: #0056b3;
-            transform: translateX(8px);
-        }
-
-        .student-option input[type="radio"] {
-            margin-right: 15px;
-            width: 20px;
-            height: 20px;
-            accent-color: #007bff;
-        }
-
-        .student-name {
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .student-usn {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
-
-        .submit-btn {
+        .add-student-btn {
             background: linear-gradient(135deg, #28a745, #1e7e34);
-            color: white;
-            border: none;
-            padding: 18px 30px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 8px 25px rgba(40,167,69,0.3);
-        }
-
-        .submit-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #1e7e34, #155724);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 35px rgba(40,167,69,0.4);
-        }
-
-        .submit-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .success-message {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .checkmark {
-            font-size: 80px;
-            color: #28a745;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .success-message h2 {
-            color: #28a745;
-            margin-bottom: 15px;
-            font-size: 1.8rem;
-        }
-
-        .success-message p {
-            color: #666;
-            margin-bottom: 25px;
-            font-size: 1.1rem;
-        }
-
-        .close-btn {
-            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             border: none;
             padding: 15px 25px;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
         }
 
-        .close-btn:hover {
-            background: linear-gradient(135deg, #0056b3, #004085);
+        .add-student-btn:hover {
+            background: linear-gradient(135deg, #1e7e34, #155724);
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
         }
 
-        .error-message {
-            background: linear-gradient(135deg, #f8d7da, #f1aeb5);
-            color: #721c24;
-            padding: 20px;
+        .student-count-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px 20px;
             border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
             text-align: center;
-            border: 2px solid #f5c6cb;
         }
 
-        .error-message h3 {
-            margin-bottom: 10px;
-            font-size: 1.3rem;
+        .student-list-container {
+            margin: 20px 0;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px 20px;
-            color: #007bff;
-            font-size: 1.1rem;
+        .student-list-display {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            background: white;
         }
 
-        .no-data {
+        .student-list-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .student-list-display::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .student-list-display::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border-radius: 10px;
+        }
+
+        .student-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 22px;
+            border-bottom: 1px solid #f1f1f1;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .student-list-item:hover {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .student-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-list-item .student-name {
+            flex: 1;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .delete-student-btn {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delete-student-btn:hover {
+            background: linear-gradient(135deg, #c82333, #a71e2a);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(220,53,69,0.3);
+        }
+
+        .no-students-message {
             text-align: center;
             padding: 40px 20px;
             color: #666;
             font-style: italic;
-            font-size: 1.1rem;
+            font-size: 16px;
         }
 
-        .hidden {
-            display: none !important;
+        .add-manually-btn.student-list-btn {
+            background: linear-gradient(135deg, #6f42c1, #5a2d91);
         }
 
-        /* Responsive Design */
+        .add-manually-btn.student-list-btn:hover {
+            box-shadow: 0 8px 25px rgba(111,66,193,0.35);
+        }
+
         @media (max-width: 768px) {
-            .container {
-                padding: 20px 15px;
+            .student-list-modal-content {
+                width: 95%;
+                margin: 5% auto;
+                max-height: 95vh;
             }
-            
-            .header h1 {
-                font-size: 1.4rem;
+
+            .add-student-form {
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
-            
-            .card {
-                padding: 20px;
-            }
-            
-            .student-option {
-                padding: 12px;
-            }
-            
-            .submit-btn {
-                padding: 15px 25px;
-                font-size: 14px;
+
+            .add-student-btn {
+                justify-content: center;
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
+    <script>
+        // ✅ Prevent unauthorized access
+        if (localStorage.getItem('authenticated') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+
     <div class="header">
-        <h1>Dayananda Sagar College Of Engineering</h1>
-        <p>Student Attendance Portal</p>
+        <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
+        <h2>Attendance Portal</h2>
     </div>
+    <button onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
     <div class="container">
-        <!-- Loading Page -->
-        <div id="loading-page" class="card">
-            <div class="loading">
-                <i class="fas fa-spinner fa-spin"></i><br>
-                Loading session details...
-            </div>
+        <div class="nav-buttons">
+            <button class="nav-btn active" onclick="showPage('admin')">Faculty View</button>
         </div>
 
-        <!-- Error Page -->
-        <div id="error-page" class="card hidden">
-            <div class="error-message">
-                <h3>⚠️ Session Error</h3>
-                <p id="error-text">Invalid or expired session. Please scan the QR code again.</p>
-                <button class="close-btn" onclick="window.close()">Close</button>
+        <!-- Admin/Faculty Page -->
+        <div id="admin-page" class="page active">
+            <div class="admin-content">
+                <div class="present-count-card">
+                    <div class="present-count">Present Count: <span id="present-count">0</span></div>
+                    <div class="present-students">
+                        <h3>Present Students</h3>
+                        <div id="present-students-list">
+                            <div class="student-item" style="opacity: 0.5; font-style: italic;">
+                                No students marked present yet
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="add-manually-btn" onclick="showAddManuallyModal()">
+                                <i class="fas fa-user-plus"></i> Add Attendance Manually
+                            </button>
+
+                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+                                <i class="fas fa-file-csv"></i> Export Attendance
+                            </button>
+
+                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+                                <i class="fas fa-users"></i> Student List
+                            </button>
+
+                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+                                <i class="fas fa-rocket"></i> Start Fresh Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qr-section">
+                    <h3>Student Attendance Portal</h3>
+                    <div class="qr-container">
+                        <div id="qr-code"></div>
+                    </div>
+                    <p class="qr-instruction">Students can scan this QR code to mark their attendance</p>
+                </div> 
             </div>
         </div>
+    </div>
 
-        <!-- Student Selection Page -->
-        <div id="student-selection-page" class="card hidden">
-            <div id="session-info-display">
-                <!-- Session info will be populated here -->
+    <!-- Add Manually Modal -->
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
             </div>
-
-            <h2 style="text-align: center; margin-bottom: 25px; color: #333;">Mark Your Attendance</h2>
-            
             <div class="search-container">
-                <input type="text" id="student-search" placeholder="Search your name or USN..." autocomplete="off">
+                <input type="text" id="student-search" placeholder="Search student name or USN...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-dropdown" id="student-dropdown">
+                <!-- Students will be populated here -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeAddManuallyModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student List Management Modal -->
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Manage Student List</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+
+            <!-- Add New Student Section -->
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Enter student name..." maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Enter USN (optional)..." maxlength="20">
+                    <button class="add-student-btn" onclick="addNewStudent()">
+                        <i class="icon">➕</i> Add Student
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Students Section -->
+            <div class="search-container">
+                <input type="text" id="student-list-search" placeholder="Search students or USN...">
                 <div class="search-icon">🔍</div>
             </div>
 
-            <div class="student-list" id="student-list">
-                <div class="loading">Loading students...</div>
+            <!-- Student List Display -->
+            <div class="student-list-container">
+                <div class="student-count-header">
+                    Total Students: <span id="total-student-count">0</span>
+                </div>
+                <div class="student-list-display" id="student-list-display">
+                    <!-- Students will be populated here -->
+                </div>
             </div>
 
-            <button class="submit-btn" id="submit-attendance" disabled>
-                Submit Attendance
-            </button>
-        </div>
-
-        <!-- Success Page -->
-        <div id="success-page" class="card hidden">
-            <div class="success-message">
-                <div class="checkmark">✓</div>
-                <h2>Attendance Submitted Successfully!</h2>
-                <p>Your attendance has been recorded for this session. Thank you!</p>
-                <div id="success-details" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
-                    <!-- Success details will be populated here -->
-                </div>
-                <button class="close-btn" onclick="window.close()">Close Window</button>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeStudentListModal()">Close</button>
             </div>
         </div>
     </div>
 
+    <!-- Load scripts in correct order -->
+    <script src="script.js"></script>
     <script>
-        // Global variables
-        let supabaseClient = null;
-        let currentSession = null;
-        let currentFaculty = null;
-        let allStudents = [];
-        let selectedStudent = null;
-
-        // Initialize Supabase
-        function initSupabase() {
-            try {
-                supabaseClient = supabase.createClient(
-                    'https://zpesqzstorixfsmpntsx.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ'
-                );
-                return true;
-            } catch (error) {
-                console.error('Supabase initialization error:', error);
-                return false;
-            }
+        function logout() {
+            localStorage.removeItem('authenticated');
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('attendanceSubmitted');
+            localStorage.removeItem('lastSessionTime');
+            window.location.href = 'login.html';
         }
-
-        // Generate unique device ID
-        function getDeviceId() {
-            let deviceId = localStorage.getItem('studentDeviceId');
-            if (!deviceId) {
-                deviceId = 'student_device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('studentDeviceId', deviceId);
-            }
-            return deviceId;
-        }
-
-        // Initialize application
-        document.addEventListener('DOMContentLoaded', async function() {
-            if (!initSupabase()) {
-                showError('Database connection failed. Please try again.');
-                return;
-            }
-
-            // Get session and faculty info from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const sessionId = urlParams.get('session');
-            const facultyId = urlParams.get('faculty');
-
-            if (!sessionId || !facultyId) {
-                showError('Invalid session link. Please scan the QR code again.');
-                return;
-            }
-
-            await loadSessionData(sessionId, facultyId);
-        });
-
-        // Load session data
-        async function loadSessionData(sessionId, facultyId) {
-            try {
-                // Load session info
-                const sessionInfo = await getSessionInfo(sessionId);
-                if (!sessionInfo) {
-                    showError('Session not found or expired. Please scan the QR code again.');
-                    return;
-                }
-
-                currentSession = { id: sessionId, ...sessionInfo };
-                currentFaculty = { id: facultyId };
-
-                // Load students for this faculty
-                await loadStudents(facultyId);
-
-                // Check if this device already submitted for this session
-                const deviceId = getDeviceId();
-                const deviceSessionKey = `${deviceId}_${sessionId}`;
-                
-                if (localStorage.getItem(deviceSessionKey)) {
-                    showError('This device has already submitted attendance for this session.');
-                    return;
-                }
-
-                // Display session info and student selection
-                displaySessionInfo();
-                displayStudentSelection();
-                
-            } catch (error) {
-                console.error('Error loading session data:', error);
-                showError('Failed to load session data. Please try again.');
-            }
-        }
-
-        // Get session info
-        async function getSessionInfo(sessionId) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('sessions')
-                    .select('*')
-                    .eq('id', sessionId)
-                    .single();
-
-                if (error) {
-                    console.warn('Session not found in database, checking session storage');
-                    return null;
-                }
-
-                return data;
-            } catch (err) {
-                console.error('Error fetching session info:', err);
-                return null;
-            }
-        }
-
-        // Load students for faculty
-        async function loadStudents(facultyId) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('students')
-                    .select('*')
-                    .eq('faculty_id', facultyId)
-                    .order('name');
-
-                if (error) throw error;
-
-                allStudents = data || [];
-                console.log('Loaded students:', allStudents.length);
-            } catch (err) {
-                console.error('Error loading students:', err);
-                allStudents = [];
-            }
-        }
-
-        // Display session info
-        function displaySessionInfo() {
-            const sessionInfoDiv = document.getElementById('session-info-display');
-            
-            if (!currentSession) {
-                sessionInfoDiv.innerHTML = '<div class="error-message">Session information not available</div>';
-                return;
-            }
-
-            sessionInfoDiv.innerHTML = `
-                <div class="session-info">
-                    <h3>📚 Session Details</h3>
-                    <div class="session-detail">
-                        <strong>Faculty:</strong> <span>${currentSession.faculty_name || 'Unknown'}</span>
-                    </div>
-                    <div class="session-detail">
-                        <strong>Subject:</strong> <span>${currentSession.subject || 'Unknown'}</span>
-                    </div>
-                    <div class="session-detail">
-                        <strong>Class:</strong> <span>${currentSession.class || 'Unknown'}</span>
-                    </div>
-                    <div class="session-detail">
-                        <strong>Date:</strong> <span>${new Date(currentSession.timestamp || Date.now()).toLocaleDateString()}</span>
-                    </div>
-                    <div class="session-detail">
-                        <strong>Time:</strong> <span>${new Date(currentSession.timestamp || Date.now()).toLocaleTimeString()}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Display student selection
-        function displayStudentSelection() {
-            hideAllPages();
-            document.getElementById('student-selection-page').classList.remove('hidden');
-            
-            populateStudentList();
-            setupEventListeners();
-        }
-
-        // Populate student list
-        function populateStudentList(searchTerm = '') {
-            const studentList = document.getElementById('student-list');
-            
-            if (allStudents.length === 0) {
-                studentList.innerHTML = '<div class="no-data">No students found for this faculty</div>';
-                return;
-            }
-
-            // Filter students based on search term
-            const filteredStudents = allStudents.filter(student => 
-                student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (student.usn && student.usn.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
-
-            if (filteredStudents.length === 0) {
-                studentList.innerHTML = '<div class="no-data">No students match your search</div>';
-                return;
-            }
-
-            studentList.innerHTML = filteredStudents.map(student => `
-                <div class="student-option" onclick="selectStudent('${student.id}')">
-                    <input type="radio" name="student" value="${student.id}" id="student-${student.id}">
-                    <div>
-                        <div class="student-name">${student.name}</div>
-                        <div class="student-usn">${student.usn || 'USN not provided'}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Select student
-        function selectStudent(studentId) {
-            // Update radio button
-            const radio = document.getElementById(`student-${studentId}`);
-            radio.checked = true;
-
-            // Update visual selection
-            document.querySelectorAll('.student-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            radio.closest('.student-option').classList.add('selected');
-
-            // Store selected student
-            selectedStudent = allStudents.find(s => s.id == studentId);
-            
-            // Enable submit button
-            document.getElementById('submit-attendance').disabled = false;
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Search functionality
-            const searchInput = document.getElementById('student-search');
-            searchInput.addEventListener('input', function(e) {
-                populateStudentList(e.target.value);
-            });
-
-            // Submit button
-            const submitBtn = document.getElementById('submit-attendance');
-            submitBtn.addEventListener('click', submitAttendance);
-        }
-
-        // Submit attendance
-        async function submitAttendance() {
-            if (!selectedStudent) {
-                alert('Please select your name first!');
-                return;
-            }
-
-            const submitBtn = document.getElementById('submit-attendance');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-
-            try {
-                // Check if student already submitted for this session
-                const { data: existingRecord, error: checkError } = await supabaseClient
-                    .from('attendance')
-                    .select('id')
-                    .eq('student_name', selectedStudent.name)
-                    .eq('session_id', currentSession.id)
-                    .limit(1);
-
-                if (checkError) throw checkError;
-
-                if (existingRecord && existingRecord.length > 0) {
-                    alert('Your attendance for this session has already been recorded.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit Attendance';
-                    return;
-                }
-
-                // Submit attendance
-                const deviceId = getDeviceId();
-                const { error } = await supabaseClient
-                    .from('attendance')
-                    .insert({
-                        student_name: selectedStudent.name,
-                        usn: selectedStudent.usn,
-                        session_id: currentSession.id,
-                        faculty_id: currentFaculty.id,
-                        student_id: selectedStudent.id,
-                        device_id: deviceId,
-                        timestamp: new Date().toISOString()
-                    });
-
-                if (error) {
-                    if (error.code === '23505') {
-                        alert('Your attendance for this session has already been recorded.');
-                    } else {
-                        throw error;
-                    }
-                } else {
-                    // Mark device as submitted for this session
-                    const deviceSessionKey = `${deviceId}_${currentSession.id}`;
-                    localStorage.setItem(deviceSessionKey, 'submitted');
-                    
-                    showSuccess();
-                }
-            } catch (err) {
-                console.error('Error submitting attendance:', err);
-                alert('Failed to submit attendance. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Attendance';
-            }
-        }
-
-        // Show success page
-        function showSuccess() {
-            hideAllPages();
-            document.getElementById('success-page').classList.remove('hidden');
-            
-            // Populate success details
-            const successDetails = document.getElementById('success-details');
-            successDetails.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <strong>Student:</strong> <span>${selectedStudent.name}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <strong>USN:</strong> <span>${selectedStudent.usn || 'N/A'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <strong>Subject:</strong> <span>${currentSession.subject || 'N/A'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <strong>Faculty:</strong> <span>${currentSession.faculty_name || 'N/A'}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <strong>Time:</strong> <span>${new Date().toLocaleString()}</span>
-                </div>
-            `;
-        }
-
-        // Show error page
-        function showError(message) {
-            hideAllPages();
-            document.getElementById('error-page').classList.remove('hidden');
-            document.getElementById('error-text').textContent = message;
-        }
-
-        // Hide all pages
-        function hideAllPages() {
-            document.getElementById('loading-page').classList.add('hidden');
-            document.getElementById('error-page').classList.add('hidden');
-            document.getElementById('student-selection-page').classList.add('hidden');
-            document.getElementById('success-page').classList.add('hidden');
-        }
-
-        // Handle page visibility change (prevent back navigation after submission)
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-                // Check if attendance was already submitted
-                const urlParams = new URLSearchParams(window.location.search);
-                const sessionId = urlParams.get('session');
-                const deviceId = getDeviceId();
-                const deviceSessionKey = `${deviceId}_${sessionId}`;
-                
-                if (localStorage.getItem(deviceSessionKey)) {
-                    showError('Attendance already submitted from this device.');
-                }
-            }
-        });
     </script>
 </body>
 </html>
