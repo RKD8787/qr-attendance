@@ -669,11 +669,25 @@ async function addStudentManually(studentName, studentUSN) {
 
 // === UTILITY === //
 
-function logout() {
-    localStorage.clear();
-    window.location.href = 'login.html';
+// ✅ New Logout function using Supabase Auth
+async function logout() {
+    if (!supabaseClient) {
+        // If supabase client is not initialized, just clear local storage and redirect
+        localStorage.clear();
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        console.error('Error logging out:', error);
+        alert('Failed to log out. Please try again.');
+    } else {
+        // Clear everything and redirect to login
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
 }
-
 // Page navigation function (if needed)
 function showPage(pageId) {
     // Hide all pages
