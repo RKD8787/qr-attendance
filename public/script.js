@@ -261,8 +261,8 @@ async function generateQR() {
     new QRious({
         element: canvas, // Give the library the <canvas> element
         value: studentUrl,
-        size: 500,
-        padding: 20
+        size: 340,
+        padding: 15
     });
 
     console.log('✅ QR code generated for session:', sessionId);
