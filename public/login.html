@@ -83,8 +83,12 @@
   </div>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="script.js"></script>
   <script>
+    // Initialize Supabase client
+    const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     // Handle the login form submission
     document.getElementById('login-form').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -94,14 +98,6 @@
 
       loginButton.disabled = true;
       loginButton.textContent = 'Logging in...';
-
-      // Initialize Supabase client first
-      if (!initSupabase()) {
-          alert('Could not connect to the database.');
-          loginButton.disabled = false;
-          loginButton.textContent = 'Login';
-          return;
-      }
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
