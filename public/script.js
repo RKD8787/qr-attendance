@@ -6,20 +6,56 @@ let allStudents = [];
 let presentStudents = [];
 let filteredStudents = [];
 
-// Initialize Supabase client
-function initSupabase() {
+// ✅ MAIN INITIALIZATION (This now runs everything)
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔄 DOM Content Loaded');
+    
+    // Determine the current page to decide which functions to run
+    const currentPage = window.location.pathname;
+
+    if (currentPage.includes('login.html')) {
+        // Login page logic is self-contained in login.html, so do nothing here.
+        return;
+    }
+    
+    // For all other pages (index.html, student.html, etc.)
+    initializeSupabaseAndApp();
+});
+
+// ✅ UNIFIED INITIALIZATION AND AUTH CHECK
+async function initializeSupabaseAndApp() {
+    // 1. Initialize Supabase Client
     try {
-        supabaseClient = supabase.createClient(
-            'https://zpesqzstorixfsmpntsx.supabase.co', // Your Supabase URL
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ' // Your Supabase Key
-        );
+        const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         console.log('✅ Supabase client initialized');
-        return true;
     } catch (error) {
         console.error('❌ Supabase initialization error:', error);
-        return false;
+        alert('FATAL: Supabase client could not be initialized. Check the console.');
+        return;
+    }
+
+    // 2. Check Authentication
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const currentPage = window.location.pathname;
+
+    // If there's no session and we are not on the student page, redirect to login
+    if (!session && !currentPage.includes('student.html')) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // 3. Run Page-Specific Logic
+    await fetchAllStudents();
+    
+    if (currentPage.includes('student.html')) {
+        initStudentView();
+    } else if (currentPage.includes('index.html') || currentPage === '/') {
+        initFacultyView();
     }
 }
+
 
 // Generate a unique device ID for this browser/device
 function getDeviceId() {
@@ -30,22 +66,6 @@ function getDeviceId() {
     }
     return deviceId;
 }
-
-// ✅ MAIN INITIALIZATION
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🔄 DOM Content Loaded');
-    if (!initSupabase()) {
-        alert('FATAL: Supabase client could not be initialized.');
-        return;
-    }
-    const currentPage = window.location.pathname;
-    await fetchAllStudents();
-    if (currentPage.includes('student')) {
-        initStudentView();
-    } else {
-        initFacultyView();
-    }
-});
 
 // ✅ FETCH ALL STUDENTS FROM SUPABASE (Updated to include USN)
 async function fetchAllStudents() {
@@ -67,7 +87,10 @@ async function fetchAttendance() {
     try {
         const sessionId = localStorage.getItem('sessionId');
         if (!sessionId) {
-            console.log('No session ID found');
+            console.log('No session ID found, creating one...');
+            // If no session ID, create one. This is important for the QR code.
+            localStorage.setItem('sessionId', Date.now().toString());
+            generateQR(); // Generate QR with the new session ID
             return;
         }
 
@@ -83,7 +106,6 @@ async function fetchAttendance() {
         updatePresentStudentsList(data);
         updatePresentCount();
         
-        console.log('✅ Fetched attendance:', presentStudents.length, 'students present');
     } catch (err) {
         console.error('❌ Error fetching attendance:', err);
     }
@@ -143,11 +165,10 @@ async function removeStudent(studentName) {
 
 // ✅ FACULTY VIEW INITIALIZATION
 function initFacultyView() {
-    // Ensure a session ID exists on first load
+    console.log('🔄 Starting faculty view initialization...');
     if (!localStorage.getItem('sessionId')) {
         localStorage.setItem('sessionId', Date.now().toString());
     }
-    console.log('🔄 Starting faculty view initialization...');
     generateQR();
     fetchAttendance();
     setInterval(fetchAttendance, 5000);
@@ -185,7 +206,6 @@ function populateStudentList() {
         studentList.appendChild(studentDiv);
     });
 
-    // Add event listeners to radio buttons
     const radioButtons = studentList.querySelectorAll('input[type="radio"]');
     radioButtons.forEach(radio => {
         radio.addEventListener('change', updateStudentSelection);
@@ -201,7 +221,6 @@ function updateStudentSelection() {
         submitBtn.disabled = !selectedRadio;
     }
 
-    // Update visual selection
     const checkboxes = document.querySelectorAll('.student-checkbox');
     checkboxes.forEach(checkbox => {
         const radio = checkbox.querySelector('input[type="radio"]');
@@ -230,14 +249,13 @@ function setupStudentEventListeners() {
 }
 
 // ✅ QR CODE GENERATION (WITH SESSION ID)
-async function generateQR() {
+function generateQR() {
     const qrCodeContainer = document.getElementById('qr-code');
     if (!qrCodeContainer) {
         console.error("QR container not found!");
         return;
     }
 
-    // Clear previous content and show a loading message
     qrCodeContainer.innerHTML = '<p>Generating QR code...</p>';
 
     const sessionId = localStorage.getItem('sessionId');
@@ -253,13 +271,12 @@ async function generateQR() {
 
     const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
 
-    // THE FIX: Create a <canvas> element for QRious to draw on
-    qrCodeContainer.innerHTML = ''; // Clear the "Generating..." message
+    qrCodeContainer.innerHTML = ''; 
     const canvas = document.createElement('canvas');
     qrCodeContainer.appendChild(canvas);
 
     new QRious({
-        element: canvas, // Give the library the <canvas> element
+        element: canvas,
         value: studentUrl,
         size: 340,
         padding: 15
@@ -284,61 +301,43 @@ function setupStudentSearch() {
 
 // ✅ REVISED: Export attendance CSV with USN
 async function exportAttendanceCSV() {
-    console.log('📤 Export process started...');
-
     if (!supabaseClient) {
-        alert("Database connection not available. Please refresh the page.");
+        alert("Database connection not available.");
         return;
     }
-
     try {
-        console.log('🔄 Fetching data from Supabase for export...');
         const { data, error } = await supabaseClient
             .from('attendance')
             .select('student, usn, timestamp')
             .order('timestamp', { ascending: false });
 
-        if (error) {
-            console.error("❌ Export fetch error:", error);
-            alert("Failed to fetch attendance data for export. Check the console for details.");
-            return;
-        }
+        if (error) throw error;
 
         if (data.length === 0) {
             alert("No attendance data to export.");
             return;
         }
-        console.log(`✅ Found ${data.length} records to export.`);
-
-        // Create CSV content
-        const csvRows = ['"Name","USN","Timestamp"']; // Header row
+        
+        const csvRows = ['"Name","USN","Timestamp"'];
         data.forEach(record => {
             const timestamp = new Date(record.timestamp).toLocaleString('en-US');
             csvRows.push(`"${record.student}","${record.usn || 'N/A'}","${timestamp}"`);
         });
-
-        // Create a Blob for the CSV data
+        
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-
-        // Create a temporary link element to trigger the download
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
         a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
-        
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
         URL.revokeObjectURL(url);
-        
-        console.log('✅ Attendance exported successfully!');
-        alert('Attendance has been exported! Check your downloads folder.');
-
+        alert('Attendance has been exported!');
     } catch (err) {
         console.error('❌ A critical error occurred during export:', err);
-        alert('Failed to export attendance. Please check the console for critical errors.');
+        alert('Failed to export attendance.');
     }
 }
 
@@ -362,14 +361,12 @@ async function submitAttendance() {
     const studentName = selectedRadio.value;
     const studentUSN = selectedRadio.getAttribute('data-usn') || '';
 
-    // Check if this device has already submitted for this session
     const deviceSessionKey = `${deviceId}_${currentSessionId}`;
     if (localStorage.getItem(deviceSessionKey)) {
-        alert("This device has already submitted attendance for this session. Only one submission per device per session is allowed.");
+        alert("This device has already submitted attendance for this session.");
         return;
     }
 
-    // Check if this student has already submitted for this session (from any device)
     try {
         const { data: existingRecord, error: checkError } = await supabaseClient
             .from('attendance')
@@ -381,12 +378,12 @@ async function submitAttendance() {
         if (checkError) throw checkError;
 
         if (existingRecord && existingRecord.length > 0) {
-            alert("Attendance for this session has already been recorded for you from another device.");
+            alert("Attendance for this session has already been recorded for you.");
             return;
         }
     } catch (err) {
         console.error("❌ Error checking existing attendance:", err);
-        alert("Error checking attendance status. Please try again.");
+        alert("Error checking attendance status.");
         return;
     }
 
@@ -406,15 +403,13 @@ async function submitAttendance() {
             });
 
         if (error) {
-            if (error.code === '23505') {
+            if (error.code === '23505') { // Unique constraint violation
                 alert("Attendance for this session has already been recorded.");
             } else {
                 throw error;
             }
         } else {
-            // Mark this device as having submitted for this session
             localStorage.setItem(deviceSessionKey, 'submitted');
-            
             document.getElementById('student-selection-page').style.display = 'none';
             document.getElementById('success-page').style.display = 'block';
         }
@@ -432,21 +427,18 @@ async function startFreshAttendance() {
     if (!confirm("⚠️ This will clear ALL attendance records and start a new session. Continue?")) return;
     
     try {
-        // Delete all attendance records
         const { error } = await supabaseClient
             .from('attendance')
             .delete()
-            .neq('student', ''); // This will match all records since student names are never empty
+            .neq('student', 'this-is-a-dummy-value-that-will-never-exist'); // Match all records
         
         if (error) throw error;
         
         const newSessionId = Date.now().toString();
         localStorage.setItem('sessionId', newSessionId);
         
-        // Clear present students array
         presentStudents = [];
         
-        // Clear device session tracking for the new session
         const deviceId = getDeviceId();
         const keys = Object.keys(localStorage);
         keys.forEach(key => {
@@ -455,16 +447,11 @@ async function startFreshAttendance() {
             }
         });
         
-        // Immediately regenerate the QR code with the new session
         await generateQR();
-        
-        // Update UI
         updatePresentCount();
         updatePresentStudentsList([]);
         
         alert("✅ All attendance cleared! A new session has started.");
-        console.log('✅ Fresh session started:', newSessionId);
-        
     } catch (err) {
         console.error("❌ Clear attendance error:", err);
         alert("Failed to clear attendance: " + err.message);
@@ -472,7 +459,6 @@ async function startFreshAttendance() {
 }
 
 // === STUDENT LIST MANAGEMENT (MODAL) === //
-
 function showStudentListModal() {
     document.getElementById('student-list-modal').style.display = 'block';
     populateStudentListDisplay();
@@ -490,14 +476,11 @@ function updateStudentCount() {
 function populateStudentListDisplay() {
     const display = document.getElementById('student-list-display');
     if (!display) return;
-    
     display.innerHTML = '';
-    
     if (allStudents.length === 0) {
         display.innerHTML = '<div class="no-students-message">No students in the list</div>';
         return;
     }
-    
     allStudents.forEach(student => {
         const item = document.createElement('div');
         item.className = 'student-list-item';
@@ -514,7 +497,6 @@ function populateStudentListDisplay() {
     updateStudentCount();
 }
 
-// ✅ ADD NEW STUDENT TO DATABASE (Updated to include USN)
 async function addNewStudent() {
     const nameInput = document.getElementById('new-student-name');
     const usnInput = document.getElementById('new-student-usn');
@@ -534,44 +516,29 @@ async function addNewStudent() {
     try {
         const { error } = await supabaseClient
             .from('students')
-            .insert({ 
-                name: studentName,
-                usn: studentUSN || null
-            });
+            .insert({ name: studentName, usn: studentUSN || null });
             
         if (error) throw error;
-
         nameInput.value = '';
         usnInput.value = '';
         alert(`${studentName} added successfully!`);
-        await fetchAllStudents(); // Refresh the list
-        populateStudentListDisplay(); // Update modal view
-        
+        await fetchAllStudents();
+        populateStudentListDisplay();
     } catch(err) {
         console.error('❌ Error adding new student:', err);
         alert('Failed to add new student: ' + err.message);
     }
 }
 
-// ✅ DELETE STUDENT FROM DATABASE
 async function deleteStudent(studentName) {
-    if (!confirm(`This will permanently delete ${studentName} from the master list. Continue?`)) return;
-    
+    if (!confirm(`This will permanently delete ${studentName}. Continue?`)) return;
     try {
-        const { error } = await supabaseClient
-            .from('students')
-            .delete()
-            .eq('name', studentName);
-            
+        const { error } = await supabaseClient.from('students').delete().eq('name', studentName);
         if (error) throw error;
-        
-        // Also remove from attendance if present
         await removeStudent(studentName);
-        
         alert(`${studentName} deleted successfully!`);
-        await fetchAllStudents(); // Refresh the list
-        populateStudentListDisplay(); // Update modal view
-        
+        await fetchAllStudents();
+        populateStudentListDisplay();
     } catch(err) {
         console.error('❌ Error deleting student:', err);
         alert('Failed to delete student: ' + err.message);
@@ -579,7 +546,6 @@ async function deleteStudent(studentName) {
 }
 
 // === MANUAL ATTENDANCE (MODAL) === //
-
 function showAddManuallyModal() {
     document.getElementById('add-manually-modal').style.display = 'block';
     populateFacultyStudentDropdown();
@@ -593,34 +559,27 @@ function closeAddManuallyModal() {
 function setupFacultyStudentSearch() {
     const searchInput = document.getElementById('student-search');
     if (!searchInput) return;
-    
     searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        populateFacultyStudentDropdown(searchTerm);
+        populateFacultyStudentDropdown(e.target.value.toLowerCase().trim());
     });
 }
 
 function populateFacultyStudentDropdown(searchTerm = '') {
     const dropdown = document.getElementById('student-dropdown');
     if (!dropdown) return;
-    
     dropdown.innerHTML = '';
-    
-    // Filter students who are not present and match search term
     const unpresentStudents = allStudents.filter(s => 
         !presentStudents.includes(s.name) && 
         (s.name.toLowerCase().includes(searchTerm) || 
          (s.usn && s.usn.toLowerCase().includes(searchTerm)))
     );
-    
     if (unpresentStudents.length === 0) {
         const noResults = document.createElement('div');
         noResults.className = 'dropdown-item no-results';
-        noResults.textContent = searchTerm ? 'No matching students found' : 'All students are already present';
+        noResults.textContent = searchTerm ? 'No matching students found' : 'All students are present';
         dropdown.appendChild(noResults);
         return;
     }
-    
     unpresentStudents.forEach(student => {
         const item = document.createElement('div');
         item.className = 'dropdown-item';
@@ -632,19 +591,16 @@ function populateFacultyStudentDropdown(searchTerm = '') {
 
 async function addStudentManually(studentName, studentUSN) {
     if (!studentName) return;
-    
     if (presentStudents.includes(studentName)) {
         alert('Student is already marked present!');
         return;
     }
-    
     try {
         const sessionId = localStorage.getItem('sessionId');
         if (!sessionId) {
-            alert('No active session. Please start a fresh session first.');
+            alert('No active session.');
             return;
         }
-        
         const { error } = await supabaseClient
             .from('attendance')
             .insert({ 
@@ -654,13 +610,10 @@ async function addStudentManually(studentName, studentUSN) {
                 device_id: 'manual_admin',
                 timestamp: new Date().toISOString()
             });
-            
         if (error) throw error;
-        
         alert(`${studentName} added successfully!`);
         fetchAttendance();
         closeAddManuallyModal();
-        
     } catch(err) {
         console.error('❌ Add manually error:', err);
         alert('Failed to add student manually: ' + err.message);
@@ -668,42 +621,31 @@ async function addStudentManually(studentName, studentUSN) {
 }
 
 // === UTILITY === //
-
-// ✅ New Logout function using Supabase Auth
 async function logout() {
     if (!supabaseClient) {
-        // If supabase client is not initialized, just clear local storage and redirect
         localStorage.clear();
         window.location.href = 'login.html';
         return;
     }
-    
     const { error } = await supabaseClient.auth.signOut();
     if (error) {
         console.error('Error logging out:', error);
-        alert('Failed to log out. Please try again.');
+        alert('Failed to log out.');
     } else {
-        // Clear everything and redirect to login
         localStorage.clear();
         window.location.href = 'login.html';
     }
 }
-// Page navigation function (if needed)
+
 function showPage(pageId) {
-    // Hide all pages
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => page.classList.remove('active'));
-    
-    // Show selected page
     const selectedPage = document.getElementById(pageId + '-page');
     if (selectedPage) {
         selectedPage.classList.add('active');
     }
-    
-    // Update nav buttons
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => btn.classList.remove('active'));
-    
     const activeBtn = document.querySelector(`[onclick="showPage('${pageId}')"]`);
     if (activeBtn) {
         activeBtn.classList.add('active');
