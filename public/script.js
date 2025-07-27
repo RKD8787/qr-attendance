@@ -261,7 +261,7 @@ async function generateQR() {
     new QRious({
         element: canvas, // Give the library the <canvas> element
         value: studentUrl,
-        size: 300,
+        size: 500,
         padding: 20
     });
 
