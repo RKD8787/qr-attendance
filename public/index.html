@@ -118,6 +118,7 @@
             border-bottom: 1px solid #f1f1f1;
             transition: all 0.3s ease;
             font-weight: 500;
+            transition: all 0.2s ease-in-out;
         }
 
         .student-list-item:hover {
@@ -202,10 +203,10 @@
 
     <div class="header">
         <h1><big><strong> Dayanda Sagar College Of Engineering</strong></big></h1>
+       
         <h2>Attendance Portal</h2>
     </div>
-    <button class="nav-btn active"  onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">
-        <i class="fas fa-sign-out-alt">Logout</button>
+   <button onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
     <div class="container">
         <div class="nav-buttons">
@@ -225,21 +226,21 @@
                             </div>
                         </div>
                         <div class="action-buttons">
-                            <button class="add-manually-btn" onclick="showAddManuallyModal()">
-                                <i class="fas fa-user-plus"></i> Add Attendance Manually
-                            </button>
+                           <button class="add-manually-btn" onclick="showAddManuallyModal()">
+    <i class="fas fa-user-plus"></i> Add Attendance Manually
+</button>
 
-                            <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
-                                <i class="fas fa-file-csv"></i> Export Attendance
-                            </button>
+<button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()">
+    <i class="fas fa-file-csv"></i> Export Attendance
+</button>
 
-                            <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
-                                <i class="fas fa-users"></i> Student List
-                            </button>
+<button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
+    <i class="fas fa-users"></i> Student List
+</button>
 
-                            <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
-                                <i class="fas fa-rocket"></i> Start Fresh Session
-                            </button>
+<button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
+    <i class="fas fa-rocket"></i> Start Fresh Session
+</button>
                         </div>
                     </div>
                 </div>
