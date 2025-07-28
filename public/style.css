@@ -788,7 +788,14 @@ body {
         min-height: 400px;
     }
     
-    .admin-content {
-        gap: 30px;
-    }
+  .admin-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Changed from 2fr 1fr */
+    gap: 50px;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    min-height: 90vh;
+}
 }
