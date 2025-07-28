@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 async function initializeApp() {
     try {
         const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
-        // ✅ CORRECTED API KEY
+        // ✅ CORRECTED, VALID API KEY
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch (error) {
