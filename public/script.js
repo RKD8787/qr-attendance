@@ -409,3 +409,200 @@ async function logout() {
     localStorage.clear();
     window.location.href = 'login.html';
 }
+// =================================================================
+// ... keep all the code above this line ...
+// =================================================================
+
+// =================================================================
+// NEW: COURSE MANAGEMENT FUNCTIONS
+// =================================================================
+let currentCourseId = null; // A global variable to track which course is being edited
+
+function showCoursesModal() {
+    document.getElementById('courses-modal').style.display = 'block';
+    backToCoursesList(); // Ensure we start on the main course list view
+    populateCoursesList();
+}
+
+function closeCoursesModal() {
+    document.getElementById('courses-modal').style.display = 'none';
+}
+
+function backToCoursesList() {
+    document.getElementById('course-list-view').style.display = 'block';
+    document.getElementById('course-management-view').style.display = 'none';
+    currentCourseId = null; // Clear the current course ID
+}
+
+async function populateCoursesList() {
+    const listDisplay = document.getElementById('courses-list-display');
+    listDisplay.innerHTML = '<div class="student-item">Loading courses...</div>';
+
+    try {
+        const { data, error } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+
+        listDisplay.innerHTML = '';
+        if (data.length === 0) {
+            listDisplay.innerHTML = '<div class="no-students-message">No courses created yet.</div>';
+            return;
+        }
+
+        data.forEach(course => {
+            const item = document.createElement('div');
+            item.className = 'student-list-item';
+            item.innerHTML = `
+                <span class="student-name">${course.course_name}</span>
+                <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name}')">Manage</button>
+            `;
+            listDisplay.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Error fetching courses:', err);
+        listDisplay.innerHTML = '<div class="no-students-message">Could not load courses.</div>';
+    }
+}
+
+async function createNewCourse() {
+    const courseNameInput = document.getElementById('new-course-name');
+    const courseName = courseNameInput.value.trim();
+    if (!courseName) return alert('Please enter a course name.');
+
+    try {
+        await supabaseClient.from('courses').insert({ course_name: courseName });
+        courseNameInput.value = '';
+        populateCoursesList(); // Refresh the list
+    } catch (err) {
+        console.error('Error creating course:', err);
+        alert('Failed to create course.');
+    }
+}
+
+function showCourseManagementView(courseId, courseName) {
+    currentCourseId = courseId; // Set the global course ID
+    document.getElementById('course-list-view').style.display = 'none';
+    document.getElementById('course-management-view').style.display = 'block';
+    document.getElementById('course-management-title').textContent = `Managing: ${courseName}`;
+    
+    populateCourseStudentList(courseId);
+    populateAddStudentToCourseList(courseId);
+
+    // Setup search listener for adding students
+    const searchInput = document.getElementById('add-student-search');
+    searchInput.oninput = () => populateAddStudentToCourseList(courseId, searchInput.value.trim().toLowerCase());
+}
+
+async function populateCourseStudentList(courseId) {
+    const listDisplay = document.getElementById('course-student-list-display');
+    listDisplay.innerHTML = '<div class="student-item">Loading enrolled students...</div>';
+
+    // This is a more advanced query to get student names from the `students` table
+    // based on the `student_usn` in the `student_courses` linking table.
+    try {
+        const { data, error } = await supabaseClient
+            .from('student_courses')
+            .select(`
+                students (name, usn)
+            `)
+            .eq('course_id', courseId);
+            
+        if (error) throw error;
+
+        listDisplay.innerHTML = '';
+        const enrolledStudents = data.map(item => item.students);
+
+        if (enrolledStudents.length === 0) {
+            listDisplay.innerHTML = '<div class="no-students-message">No students enrolled.</div>';
+            return;
+        }
+
+        enrolledStudents.forEach(student => {
+            if (!student) return; // Safeguard if a student was deleted but the enrollment link remains
+            const item = document.createElement('div');
+            item.className = 'student-list-item';
+            item.innerHTML = `
+                <span class="student-name">${student.name} <sub style="color:#666">${student.usn}</sub></span>
+                <button class="remove-btn" onclick="removeStudentFromCourse('${student.usn}', ${courseId})">Remove</button>
+            `;
+            listDisplay.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Error fetching enrolled students:', err);
+    }
+}
+
+async function populateAddStudentToCourseList(courseId, searchTerm = '') {
+    const addListDisplay = document.getElementById('add-student-to-course-display');
+    addListDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+
+    // Get students already enrolled in THIS course
+    const { data: enrolledData, error: enrolledError } = await supabaseClient
+        .from('student_courses')
+        .select('student_usn')
+        .eq('course_id', courseId);
+
+    if (enrolledError) return;
+    const enrolledUsns = enrolledData.map(item => item.student_usn);
+
+    // Filter all students to find who is NOT enrolled and matches the search
+    let unenrolledStudents = allStudents.filter(student => student.usn && !enrolledUsns.includes(student.usn));
+    if (searchTerm) {
+        unenrolledStudents = unenrolledStudents.filter(student => 
+            student.name.toLowerCase().includes(searchTerm) ||
+            student.usn.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    addListDisplay.innerHTML = '';
+    if (unenrolledStudents.length === 0) {
+        addListDisplay.innerHTML = '<div class="no-students-message">No students to add.</div>';
+        return;
+    }
+
+    unenrolledStudents.forEach(student => {
+        const item = document.createElement('div');
+        item.className = 'student-list-item';
+        item.innerHTML = `
+            <span class="student-name">${student.name} <sub style="color:#666">${student.usn}</sub></span>
+            <button class="add-student-btn" onclick="addStudentToCourse('${student.usn}', ${courseId})">Add</button>
+        `;
+        addListDisplay.appendChild(item);
+    });
+}
+
+async function addStudentToCourse(studentUsn, courseId) {
+    try {
+        await supabaseClient.from('student_courses').insert({ student_usn: studentUsn, course_id: courseId });
+        // Refresh both lists
+        populateCourseStudentList(courseId);
+        populateAddStudentToCourseList(courseId);
+    } catch (err) {
+        console.error('Error adding student to course:', err);
+    }
+}
+
+async function removeStudentFromCourse(studentUsn, courseId) {
+    try {
+        await supabaseClient.from('student_courses').delete().match({ student_usn: studentUsn, course_id: courseId });
+        // Refresh both lists
+        populateCourseStudentList(courseId);
+        populateAddStudentToCourseList(courseId);
+    } catch (err) {
+        console.error('Error removing student from course:', err);
+    }
+}
+
+async function deleteCourse() {
+    if (!currentCourseId) return;
+    if (!confirm("⚠️ Are you sure you want to permanently delete this course and all its enrollment records? This cannot be undone.")) return;
+
+    try {
+        await supabaseClient.from('courses').delete().eq('id', currentCourseId);
+        alert('Course deleted successfully.');
+        backToCoursesList(); // Go back to the main list
+        populateCoursesList(); // Refresh the list
+    } catch (err) {
+        console.error('Error deleting course:', err);
+        alert('Failed to delete course.');
+    }
+}
