@@ -174,7 +174,7 @@ function generateQR(sessionId) {
         new QRious({
             element: canvas,
             value: studentUrl,
-            size: 350,
+            size: 400,
             padding: 10,
             level: 'H',
             background: 'white',
