@@ -636,6 +636,8 @@ async function populateCoursesList() {
 
 // REPLACE the entire createNewCourse function with this corrected version.
 
+// REPLACE the entire old createNewCourse function with this corrected version.
+
 async function createNewCourse() {
     const courseNameInput = document.getElementById('new-course-name');
     if (!courseNameInput) return;
@@ -646,7 +648,7 @@ async function createNewCourse() {
     }
 
     try {
-        // This part inserts the new course and gets the new record back.
+        // This part correctly inserts the course and gets the new record back.
         const { data: newCourse, error } = await supabaseClient
             .from('courses')
             .insert({ course_name: courseName })
@@ -659,13 +661,13 @@ async function createNewCourse() {
             } else {
                 throw error;
             }
-            return; // Stop if there was an error.
+            return; // Stop execution if there was an error.
         }
 
         // This is the new, guaranteed logic to update the UI instantly.
         const listDisplay = document.getElementById('courses-list-display');
 
-        // 1. Find and remove the "No courses created" message if it is currently visible.
+        // 1. Find and remove the "No courses created" message if it is visible.
         const noCoursesMessage = listDisplay.querySelector('.no-students-message');
         if (noCoursesMessage) {
             listDisplay.innerHTML = '';
@@ -684,7 +686,7 @@ async function createNewCourse() {
         // 3. Add the new course to the top of the list so it appears immediately.
         listDisplay.prepend(item);
 
-        // 4. Clear the input field and notify the user of the success.
+        // 4. Clear the input field and notify the user of success.
         courseNameInput.value = '';
         alert(`Course "${newCourse.course_name}" was created successfully!`);
 
