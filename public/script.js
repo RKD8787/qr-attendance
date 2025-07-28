@@ -4,8 +4,8 @@ let supabaseClient = null;
 // Global state variables
 let allStudents = [];
 let presentStudents = [];
-let currentCourseId = null; // Used for the course management modal
-let currentSession = null;  // Holds all info about the currently active session
+let currentCourseId = null;
+let currentSession = null;
 
 // ✅ MAIN ENTRY POINT
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 async function initializeApp() {
     try {
         const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
-        // ✅ CORRECTED, VALID API KEY
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch (error) {
+        console.error('Database connection error:', error);
         return alert('FATAL: Could not connect to the database.');
     }
 
@@ -45,19 +45,25 @@ async function initializeApp() {
 
 async function fetchAllStudents() {
     try {
-        const { data, error } = await supabaseClient.from('students').select('name, usn').order('name', { ascending: true });
+        const { data, error } = await supabaseClient
+            .from('students')
+            .select('name, usn')
+            .order('name', { ascending: true });
+        
         if (error) throw error;
-        allStudents = data;
+        allStudents = data || [];
+        console.log('✅ Fetched students:', allStudents.length);
     } catch (err) {
         console.error('Error fetching students:', err);
+        allStudents = [];
     }
 }
 
 async function fetchCurrentSessionAttendance() {
     if (!currentSession) {
-        updatePresentStudentsList([]); // Clear list if no active session
+        updatePresentStudentsList([]);
         return;
-    };
+    }
 
     try {
         const { data, error } = await supabaseClient
@@ -67,16 +73,19 @@ async function fetchCurrentSessionAttendance() {
             .order('timestamp', { ascending: false });
 
         if (error) throw error;
-        presentStudents = data.map(record => record.student);
-        updatePresentStudentsList(data);
+        
+        const attendanceData = data || [];
+        presentStudents = attendanceData.map(record => record.student);
+        updatePresentStudentsList(attendanceData);
+        console.log('✅ Fetched attendance:', attendanceData.length, 'students');
     } catch (err) {
         console.error('Error fetching attendance:', err);
+        updatePresentStudentsList([]);
     }
 }
 
 /**
  * The single source of truth for managing the active session state.
- * @param {object | null} sessionData - The session object from the database, or null to end a session.
  */
 function updateActiveSession(sessionData) {
     currentSession = sessionData;
@@ -86,57 +95,97 @@ function updateActiveSession(sessionData) {
     if (sessionData) {
         localStorage.setItem('sessionId', sessionData.id);
         const courseName = sessionData.courses ? sessionData.courses.course_name : 'General';
-        sessionTitle.textContent = `Active Session: ${sessionData.session_name} (${courseName})`;
+        if (sessionTitle) {
+            sessionTitle.textContent = `Active Session: ${sessionData.session_name} (${courseName})`;
+        }
         generateQR(sessionData.id);
         fetchCurrentSessionAttendance();
+        console.log('✅ Session updated:', sessionData.session_name);
     } else {
         localStorage.removeItem('sessionId');
-        sessionTitle.textContent = 'No Active Session';
-        qrContainer.innerHTML = '<p style="color: #999;">Start a new session to generate a QR code.</p>';
+        if (sessionTitle) {
+            sessionTitle.textContent = 'No Active Session';
+        }
+        if (qrContainer) {
+            qrContainer.innerHTML = '<p style="color: #999; font-size: 16px; text-align: center; padding: 40px;">Start a new session to generate a QR code.</p>';
+        }
         updatePresentStudentsList([]);
+        console.log('✅ Session cleared');
     }
 }
-
 
 // =================================================================
 // FACULTY VIEW (`index.html`)
 // =================================================================
 
 function initFacultyView() {
+    console.log('🚀 Initializing faculty view...');
+    
     const lastSessionId = localStorage.getItem('sessionId');
     if (lastSessionId) {
-        // On page load, try to resume the last session
-        supabaseClient.from('sessions').select('*, courses(course_name)').eq('id', lastSessionId).single().then(({data}) => {
-            if (data) {
-                updateActiveSession(data);
-            } else {
-                updateActiveSession(null); // Clear state if session is not found
-            }
-        });
+        console.log('🔄 Resuming session:', lastSessionId);
+        supabaseClient
+            .from('sessions')
+            .select('*, courses(course_name)')
+            .eq('id', lastSessionId)
+            .single()
+            .then(({ data, error }) => {
+                if (data && !error) {
+                    updateActiveSession(data);
+                } else {
+                    console.log('❌ Previous session not found, clearing state');
+                    updateActiveSession(null);
+                }
+            });
     } else {
-        updateActiveSession(null); // Ensure clean state on first load
+        updateActiveSession(null);
     }
     
     // Set up polling and event listeners
     setInterval(fetchCurrentSessionAttendance, 5000);
     setupAllModalSearchListeners();
+    console.log('✅ Faculty view initialized');
 }
 
 function generateQR(sessionId) {
     const qrContainer = document.getElementById('qr-code-container');
-    if (!qrContainer) return;
+    if (!qrContainer) {
+        console.error('❌ QR container not found');
+        return;
+    }
 
-    qrContainer.innerHTML = ''; // Clear previous QR or message
-    const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
+    console.log('🔄 Generating QR code for session:', sessionId);
+    qrContainer.innerHTML = '';
     
-    new QRious({
-        element: qrContainer.appendChild(document.createElement('canvas')),
-        value: studentUrl,
-        size: 250,
-        padding: 10,
-        level: 'H'
-    });
-    console.log(`✅ QR code generated for session ${sessionId}`);
+    try {
+        const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
+        console.log('🔗 Student URL:', studentUrl);
+        
+        // Check if QRious is available
+        if (typeof QRious === 'undefined') {
+            console.error('❌ QRious library not loaded');
+            qrContainer.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 40px;">QR code library not loaded. Please refresh the page.</p>';
+            return;
+        }
+        
+        const canvas = document.createElement('canvas');
+        qrContainer.appendChild(canvas);
+        
+        new QRious({
+            element: canvas,
+            value: studentUrl,
+            size: 250,
+            padding: 10,
+            level: 'H',
+            background: 'white',
+            foreground: 'black'
+        });
+        
+        console.log('✅ QR code generated successfully');
+    } catch (error) {
+        console.error('❌ QR generation error:', error);
+        qrContainer.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 40px;">Failed to generate QR code. Please try again.</p>';
+    }
 }
 
 function updatePresentStudentsList(attendanceData) {
@@ -154,31 +203,45 @@ function updatePresentStudentsList(attendanceData) {
     attendanceData.forEach(record => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-item';
-        studentDiv.innerHTML = `<span>${record.student} <sub style="color: #666;">${record.usn || 'N/A'}</sub></span><button class="remove-btn" onclick="removeStudentFromSession('${record.student}')">Remove</button>`;
+        studentDiv.innerHTML = `
+            <span>${record.student} <sub style="color: #666;">${record.usn || 'N/A'}</sub></span>
+            <button class="remove-btn" onclick="removeStudentFromSession('${record.student.replace(/'/g, "\\'")}')">Remove</button>
+        `;
         listElement.appendChild(studentDiv);
     });
 }
 
 function updatePresentCount(count) {
-    document.getElementById('present-count').textContent = count;
+    const countElement = document.getElementById('present-count');
+    if (countElement) {
+        countElement.textContent = count;
+    }
 }
 
 async function removeStudentFromSession(studentName) {
     if (!currentSession || !confirm(`Remove ${studentName} from this session?`)) return;
+    
     try {
-        await supabaseClient.from('attendance').delete().match({ student: studentName, session_id: currentSession.id });
-        fetchCurrentSessionAttendance(); // Refresh the list
+        const { error } = await supabaseClient
+            .from('attendance')
+            .delete()
+            .match({ student: studentName, session_id: currentSession.id });
+            
+        if (error) throw error;
+        fetchCurrentSessionAttendance();
+        console.log('✅ Student removed:', studentName);
     } catch (err) {
         console.error('Error removing student:', err);
+        alert('Failed to remove student: ' + err.message);
     }
 }
-
 
 // =================================================================
 // STUDENT VIEW (`student.html`)
 // =================================================================
 
 function initStudentView() {
+    console.log('🚀 Initializing student view...');
     populateStudentListForSelection();
     setupStudentEventListeners();
 }
@@ -187,64 +250,109 @@ function populateStudentListForSelection(searchTerm = '') {
     const studentList = document.getElementById('student-list');
     if (!studentList) return;
     
-    const studentsToDisplay = allStudents.filter(s => searchTerm === '' || s.name.toLowerCase().includes(searchTerm) || (s.usn && s.usn.toLowerCase().includes(searchTerm)));
+    const studentsToDisplay = allStudents.filter(s => 
+        searchTerm === '' || 
+        s.name.toLowerCase().includes(searchTerm) || 
+        (s.usn && s.usn.toLowerCase().includes(searchTerm))
+    );
     
     studentList.innerHTML = '';
     if (studentsToDisplay.length === 0) {
         studentList.innerHTML = '<div class="no-results"><p>No students found</p></div>';
         return;
     }
+    
     studentsToDisplay.forEach(student => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-checkbox';
-        studentDiv.innerHTML = `<input type="radio" name="student" value="${student.name}" data-usn="${student.usn || ''}" id="student-${student.usn}"><label for="student-${student.usn}">${student.name} <sub style="color: #666;">${student.usn || 'N/A'}</sub></label>`;
+        studentDiv.innerHTML = `
+            <input type="radio" name="student" value="${student.name}" data-usn="${student.usn || ''}" id="student-${student.usn}">
+            <label for="student-${student.usn}">${student.name} <sub style="color: #666;">${student.usn || 'N/A'}</sub></label>
+        `;
         studentList.appendChild(studentDiv);
     });
-    studentList.querySelectorAll('input[type="radio"]').forEach(radio => radio.addEventListener('change', () => {
-        document.getElementById('submit-attendance').disabled = false;
-        document.querySelectorAll('.student-checkbox').forEach(box => box.classList.remove('selected'));
-        radio.parentElement.classList.add('selected');
-    }));
+    
+    studentList.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const submitBtn = document.getElementById('submit-attendance');
+            if (submitBtn) submitBtn.disabled = false;
+            
+            document.querySelectorAll('.student-checkbox').forEach(box => 
+                box.classList.remove('selected')
+            );
+            radio.parentElement.classList.add('selected');
+        });
+    });
 }
 
 function setupStudentEventListeners() {
-    document.getElementById('submit-attendance')?.addEventListener('click', submitAttendance);
-    document.getElementById('close-success')?.addEventListener('click', () => window.close());
-    document.getElementById('student-search')?.addEventListener('input', (e) => populateStudentListForSelection(e.target.value.toLowerCase().trim()));
+    const submitBtn = document.getElementById('submit-attendance');
+    const closeBtn = document.getElementById('close-success');
+    const searchInput = document.getElementById('student-search');
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitAttendance);
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => window.close());
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => 
+            populateStudentListForSelection(e.target.value.toLowerCase().trim())
+        );
+    }
 }
 
 async function submitAttendance() {
     const selectedRadio = document.querySelector('input[name="student"]:checked');
-    if (!selectedRadio) return alert("Please select your name.");
+    if (!selectedRadio) {
+        return alert("Please select your name.");
+    }
 
     const sessionId = new URLSearchParams(window.location.search).get('session');
-    if (!sessionId) return alert("Invalid or missing session. Please scan the QR code again.");
+    if (!sessionId) {
+        return alert("Invalid or missing session. Please scan the QR code again.");
+    }
 
     const submitBtn = document.getElementById('submit-attendance');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+    }
 
     try {
-        const { error } = await supabaseClient.from('attendance').insert({
-            student: selectedRadio.value,
-            usn: selectedRadio.getAttribute('data-usn'),
-            session_id: sessionId,
-            device_id: 'student_device'
-        });
+        const { error } = await supabaseClient
+            .from('attendance')
+            .insert({
+                student: selectedRadio.value,
+                usn: selectedRadio.getAttribute('data-usn'),
+                session_id: sessionId,
+                device_id: 'student_device'
+            });
 
         if (error?.code === '23505') {
             alert("You have already submitted your attendance for this session.");
         } else if (error) {
             throw error;
         } else {
-            document.getElementById('student-selection-page').style.display = 'none';
-            document.getElementById('success-page').style.display = 'block';
+            const selectionPage = document.getElementById('student-selection-page');
+            const successPage = document.getElementById('success-page');
+            
+            if (selectionPage) selectionPage.style.display = 'none';
+            if (successPage) successPage.style.display = 'block';
+            
+            console.log('✅ Attendance submitted successfully');
         }
     } catch (err) {
+        console.error('Attendance submission error:', err);
         alert("Failed to submit attendance: " + err.message);
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Attendance';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Attendance';
+        }
     }
 }
 
@@ -253,95 +361,186 @@ async function submitAttendance() {
 // =================================================================
 
 async function showCourseSelectionModal() {
-    const { data: courses, error } = await supabaseClient.from('courses').select('id, course_name');
-    if (error || !courses) return alert('Could not fetch courses.');
-    if (courses.length === 0) return alert('Please create a course first via the "Manage Courses" button.');
+    try {
+        const { data: courses, error } = await supabaseClient
+            .from('courses')
+            .select('id, course_name');
+            
+        if (error) throw error;
+        
+        if (!courses || courses.length === 0) {
+            return alert('Please create a course first via the "Manage Courses" button.');
+        }
 
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
-    
-    let courseOptionsHTML = courses.map(course => `<button class="modal-btn primary" style="margin: 10px; width: 80%;" onclick="startSessionForCourse(${course.id}, '${course.course_name}')">${course.course_name}</button>`).join('');
-    
-    modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Select a Course to Start Session</h3><button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button></div><div style="text-align: center;">${courseOptionsHTML}</div></div>`;
-    document.body.appendChild(modal);
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.onclick = (e) => { 
+            if (e.target === modal) modal.remove(); 
+        };
+        
+        let courseOptionsHTML = courses.map(course => 
+            `<button class="modal-btn primary" style="margin: 10px; width: 80%;" onclick="startSessionForCourse(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                ${course.course_name}
+            </button>`
+        ).join('');
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Select a Course to Start Session</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div style="text-align: center;">
+                    ${courseOptionsHTML}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    } catch (err) {
+        console.error('Error fetching courses:', err);
+        alert('Could not fetch courses: ' + err.message);
+    }
 }
 
 async function startSessionForCourse(courseId, courseName) {
-    document.querySelector('.modal').remove();
-    const sessionName = prompt(`Enter a name for this session for "${courseName}":`, `Session on ${new Date().toLocaleDateString()}`);
+    const modal = document.querySelector('.modal');
+    if (modal) modal.remove();
+    
+    const sessionName = prompt(
+        `Enter a name for this session for "${courseName}":`, 
+        `Session on ${new Date().toLocaleDateString()}`
+    );
+    
     if (!sessionName) return;
 
     try {
-        const { data, error } = await supabaseClient.from('sessions').insert({ session_name: sessionName, course_id: courseId }).select('*, courses(course_name)').single();
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .insert({ 
+                session_name: sessionName, 
+                course_id: courseId 
+            })
+            .select('*, courses(course_name)')
+            .single();
+            
         if (error) throw error;
+        
         updateActiveSession(data);
         alert(`✅ Session "${sessionName}" has started!`);
+        console.log('✅ Session started:', data);
     } catch (err) {
+        console.error('Error creating session:', err);
         alert("Failed to create session: " + err.message);
     }
 }
 
 function showSessionHistoryModal() {
-    document.getElementById('session-history-modal').style.display = 'block';
-    backToSessionList();
-    populateSessionHistory();
+    const modal = document.getElementById('session-history-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        backToSessionList();
+        populateSessionHistory();
+    }
 }
 
-function closeSessionHistoryModal() { document.getElementById('session-history-modal').style.display = 'none'; }
+function closeSessionHistoryModal() { 
+    const modal = document.getElementById('session-history-modal');
+    if (modal) modal.style.display = 'none';
+}
+
 function backToSessionList() {
-    document.getElementById('session-list-container').style.display = 'block';
-    document.getElementById('session-details-container').style.display = 'none';
+    const listContainer = document.getElementById('session-list-container');
+    const detailsContainer = document.getElementById('session-details-container');
+    
+    if (listContainer) listContainer.style.display = 'block';
+    if (detailsContainer) detailsContainer.style.display = 'none';
 }
 
 async function populateSessionHistory() {
     const listDisplay = document.getElementById('session-list-display');
+    if (!listDisplay) return;
+    
     listDisplay.innerHTML = '<div class="student-item">Loading sessions...</div>';
+    
     try {
-        const { data, error } = await supabaseClient.from('sessions').select('id, session_name, created_at, courses(course_name)').order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .select('id, session_name, created_at, courses(course_name)')
+            .order('created_at', { ascending: false });
+            
         if (error) throw error;
+        
         listDisplay.innerHTML = '';
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             listDisplay.innerHTML = '<div class="no-students-message">No past sessions found.</div>';
             return;
         }
+        
         data.forEach(session => {
             const item = document.createElement('div');
             item.className = 'student-list-item';
             const courseName = session.courses ? session.courses.course_name : 'No Course';
             item.innerHTML = `
-                <span class="student-name">${session.session_name}<sub style="color: #6f42c1; display: block; margin-top: 5px;">${courseName}</sub></span>
-                <button class="add-student-btn" onclick="viewSessionDetails(${session.id}, '${session.session_name}')">View</button>`;
+                <span class="student-name">
+                    ${session.session_name}
+                    <sub style="color: #6f42c1; display: block; margin-top: 5px;">${courseName}</sub>
+                </span>
+                <button class="add-student-btn" onclick="viewSessionDetails(${session.id}, '${session.session_name.replace(/'/g, "\\'")}')">
+                    View
+                </button>
+            `;
             listDisplay.appendChild(item);
         });
     } catch (err) {
+        console.error('Error loading session history:', err);
         listDisplay.innerHTML = '<div class="no-students-message">Could not load session history.</div>';
     }
 }
 
 async function viewSessionDetails(sessionId, sessionName) {
-    document.getElementById('session-list-container').style.display = 'none';
-    document.getElementById('session-details-container').style.display = 'block';
+    const listContainer = document.getElementById('session-list-container');
+    const detailsContainer = document.getElementById('session-details-container');
     const detailsDisplay = document.getElementById('session-details-display');
-    document.getElementById('session-details-title').textContent = `Attendance for: ${sessionName}`;
-    detailsDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    const detailsTitle = document.getElementById('session-details-title');
+    
+    if (listContainer) listContainer.style.display = 'none';
+    if (detailsContainer) detailsContainer.style.display = 'block';
+    if (detailsTitle) detailsTitle.textContent = `Attendance for: ${sessionName}`;
+    if (detailsDisplay) detailsDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    
     try {
-        const { data, error } = await supabaseClient.from('session_attendance').select('student, usn, timestamp').eq('session_id', sessionId).order('timestamp', { ascending: true });
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('student, usn, timestamp')
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: true });
+            
         if (error) throw error;
+        
+        if (!detailsDisplay) return;
+        
         detailsDisplay.innerHTML = '';
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             detailsDisplay.innerHTML = '<div class="no-students-message">No attendance recorded.</div>';
             return;
         }
+        
         data.forEach(record => {
             const item = document.createElement('div');
             item.className = 'student-item';
-            item.innerHTML = `<span>${record.student} <sub style="color: #666;">${record.usn || ''}</sub></span><span>${new Date(record.timestamp).toLocaleTimeString()}</span>`;
+            item.innerHTML = `
+                <span>${record.student} <sub style="color: #666;">${record.usn || ''}</sub></span>
+                <span>${new Date(record.timestamp).toLocaleTimeString()}</span>
+            `;
             detailsDisplay.appendChild(item);
         });
     } catch (err) {
-        detailsDisplay.innerHTML = '<div class="no-students-message">Could not load details.</div>';
+        console.error('Error loading session details:', err);
+        if (detailsDisplay) {
+            detailsDisplay.innerHTML = '<div class="no-students-message">Could not load details.</div>';
+        }
     }
 }
 
@@ -350,50 +549,104 @@ async function viewSessionDetails(sessionId, sessionName) {
 // =================================================================
 
 function setupAllModalSearchListeners() {
-    document.getElementById('student-list-search')?.addEventListener('input', (e) => populateStudentListDisplay(e.target.value.toLowerCase().trim()));
-    document.getElementById('student-search-manual')?.addEventListener('input', (e) => populateFacultyStudentDropdown(e.target.value.toLowerCase().trim()));
+    const studentListSearch = document.getElementById('student-list-search');
+    const studentSearchManual = document.getElementById('student-search-manual');
+    
+    if (studentListSearch) {
+        studentListSearch.addEventListener('input', (e) => 
+            populateStudentListDisplay(e.target.value.toLowerCase().trim())
+        );
+    }
+    
+    if (studentSearchManual) {
+        studentSearchManual.addEventListener('input', (e) => 
+            populateFacultyStudentDropdown(e.target.value.toLowerCase().trim())
+        );
+    }
 }
 
-function showCoursesModal() { document.getElementById('courses-modal').style.display = 'block'; backToCoursesList(); populateCoursesList(); }
-function closeCoursesModal() { document.getElementById('courses-modal').style.display = 'none'; }
+function showCoursesModal() { 
+    const modal = document.getElementById('courses-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        backToCoursesList(); 
+        populateCoursesList();
+    }
+}
+
+function closeCoursesModal() { 
+    const modal = document.getElementById('courses-modal');
+    if (modal) modal.style.display = 'none';
+}
+
 function backToCoursesList() {
-    document.getElementById('course-list-view').style.display = 'block';
-    document.getElementById('course-management-view').style.display = 'none';
+    const listView = document.getElementById('course-list-view');
+    const managementView = document.getElementById('course-management-view');
+    
+    if (listView) listView.style.display = 'block';
+    if (managementView) managementView.style.display = 'none';
     currentCourseId = null;
 }
 
 async function populateCoursesList() {
     const listDisplay = document.getElementById('courses-list-display');
+    if (!listDisplay) return;
+    
     listDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    
     try {
-        const { data, error } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabaseClient
+            .from('courses')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
         if (error) throw error;
+        
         listDisplay.innerHTML = '';
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             listDisplay.innerHTML = '<div class="no-students-message">No courses created.</div>';
             return;
         }
+        
         data.forEach(course => {
             const item = document.createElement('div');
             item.className = 'student-list-item';
-            item.innerHTML = `<span>${course.course_name}</span><button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name}')">Manage</button>`;
+            item.innerHTML = `
+                <span>${course.course_name}</span>
+                <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                    Manage
+                </button>
+            `;
             listDisplay.appendChild(item);
         });
     } catch (err) {
+        console.error('Error loading courses:', err);
         listDisplay.innerHTML = '<div class="no-students-message">Could not load courses.</div>';
     }
 }
 
 async function createNewCourse() {
     const courseNameInput = document.getElementById('new-course-name');
+    if (!courseNameInput) return;
+    
     const courseName = courseNameInput.value.trim();
-    if (!courseName) return alert('Please enter a course name.');
+    if (!courseName) {
+        return alert('Please enter a course name.');
+    }
 
     try {
-        const { data, error } = await supabaseClient.from('courses').insert({ course_name: courseName }).select().single();
+        const { data, error } = await supabaseClient
+            .from('courses')
+            .insert({ course_name: courseName })
+            .select()
+            .single();
+            
         if (error) {
-            if (error.code === '23505') alert(`Error: A course named "${courseName}" already exists.`);
-            else throw error;
+            if (error.code === '23505') {
+                alert(`Error: A course named "${courseName}" already exists.`);
+            } else {
+                throw error;
+            }
         } else {
             courseNameInput.value = '';
             populateCoursesList();
@@ -407,95 +660,193 @@ async function createNewCourse() {
 
 function showCourseManagementView(courseId, courseName) {
     currentCourseId = courseId;
-    document.getElementById('course-list-view').style.display = 'none';
-    document.getElementById('course-management-view').style.display = 'block';
-    document.getElementById('course-management-title').textContent = `Managing: ${courseName}`;
+    const listView = document.getElementById('course-list-view');
+    const managementView = document.getElementById('course-management-view');
+    const managementTitle = document.getElementById('course-management-title');
+    
+    if (listView) listView.style.display = 'none';
+    if (managementView) managementView.style.display = 'block';
+    if (managementTitle) managementTitle.textContent = `Managing: ${courseName}`;
+    
     const searchInput = document.getElementById('add-student-search');
-    searchInput.oninput = () => populateAddStudentToCourseList(courseId, searchInput.value.trim().toLowerCase());
+    if (searchInput) {
+        searchInput.oninput = () => 
+            populateAddStudentToCourseList(courseId, searchInput.value.trim().toLowerCase());
+    }
+    
     populateCourseStudentList(courseId);
     populateAddStudentToCourseList(courseId);
 }
 
 async function populateCourseStudentList(courseId) {
     const listDisplay = document.getElementById('course-student-list-display');
+    if (!listDisplay) return;
+    
     listDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    
     try {
-        const { data, error } = await supabaseClient.from('student_courses').select(`students(name, usn)`).eq('course_id', courseId);
+        const { data, error } = await supabaseClient
+            .from('student_courses')
+            .select(`students(name, usn)`)
+            .eq('course_id', courseId);
+            
         if (error) throw error;
+        
         const enrolledStudents = data.map(item => item.students).filter(Boolean);
         listDisplay.innerHTML = '';
+        
         if (enrolledStudents.length === 0) {
             listDisplay.innerHTML = '<div class="no-students-message">No students enrolled.</div>';
             return;
         }
+        
         enrolledStudents.forEach(student => {
             const item = document.createElement('div');
             item.className = 'student-list-item';
-            item.innerHTML = `<span>${student.name} <sub style="color:#666">${student.usn}</sub></span><button class="remove-btn" onclick="removeStudentFromCourse('${student.usn}', ${courseId})">Remove</button>`;
+            item.innerHTML = `
+                <span>${student.name} <sub style="color:#666">${student.usn}</sub></span>
+                <button class="remove-btn" onclick="removeStudentFromCourse('${student.usn}', ${courseId})">
+                    Remove
+                </button>
+            `;
             listDisplay.appendChild(item);
         });
-    } catch (err) { console.error('Error fetching enrolled students:', err); }
+    } catch (err) { 
+        console.error('Error fetching enrolled students:', err);
+        listDisplay.innerHTML = '<div class="no-students-message">Error loading students.</div>';
+    }
 }
 
 async function populateAddStudentToCourseList(courseId, searchTerm = '') {
     const addListDisplay = document.getElementById('add-student-to-course-display');
+    if (!addListDisplay) return;
+    
     addListDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    
     try {
-        const { data: enrolledData, error } = await supabaseClient.from('student_courses').select('student_usn').eq('course_id', courseId);
+        const { data: enrolledData, error } = await supabaseClient
+            .from('student_courses')
+            .select('student_usn')
+            .eq('course_id', courseId);
+            
         if (error) throw error;
+        
         const enrolledUsns = enrolledData.map(item => item.student_usn);
-        let unenrolledStudents = allStudents.filter(student => student.usn && !enrolledUsns.includes(student.usn));
+        let unenrolledStudents = allStudents.filter(student => 
+            student.usn && !enrolledUsns.includes(student.usn)
+        );
+        
         if (searchTerm) {
-            unenrolledStudents = unenrolledStudents.filter(s => s.name.toLowerCase().includes(searchTerm) || s.usn.toLowerCase().includes(searchTerm));
+            unenrolledStudents = unenrolledStudents.filter(s => 
+                s.name.toLowerCase().includes(searchTerm) || 
+                s.usn.toLowerCase().includes(searchTerm)
+            );
         }
+        
         addListDisplay.innerHTML = '';
         if (unenrolledStudents.length === 0) {
             addListDisplay.innerHTML = '<div class="no-students-message">No available students found.</div>';
             return;
         }
+        
         unenrolledStudents.forEach(student => {
             const item = document.createElement('div');
             item.className = 'student-list-item';
-            item.innerHTML = `<span>${student.name} <sub style="color:#666">${student.usn}</sub></span><button class="add-student-btn" onclick="addStudentToCourse('${student.usn}', ${courseId})">Add</button>`;
+            item.innerHTML = `
+                <span>${student.name} <sub style="color:#666">${student.usn}</sub></span>
+                <button class="add-student-btn" onclick="addStudentToCourse('${student.usn}', ${courseId})">
+                    Add
+                </button>
+            `;
             addListDisplay.appendChild(item);
         });
-    } catch (err) { console.error('Error populating students to add:', err); }
+    } catch (err) { 
+        console.error('Error populating students to add:', err);
+        addListDisplay.innerHTML = '<div class="no-students-message">Error loading available students.</div>';
+    }
 }
 
 async function addStudentToCourse(studentUsn, courseId) {
     try {
-        await supabaseClient.from('student_courses').insert({ student_usn: studentUsn, course_id: courseId });
+        const { error } = await supabaseClient
+            .from('student_courses')
+            .insert({ student_usn: studentUsn, course_id: courseId });
+            
+        if (error) throw error;
+        
         populateCourseStudentList(courseId);
         populateAddStudentToCourseList(courseId);
-    } catch (err) { console.error('Error adding student to course:', err); }
+        console.log('✅ Student added to course');
+    } catch (err) { 
+        console.error('Error adding student to course:', err);
+        alert('Failed to add student to course: ' + err.message);
+    }
 }
 
 async function removeStudentFromCourse(studentUsn, courseId) {
     try {
-        await supabaseClient.from('student_courses').delete().match({ student_usn: studentUsn, course_id: courseId });
+        const { error } = await supabaseClient
+            .from('student_courses')
+            .delete()
+            .match({ student_usn: studentUsn, course_id: courseId });
+            
+        if (error) throw error;
+        
         populateCourseStudentList(courseId);
         populateAddStudentToCourseList(courseId);
-    } catch (err) { console.error('Error removing student from course:', err); }
+        console.log('✅ Student removed from course');
+    } catch (err) { 
+        console.error('Error removing student from course:', err);
+        alert('Failed to remove student from course: ' + err.message);
+    }
 }
 
 async function deleteCourse() {
-    if (!currentCourseId || !confirm("⚠️ Permanently delete this course and all its enrollment records?")) return;
+    if (!currentCourseId || !confirm("⚠️ Permanently delete this course and all its enrollment records?")) {
+        return;
+    }
+    
     try {
-        await supabaseClient.from('courses').delete().eq('id', currentCourseId);
+        const { error } = await supabaseClient
+            .from('courses')
+            .delete()
+            .eq('id', currentCourseId);
+            
+        if (error) throw error;
+        
         backToCoursesList();
         populateCoursesList();
-    } catch (err) { alert('Failed to delete course.'); }
+        console.log('✅ Course deleted');
+    } catch (err) { 
+        console.error('Error deleting course:', err);
+        alert('Failed to delete course: ' + err.message);
+    }
 }
 
-function showStudentListModal() { document.getElementById('student-list-modal').style.display = 'block'; populateStudentListDisplay(); }
-function closeStudentListModal() { document.getElementById('student-list-modal').style.display = 'none'; }
+function showStudentListModal() { 
+    const modal = document.getElementById('student-list-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateStudentListDisplay();
+    }
+}
+
+function closeStudentListModal() { 
+    const modal = document.getElementById('student-list-modal');
+    if (modal) modal.style.display = 'none';
+}
 
 function populateStudentListDisplay(searchTerm = '') {
     const display = document.getElementById('student-list-display');
     const countEl = document.getElementById('total-student-count');
     if (!display || !countEl) return;
 
-    const studentsToDisplay = allStudents.filter(s => searchTerm === '' || s.name.toLowerCase().includes(searchTerm) || (s.usn && s.usn.toLowerCase().includes(searchTerm)));
+    const studentsToDisplay = allStudents.filter(s => 
+        searchTerm === '' || 
+        s.name.toLowerCase().includes(searchTerm) || 
+        (s.usn && s.usn.toLowerCase().includes(searchTerm))
+    );
+    
     countEl.textContent = studentsToDisplay.length;
     display.innerHTML = '';
     
@@ -505,7 +856,12 @@ function populateStudentListDisplay(searchTerm = '') {
         studentsToDisplay.forEach(student => {
             const item = document.createElement('div');
             item.className = 'student-list-item';
-            item.innerHTML = `<span>${student.name} <sub style="color: #666;">${student.usn || 'N/A'}</sub></span><button class="delete-student-btn" onclick="deleteStudent('${student.name}')">🗑️ Delete</button>`;
+            item.innerHTML = `
+                <span>${student.name} <sub style="color: #666;">${student.usn || 'N/A'}</sub></span>
+                <button class="delete-student-btn" onclick="deleteStudent('${student.name.replace(/'/g, "\\'")}')">
+                    🗑️ Delete
+                </button>
+            `;
             display.appendChild(item);
         });
     }
@@ -514,34 +870,86 @@ function populateStudentListDisplay(searchTerm = '') {
 async function addNewStudent() {
     const nameInput = document.getElementById('new-student-name');
     const usnInput = document.getElementById('new-student-usn');
+    
+    if (!nameInput || !usnInput) return;
+    
     const studentName = nameInput.value.trim();
     const studentUsn = usnInput.value.trim();
-    if (!studentName || !studentUsn) return alert('Student name and USN are required.');
-    if (allStudents.some(s => s.usn === studentUsn)) return alert('A student with this USN already exists.');
+    
+    if (!studentName || !studentUsn) {
+        return alert('Student name and USN are required.');
+    }
+    
+    if (allStudents.some(s => s.usn === studentUsn)) {
+        return alert('A student with this USN already exists.');
+    }
+    
     try {
-        await supabaseClient.from('students').insert({ name: studentName, usn: studentUsn });
-        nameInput.value = ''; usnInput.value = '';
+        const { error } = await supabaseClient
+            .from('students')
+            .insert({ name: studentName, usn: studentUsn });
+            
+        if (error) throw error;
+        
+        nameInput.value = ''; 
+        usnInput.value = '';
         await fetchAllStudents();
         populateStudentListDisplay();
-    } catch (err) { alert('Failed to add student: ' + err.message); }
+        console.log('✅ Student added:', studentName);
+    } catch (err) { 
+        console.error('Error adding student:', err);
+        alert('Failed to add student: ' + err.message); 
+    }
 }
 
 async function deleteStudent(studentName) {
     if (!confirm(`Permanently delete ${studentName}?`)) return;
+    
     try {
-        await supabaseClient.from('students').delete().eq('name', studentName);
+        const { error } = await supabaseClient
+            .from('students')
+            .delete()
+            .eq('name', studentName);
+            
+        if (error) throw error;
+        
         await fetchAllStudents();
         populateStudentListDisplay();
-    } catch (err) { alert('Failed to delete student: ' + err.message); }
+        console.log('✅ Student deleted:', studentName);
+    } catch (err) { 
+        console.error('Error deleting student:', err);
+        alert('Failed to delete student: ' + err.message); 
+    }
 }
 
-function showAddManuallyModal() { document.getElementById('add-manually-modal').style.display = 'block'; populateFacultyStudentDropdown(); }
-function closeAddManuallyModal() { document.getElementById('add-manually-modal').style.display = 'none'; }
+function showAddManuallyModal() { 
+    if (!currentSession) {
+        return alert('Please start a session first before adding students manually.');
+    }
+    
+    const modal = document.getElementById('add-manually-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateFacultyStudentDropdown();
+    }
+}
+
+function closeAddManuallyModal() { 
+    const modal = document.getElementById('add-manually-modal');
+    if (modal) modal.style.display = 'none';
+}
 
 function populateFacultyStudentDropdown(searchTerm = '') {
     const dropdown = document.getElementById('student-dropdown');
     if (!dropdown) return;
-    const unpresentStudents = allStudents.filter(s => !presentStudents.includes(s.name) && (searchTerm === '' || s.name.toLowerCase().includes(searchTerm) || (s.usn && s.usn.toLowerCase().includes(searchTerm))));
+    
+    const unpresentStudents = allStudents.filter(s => 
+        !presentStudents.includes(s.name) && 
+        (searchTerm === '' || 
+         s.name.toLowerCase().includes(searchTerm) || 
+         (s.usn && s.usn.toLowerCase().includes(searchTerm)))
+    );
+    
     dropdown.innerHTML = '';
     if (unpresentStudents.length === 0) {
         dropdown.innerHTML = '<div class="dropdown-item no-results">No available students found.</div>';
@@ -558,31 +966,78 @@ function populateFacultyStudentDropdown(searchTerm = '') {
 
 async function addStudentManually(studentName, studentUSN) {
     if (!currentSession || !studentName) return;
-    if (presentStudents.includes(studentName)) return alert('Student already marked present.');
+    
+    if (presentStudents.includes(studentName)) {
+        return alert('Student already marked present.');
+    }
+    
     try {
-        await supabaseClient.from('attendance').insert({ student: studentName, usn: studentUSN, session_id: currentSession.id, device_id: 'manual_admin' });
+        const { error } = await supabaseClient
+            .from('attendance')
+            .insert({ 
+                student: studentName, 
+                usn: studentUSN, 
+                session_id: currentSession.id, 
+                device_id: 'manual_admin' 
+            });
+            
+        if (error) throw error;
+        
         fetchCurrentSessionAttendance();
         closeAddManuallyModal();
-    } catch (err) { alert('Failed to add student manually.'); }
+        console.log('✅ Student added manually:', studentName);
+    } catch (err) { 
+        console.error('Error adding student manually:', err);
+        alert('Failed to add student manually: ' + err.message); 
+    }
 }
 
 async function exportAttendanceCSV() {
-    if (!currentSession) return alert("Please start a session to export attendance.");
-    const { data, error } = await supabaseClient.from('session_attendance').select('student, usn, timestamp, session_name').eq('session_id', currentSession.id);
-    if (error || !data || data.length === 0) return alert("No attendance data to export for this session.");
-
-    let csvContent = "data:text/csv;charset=utf-8," + "Student,USN,Timestamp,Session\n" + data.map(e => `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${e.session_name}"`).join("\n");
+    if (!currentSession) {
+        return alert("Please start a session to export attendance.");
+    }
     
-    var link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `attendance_${data[0].session_name}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('student, usn, timestamp')
+            .eq('session_id', currentSession.id);
+            
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            return alert("No attendance data to export for this session.");
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Student,USN,Timestamp,Session\n";
+        csvContent += data.map(e => 
+            `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${currentSession.session_name}"`
+        ).join("\n");
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", `attendance_${currentSession.session_name}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('✅ Attendance exported');
+    } catch (err) {
+        console.error('Error exporting attendance:', err);
+        alert('Failed to export attendance: ' + err.message);
+    }
 }
 
 async function logout() {
-    await supabaseClient.auth.signOut();
-    localStorage.clear();
-    window.location.href = 'login.html';
+    try {
+        await supabaseClient.auth.signOut();
+        localStorage.clear();
+        window.location.href = 'login.html';
+    } catch (err) {
+        console.error('Logout error:', err);
+        // Force logout even if there's an error
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
 }
