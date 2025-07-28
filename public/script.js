@@ -117,7 +117,7 @@ function generateQR() {
     qrCodeContainer.innerHTML = '';
     const sessionId = localStorage.getItem('sessionId');
     const studentUrl = `${window.location.origin}/public/student.html?session=${sessionId}`;
-    new QRious({ element: qrCodeContainer.appendChild(document.createElement('canvas')), value: studentUrl, size: 350, padding: 10 });
+    new QRious({ element: qrCodeContainer.appendChild(document.createElement('canvas')), value: studentUrl, size: 350, padding: 15 });
     console.log('✅ QR code generated');
 }
 
