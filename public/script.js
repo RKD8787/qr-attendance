@@ -587,38 +587,45 @@ function backToCoursesList() {
     if (managementView) managementView.style.display = 'none';
     currentCourseId = null;
 }
+function renderCourseList(courses) {
+    const listDisplay = document.getElementById('courses-list-display');
+    if (!listDisplay) return;
+
+    listDisplay.innerHTML = '';
+    if (!courses || courses.length === 0) {
+        listDisplay.innerHTML = '<div class="no-students-message">No courses created.</div>';
+        return;
+    }
+
+    courses.forEach(course => {
+        const item = document.createElement('div');
+        item.className = 'student-list-item';
+        item.innerHTML = `
+            <span>${course.course_name}</span>
+            <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                Manage
+            </button>
+        `;
+        listDisplay.appendChild(item);
+    });
+}
 
 async function populateCoursesList() {
     const listDisplay = document.getElementById('courses-list-display');
     if (!listDisplay) return;
-    
+
     listDisplay.innerHTML = '<div class="student-item">Loading...</div>';
-    
+
     try {
         const { data, error } = await supabaseClient
             .from('courses')
             .select('*')
             .order('created_at', { ascending: false });
-            
+
         if (error) throw error;
-        
-        listDisplay.innerHTML = '';
-        if (!data || data.length === 0) {
-            listDisplay.innerHTML = '<div class="no-students-message">No courses created.</div>';
-            return;
-        }
-        
-        data.forEach(course => {
-            const item = document.createElement('div');
-            item.className = 'student-list-item';
-            item.innerHTML = `
-                <span>${course.course_name}</span>
-                <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                    Manage
-                </button>
-            `;
-            listDisplay.appendChild(item);
-        });
+
+        renderCourseList(data); // We now use our new function here
+
     } catch (err) {
         console.error('Error loading courses:', err);
         listDisplay.innerHTML = '<div class="no-students-message">Could not load courses.</div>';
@@ -635,54 +642,29 @@ async function createNewCourse() {
     }
 
     try {
-        // This part remains the same
-        const { data: newCourse, error } = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('courses')
             .insert({ course_name: courseName })
             .select()
             .single();
 
         if (error) {
-            if (error.code === '23505') { // Handles duplicate course names
+            if (error.code === '23505') {
                 alert(`Error: A course named "${courseName}" already exists.`);
             } else {
                 throw error;
             }
-            return; // Stop execution if there was an error
+        } else {
+            courseNameInput.value = '';
+            // This will re-fetch and display the updated list of all courses
+            await populateCoursesList(); 
+            alert(`Course "${data.course_name}" was created!`);
         }
-
-        // *** This is the new, improved part ***
-        const listDisplay = document.getElementById('courses-list-display');
-
-        // If the "No courses created" message is there, remove it
-        const noCoursesMessage = listDisplay.querySelector('.no-students-message');
-        if (noCoursesMessage) {
-            listDisplay.innerHTML = '';
-        }
-
-        // Create the new course item to display
-        const item = document.createElement('div');
-        item.className = 'student-list-item';
-        item.innerHTML = `
-            <span>${newCourse.course_name}</span>
-            <button class="add-student-btn" onclick="showCourseManagementView(${newCourse.id}, '${newCourse.course_name.replace(/'/g, "\\'")}')">
-                Manage
-            </button>
-        `;
-
-        // Add the new course to the beginning of the list
-        listDisplay.prepend(item);
-
-        // Clear the input field and notify the user
-        courseNameInput.value = '';
-        alert(`Course "${newCourse.course_name}" was created!`);
-
     } catch (err) {
         console.error('Error creating course:', err);
         alert(`An unexpected error occurred: ${err.message}`);
     }
 }
-
 function showCourseManagementView(courseId, courseName) {
     currentCourseId = courseId;
     const listView = document.getElementById('course-list-view');
