@@ -161,7 +161,6 @@ function generateQR(sessionId) {
         const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
         console.log('🔗 Student URL:', studentUrl);
         
-        // Check if QRious is available
         if (typeof QRious === 'undefined') {
             console.error('❌ QRious library not loaded');
             qrContainer.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 40px;">QR code library not loaded. Please refresh the page.</p>';
@@ -587,6 +586,7 @@ function backToCoursesList() {
     if (managementView) managementView.style.display = 'none';
     currentCourseId = null;
 }
+
 function renderCourseList(courses) {
     const listDisplay = document.getElementById('courses-list-display');
     if (!listDisplay) return;
@@ -624,19 +624,13 @@ async function populateCoursesList() {
 
         if (error) throw error;
 
-        renderCourseList(data); // We now use our new function here
+        renderCourseList(data);
 
     } catch (err) {
         console.error('Error loading courses:', err);
         listDisplay.innerHTML = '<div class="no-students-message">Could not load courses.</div>';
     }
 }
-
-// REPLACE the old createNewCourse function (around line 639) with this one.
-
-// REPLACE the entire createNewCourse function with this corrected version.
-
-// REPLACE the entire old createNewCourse function with this corrected version.
 
 async function createNewCourse() {
     const courseNameInput = document.getElementById('new-course-name');
@@ -648,7 +642,6 @@ async function createNewCourse() {
     }
 
     try {
-        // This part correctly inserts the course and gets the new record back.
         const { data: newCourse, error } = await supabaseClient
             .from('courses')
             .insert({ course_name: courseName })
@@ -661,19 +654,16 @@ async function createNewCourse() {
             } else {
                 throw error;
             }
-            return; // Stop execution if there was an error.
+            return;
         }
 
-        // This is the new, guaranteed logic to update the UI instantly.
         const listDisplay = document.getElementById('courses-list-display');
-
-        // 1. Find and remove the "No courses created" message if it is visible.
+        
         const noCoursesMessage = listDisplay.querySelector('.no-students-message');
         if (noCoursesMessage) {
             listDisplay.innerHTML = '';
         }
 
-        // 2. Create the new course item as an HTML element.
         const item = document.createElement('div');
         item.className = 'student-list-item';
         item.innerHTML = `
@@ -683,10 +673,8 @@ async function createNewCourse() {
             </button>
         `;
 
-        // 3. Add the new course to the top of the list so it appears immediately.
         listDisplay.prepend(item);
 
-        // 4. Clear the input field and notify the user of success.
         courseNameInput.value = '';
         alert(`Course "${newCourse.course_name}" was created successfully!`);
 
@@ -695,6 +683,7 @@ async function createNewCourse() {
         alert(`An unexpected error occurred: ${err.message}`);
     }
 }
+
 function showCourseManagementView(courseId, courseName) {
     currentCourseId = courseId;
     const listView = document.getElementById('course-list-view');
