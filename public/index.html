@@ -6,7 +6,6 @@
     <title>QR Attendance System</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Student List Management Modal Styles */
         .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
@@ -21,31 +20,29 @@
    <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
     <div class="container">
-        <div class="nav-buttons">
-            <button class="nav-btn active">Faculty View</button>
-        </div>
-
         <div id="admin-page" class="page active">
             <div class="admin-content">
                 <div class="present-count-card">
                     <div class="present-count">Present: <span id="present-count">0</span></div>
-                    <h3 id="current-session-title" style="text-align: center; color: #666; margin-bottom: 20px;">No Active Session</h3>
+                    <h3 id="current-session-title" style="text-align: center; color: #666; margin-bottom: 20px; font-size: 1.2rem; font-weight: 500;">No Active Session</h3>
                     <div class="present-students">
                         <h3>Present Students</h3>
-                        <div id="present-students-list"></div>
+                        <div id="present-students-list">
+                            </div>
                     </div>
                 </div>
 
                 <div class="qr-section">
                     <h3>Scan to Mark Attendance</h3>
                     <div class="qr-container">
-                        <div id="qr-code-container" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <div id="qr-code-container" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 290px; display: flex; align-items: center; justify-content: center;">
                             </div>
                     </div>
-                    <p class="qr-instruction">Point your camera at the code</p>
+                    <p class="qr-instruction">Start a session to generate a new QR code</p>
                 </div> 
             </div>
-             <div class="action-buttons" style="max-width: 800px; margin: 40px auto 0;">
+
+            <div class="action-buttons" style="max-width: 900px; margin: 40px auto 0; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                 <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()"><i class="fas fa-rocket"></i> Start New Session</button>
                 <button class="add-manually-btn" onclick="showSessionHistoryModal()" style="background: linear-gradient(135deg, #fd7e14, #f86202);"><i class="fas fa-history"></i> Session History</button>
                 <button class="add-manually-btn" onclick="showAddManuallyModal()"><i class="fas fa-user-plus"></i> Add Manually</button>
