@@ -91,7 +91,7 @@ body {
     grid-template-columns: repeat(2, minmax(0, 600px)); 
     justify-content: center; /* Center the grid container */
     gap: 40px;
-    align-items: start;
+    align-items: stretch;
     margin: 0 auto;
 }
 
@@ -103,7 +103,6 @@ body {
     box-shadow: 0 15px 50px rgba(0,0,0,0.1);
     border: 1px solid rgba(255,255,255,0.2);
     border-left: 6px solid #28a745;
-    height: fit-content;
 }
 
 .present-count {
