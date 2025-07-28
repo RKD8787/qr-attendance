@@ -46,6 +46,9 @@
                             <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()">
                                 <i class="fas fa-users"></i> Student List
                             </button>
+                            <button class="add-manually-btn" onclick="showCoursesModal()" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">
+                               <i class="fas fa-book"></i> Manage Courses
+                            </button>
                             <button class="add-manually-btn fresh-btn" onclick="startFreshAttendance()">
                                 <i class="fas fa-rocket"></i> Start Fresh Session
                             </button>
@@ -114,5 +117,49 @@
     </div>
 
     <script src="script.js"></script>
+    <div id="courses-modal" class="modal">
+    <div class="modal-content student-list-modal-content">
+        <div class="modal-header">
+            <h3 id="courses-modal-title">Manage Courses</h3>
+            <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
+        </div>
+
+        <div id="course-list-view">
+            <div class="add-student-section">
+                <h4>Create New Course</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-course-name" placeholder="Enter new course name...">
+                    <button class="add-student-btn" onclick="createNewCourse()">Create Course</button>
+                </div>
+            </div>
+            <div class="student-list-display" id="courses-list-display">
+                </div>
+        </div>
+
+        <div id="course-management-view" style="display: none;">
+            <button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back to All Courses</button>
+            <h4 id="course-management-title">Managing Course</h4>
+            <div id="course-student-list-container">
+                <p><strong>Enrolled Students:</strong></p>
+                <div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div>
+            </div>
+            <hr style="margin: 20px 0;">
+            <div id="add-student-to-course-container">
+                <p><strong>Add Students to Course:</strong></p>
+                <input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;">
+                <div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div>
+            </div>
+             <button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px;">Delete This Entire Course</button>
+        </div>
+
+         <div class="modal-buttons">
+            <button class="modal-btn secondary" onclick="closeCoursesModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
 </body>
 </html>
