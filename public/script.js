@@ -1,41 +1,37 @@
-// Global Supabase client - to be initialized once
+// Global Supabase client
 let supabaseClient = null;
 
-// Global state
+// Global state variables
 let allStudents = [];
 let presentStudents = [];
-let currentCourseId = null; // Used for managing courses
-let currentSession = null; // Holds info about the active session
+let currentCourseId = null; // Used for the course management modal
+let currentSession = null;  // Holds all info about the currently active session
 
 // ✅ MAIN ENTRY POINT
-document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-});
+document.addEventListener('DOMContentLoaded', initializeApp);
 
 /**
- * Initializes the Supabase client, checks auth, and starts the app.
+ * Initializes the Supabase client, checks auth, fetches data, and starts the correct UI.
  */
 async function initializeApp() {
-    // 1. Initialize Supabase Client
     try {
         const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM4MH0.Q4t0PAuA-22z2i555Y9tE7n3f2ZC23a2g8i523A7f6E';
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch (error) {
         return alert('FATAL: Could not connect to the database.');
     }
 
-    // 2. Check Authentication & Page
     const { data: { session } } = await supabaseClient.auth.getSession();
-    const currentPage = window.location.pathname;
+    const isStudentPage = window.location.pathname.includes('student.html');
 
-    if (!session && !currentPage.includes('student.html')) {
+    if (!session && !isStudentPage) {
         return window.location.href = 'login.html';
     }
 
-    // 3. Load data and initialize the correct view
     await fetchAllStudents();
-    if (currentPage.includes('student.html')) {
+
+    if (isStudentPage) {
         initStudentView();
     } else {
         initFacultyView();
@@ -43,11 +39,10 @@ async function initializeApp() {
 }
 
 // =================================================================
-// DATA FETCHING & STATE MANAGEMENT
+// DATA FETCHING & STATE
 // =================================================================
 
 async function fetchAllStudents() {
-    if (!supabaseClient) return;
     try {
         const { data, error } = await supabaseClient.from('students').select('name, usn').order('name', { ascending: true });
         if (error) throw error;
@@ -59,9 +54,10 @@ async function fetchAllStudents() {
 
 async function fetchCurrentSessionAttendance() {
     if (!currentSession) {
-        updatePresentStudentsList([]); // Clear list if no session
+        updatePresentStudentsList([]); // Clear list if no active session
         return;
     };
+
     try {
         const { data, error } = await supabaseClient
             .from('attendance')
@@ -77,64 +73,83 @@ async function fetchCurrentSessionAttendance() {
     }
 }
 
+/**
+ * The single source of truth for managing the active session state.
+ * @param {object | null} sessionData - The session object from the database, or null to end a session.
+ */
 function updateActiveSession(sessionData) {
     currentSession = sessionData;
+    const qrContainer = document.getElementById('qr-code-container');
+    const sessionTitle = document.getElementById('current-session-title');
+
     if (sessionData) {
         localStorage.setItem('sessionId', sessionData.id);
-        document.getElementById('current-session-title').textContent = `Active Session: ${sessionData.session_name}`;
+        const courseName = sessionData.courses ? sessionData.courses.course_name : 'General';
+        sessionTitle.textContent = `Active Session: ${sessionData.session_name} (${courseName})`;
         generateQR(sessionData.id);
         fetchCurrentSessionAttendance();
     } else {
         localStorage.removeItem('sessionId');
-        document.getElementById('current-session-title').textContent = 'No Active Session';
-        document.getElementById('qr-code-container').innerHTML = '<p style="color: #999;">Start a new session to generate a QR code.</p>';
+        sessionTitle.textContent = 'No Active Session';
+        qrContainer.innerHTML = '<p style="color: #999;">Start a new session to generate a QR code.</p>';
         updatePresentStudentsList([]);
     }
 }
 
+
 // =================================================================
-// MAIN FACULTY VIEW (`index.html`)
+// FACULTY VIEW (`index.html`)
 // =================================================================
 
 function initFacultyView() {
     const lastSessionId = localStorage.getItem('sessionId');
     if (lastSessionId) {
-        // Try to resume the last known session
-        supabaseClient.from('sessions').select('*, courses(course_name)').eq('id', lastSessionId).single().then(({data, error}) => {
-            if (data) updateActiveSession(data);
+        // On page load, try to resume the last session
+        supabaseClient.from('sessions').select('*, courses(course_name)').eq('id', lastSessionId).single().then(({data}) => {
+            if (data) {
+                updateActiveSession(data);
+            } else {
+                updateActiveSession(null); // Clear state if session is not found
+            }
         });
+    } else {
+        updateActiveSession(null); // Ensure clean state on first load
     }
     
-    // Set up polling for attendance updates
+    // Set up polling and event listeners
     setInterval(fetchCurrentSessionAttendance, 5000);
-
-    // Set up event listeners for modals
     setupAllModalSearchListeners();
 }
 
 function generateQR(sessionId) {
     const qrContainer = document.getElementById('qr-code-container');
     if (!qrContainer) return;
-    qrContainer.innerHTML = '';
-    const studentUrl = `${window.location.origin}/public/student.html?session=${sessionId}`;
+
+    qrContainer.innerHTML = ''; // Clear previous QR or message
+    const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
+    
     new QRious({
         element: qrContainer.appendChild(document.createElement('canvas')),
         value: studentUrl,
-        size: 350,
-        padding: 15,
+        size: 250,
+        padding: 10,
         level: 'H'
     });
+    console.log(`✅ QR code generated for session ${sessionId}`);
 }
 
 function updatePresentStudentsList(attendanceData) {
     const listElement = document.getElementById('present-students-list');
+    updatePresentCount(attendanceData.length);
+
     if (!listElement) return;
     listElement.innerHTML = '';
-    updatePresentCount(attendanceData.length);
+
     if (attendanceData.length === 0) {
         listElement.innerHTML = '<div class="student-item" style="opacity: 0.5; font-style: italic;">No students present</div>';
         return;
     }
+
     attendanceData.forEach(record => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-item';
@@ -144,19 +159,19 @@ function updatePresentStudentsList(attendanceData) {
 }
 
 function updatePresentCount(count) {
-    const countElement = document.getElementById('present-count');
-    if (countElement) countElement.textContent = count;
+    document.getElementById('present-count').textContent = count;
 }
 
 async function removeStudentFromSession(studentName) {
     if (!currentSession || !confirm(`Remove ${studentName} from this session?`)) return;
     try {
         await supabaseClient.from('attendance').delete().match({ student: studentName, session_id: currentSession.id });
-        fetchCurrentSessionAttendance();
+        fetchCurrentSessionAttendance(); // Refresh the list
     } catch (err) {
         console.error('Error removing student:', err);
     }
 }
+
 
 // =================================================================
 // STUDENT VIEW (`student.html`)
@@ -170,10 +185,10 @@ function initStudentView() {
 function populateStudentListForSelection(searchTerm = '') {
     const studentList = document.getElementById('student-list');
     if (!studentList) return;
-    studentList.innerHTML = '';
     
     const studentsToDisplay = allStudents.filter(s => searchTerm === '' || s.name.toLowerCase().includes(searchTerm) || (s.usn && s.usn.toLowerCase().includes(searchTerm)));
-
+    
+    studentList.innerHTML = '';
     if (studentsToDisplay.length === 0) {
         studentList.innerHTML = '<div class="no-results"><p>No students found</p></div>';
         return;
@@ -213,7 +228,7 @@ async function submitAttendance() {
             student: selectedRadio.value,
             usn: selectedRadio.getAttribute('data-usn'),
             session_id: sessionId,
-            device_id: 'student_device' // Simplified
+            device_id: 'student_device'
         });
 
         if (error?.code === '23505') {
@@ -246,14 +261,14 @@ async function showCourseSelectionModal() {
     modal.style.display = 'block';
     modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
     
-    let courseOptionsHTML = courses.map(course => `<button class="modal-btn primary" style="margin: 10px; width: 80%;" onclick="startSessionForCourse(${course.id}, '${course.name}')">${course.course_name}</button>`).join('');
+    let courseOptionsHTML = courses.map(course => `<button class="modal-btn primary" style="margin: 10px; width: 80%;" onclick="startSessionForCourse(${course.id}, '${course.course_name}')">${course.course_name}</button>`).join('');
     
     modal.innerHTML = `<div class="modal-content"><div class="modal-header"><h3>Select a Course to Start Session</h3><button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button></div><div style="text-align: center;">${courseOptionsHTML}</div></div>`;
     document.body.appendChild(modal);
 }
 
 async function startSessionForCourse(courseId, courseName) {
-    document.querySelector('.modal').remove(); // Close the selection modal
+    document.querySelector('.modal').remove();
     const sessionName = prompt(`Enter a name for this session for "${courseName}":`, `Session on ${new Date().toLocaleDateString()}`);
     if (!sessionName) return;
 
@@ -273,10 +288,7 @@ function showSessionHistoryModal() {
     populateSessionHistory();
 }
 
-function closeSessionHistoryModal() {
-    document.getElementById('session-history-modal').style.display = 'none';
-}
-
+function closeSessionHistoryModal() { document.getElementById('session-history-modal').style.display = 'none'; }
 function backToSessionList() {
     document.getElementById('session-list-container').style.display = 'block';
     document.getElementById('session-details-container').style.display = 'none';
@@ -341,16 +353,8 @@ function setupAllModalSearchListeners() {
     document.getElementById('student-search-manual')?.addEventListener('input', (e) => populateFacultyStudentDropdown(e.target.value.toLowerCase().trim()));
 }
 
-function showCoursesModal() {
-    document.getElementById('courses-modal').style.display = 'block';
-    backToCoursesList();
-    populateCoursesList();
-}
-
-function closeCoursesModal() {
-    document.getElementById('courses-modal').style.display = 'none';
-}
-
+function showCoursesModal() { document.getElementById('courses-modal').style.display = 'block'; backToCoursesList(); populateCoursesList(); }
+function closeCoursesModal() { document.getElementById('courses-modal').style.display = 'none'; }
 function backToCoursesList() {
     document.getElementById('course-list-view').style.display = 'block';
     document.getElementById('course-management-view').style.display = 'none';
@@ -379,36 +383,20 @@ async function populateCoursesList() {
     }
 }
 
-// ✅ CORRECTED AND IMPROVED FUNCTION
 async function createNewCourse() {
     const courseNameInput = document.getElementById('new-course-name');
     const courseName = courseNameInput.value.trim();
-    console.log(`Attempting to create course: "${courseName}"`); // Debugging line
-
-    if (!courseName) {
-        return alert('Please enter a course name.');
-    }
+    if (!courseName) return alert('Please enter a course name.');
 
     try {
-        // Use .select() to confirm the insert worked
-        const { data, error } = await supabaseClient
-            .from('courses')
-            .insert({ course_name: courseName })
-            .select()
-            .single();
-
+        const { data, error } = await supabaseClient.from('courses').insert({ course_name: courseName }).select().single();
         if (error) {
-            // Provide specific feedback for common errors
-            if (error.code === '23505') { // Unique constraint violation
-                alert(`Error: A course named "${courseName}" already exists.`);
-            } else {
-                throw error;
-            }
+            if (error.code === '23505') alert(`Error: A course named "${courseName}" already exists.`);
+            else throw error;
         } else {
-            console.log('Successfully created course:', data); // Debugging line
-            courseNameInput.value = ''; // Clear the input
-            populateCoursesList(); // Refresh the list of courses
-            alert(`Course "${data.course_name}" was created successfully!`);
+            courseNameInput.value = '';
+            populateCoursesList();
+            alert(`Course "${data.course_name}" was created!`);
         }
     } catch (err) {
         console.error('Error creating course:', err);
@@ -433,8 +421,8 @@ async function populateCourseStudentList(courseId) {
     try {
         const { data, error } = await supabaseClient.from('student_courses').select(`students(name, usn)`).eq('course_id', courseId);
         if (error) throw error;
+        const enrolledStudents = data.map(item => item.students).filter(Boolean);
         listDisplay.innerHTML = '';
-        const enrolledStudents = data.map(item => item.students).filter(Boolean); // Filter out nulls
         if (enrolledStudents.length === 0) {
             listDisplay.innerHTML = '<div class="no-students-message">No students enrolled.</div>';
             return;
@@ -466,7 +454,7 @@ async function populateAddStudentToCourseList(courseId, searchTerm = '') {
         }
         unenrolledStudents.forEach(student => {
             const item = document.createElement('div');
-            item.className = 'student-item';
+            item.className = 'student-list-item';
             item.innerHTML = `<span>${student.name} <sub style="color:#666">${student.usn}</sub></span><button class="add-student-btn" onclick="addStudentToCourse('${student.usn}', ${courseId})">Add</button>`;
             addListDisplay.appendChild(item);
         });
@@ -505,9 +493,11 @@ function populateStudentListDisplay(searchTerm = '') {
     const display = document.getElementById('student-list-display');
     const countEl = document.getElementById('total-student-count');
     if (!display || !countEl) return;
-    display.innerHTML = '';
+
     const studentsToDisplay = allStudents.filter(s => searchTerm === '' || s.name.toLowerCase().includes(searchTerm) || (s.usn && s.usn.toLowerCase().includes(searchTerm)));
     countEl.textContent = studentsToDisplay.length;
+    display.innerHTML = '';
+    
     if (studentsToDisplay.length === 0) {
         display.innerHTML = '<div class="no-students-message">No students found.</div>';
     } else {
@@ -529,8 +519,7 @@ async function addNewStudent() {
     if (allStudents.some(s => s.usn === studentUsn)) return alert('A student with this USN already exists.');
     try {
         await supabaseClient.from('students').insert({ name: studentName, usn: studentUsn });
-        nameInput.value = '';
-        usnInput.value = '';
+        nameInput.value = ''; usnInput.value = '';
         await fetchAllStudents();
         populateStudentListDisplay();
     } catch (err) { alert('Failed to add student: ' + err.message); }
@@ -551,8 +540,8 @@ function closeAddManuallyModal() { document.getElementById('add-manually-modal')
 function populateFacultyStudentDropdown(searchTerm = '') {
     const dropdown = document.getElementById('student-dropdown');
     if (!dropdown) return;
-    dropdown.innerHTML = '';
     const unpresentStudents = allStudents.filter(s => !presentStudents.includes(s.name) && (searchTerm === '' || s.name.toLowerCase().includes(searchTerm) || (s.usn && s.usn.toLowerCase().includes(searchTerm))));
+    dropdown.innerHTML = '';
     if (unpresentStudents.length === 0) {
         dropdown.innerHTML = '<div class="dropdown-item no-results">No available students found.</div>';
     } else {
@@ -583,9 +572,8 @@ async function exportAttendanceCSV() {
 
     let csvContent = "data:text/csv;charset=utf-8," + "Student,USN,Timestamp,Session\n" + data.map(e => `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${e.session_name}"`).join("\n");
     
-    var encodedUri = encodeURI(csvContent);
     var link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", encodeURI(csvContent));
     link.setAttribute("download", `attendance_${data[0].session_name}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
