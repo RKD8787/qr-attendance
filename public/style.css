@@ -301,7 +301,6 @@ body {
     background-clip: text;
 }
 
-.qr-container {
     .qr-container {
     width: fit-content;
     max-width: 100%;
@@ -309,8 +308,6 @@ body {
     margin: 0 auto;
     display: flex;
     justify-content: center;
-}
-
 }
 
 .qr-container:hover {
@@ -769,6 +766,10 @@ body {
     
     .present-count {
         font-size: 2.5rem;
+    }
+    .success-message h2 {
+        font-size: 1.6rem; /* Reduces font size on small screens */
+        line-height: 1.3;  /* Improves text wrapping */
     }
     
     .student-selection {
