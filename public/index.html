@@ -8,9 +8,12 @@
     <style>
         .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
     <div class="header">
@@ -36,7 +39,8 @@
                     <h3>Scan to Mark Attendance</h3>
                     <div class="qr-container">
                         <div id="qr-code-container" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); min-height: 290px; display: flex; align-items: center; justify-content: center;">
-                            </div>
+                            <p style="color: #999; font-size: 16px; text-align: center; padding: 40px;">Start a new session to generate a QR code.</p>
+                        </div>
                     </div>
                     <p class="qr-instruction">Start a session to generate a new QR code</p>
                 </div> 
@@ -53,10 +57,95 @@
         </div>
     </div>
 
-    <div id="add-manually-modal" class="modal"><div class="modal-content"><div class="modal-header"><h3>Add Student Manually</h3><button class="close-btn" onclick="closeAddManuallyModal()">&times;</button></div><div class="search-container"><input type="text" id="student-search-manual" placeholder="Search for students not yet present..."><div class="search-icon">🔍</div></div><div class="student-dropdown" id="student-dropdown"></div></div></div>
-    <div id="student-list-modal" class="modal"><div class="modal-content student-list-modal-content"><div class="modal-header"><h3>Manage Student Roster</h3><button class="close-btn" onclick="closeStudentListModal()">&times;</button></div><div class="add-student-section"><h4>Add New Student</h4><div class="add-student-form"><input type="text" id="new-student-name" placeholder="Student Name" maxlength="50"><input type="text" id="new-student-usn" placeholder="Unique Student Number (USN)" maxlength="20"><button class="add-student-btn" onclick="addNewStudent()">Add Student</button></div></div><div class="search-container"><input type="text" id="student-list-search" placeholder="Search all students..."><div class="search-icon">🔍</div></div><div class="student-list-container"><div class="student-count-header">Total Students: <span id="total-student-count">0</span></div><div class="student-list-display" id="student-list-display"></div></div></div></div>
-    <div id="session-history-modal" class="modal"><div class="modal-content student-list-modal-content"><div class="modal-header"><h3>Session History</h3><button class="close-btn" onclick="closeSessionHistoryModal()">&times;</button></div><div id="session-list-container"><div class="student-list-display" id="session-list-display"></div></div><div id="session-details-container" style="display: none;"><button class="modal-btn secondary" onclick="backToSessionList()" style="margin-bottom: 15px;">&larr; Back to List</button><h4 id="session-details-title"></h4><div class="student-list-display" id="session-details-display"></div></div></div></div>
-    <div id="courses-modal" class="modal"><div class="modal-content student-list-modal-content"><div class="modal-header"><h3 id="courses-modal-title">Manage Courses</h3><button class="close-btn" onclick="closeCoursesModal()">&times;</button></div><div id="course-list-view"><div class="add-student-section"><h4>Create New Course</h4><div class="add-student-form"><input type="text" id="new-course-name" placeholder="Enter new course name..."><button class="add-student-btn" onclick="createNewCourse()">Create Course</button></div></div><div class="student-list-display" id="courses-list-display"></div></div><div id="course-management-view" style="display: none;"><button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back</button><h4 id="course-management-title"></h4><p><strong>Enrolled Students:</strong></p><div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div><hr style="margin: 20px 0;"><p><strong>Add Students to Course:</strong></p><input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;"><div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div><button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px; background: #dc3545;">Delete This Course</button></div></div></div>
+    <!-- Add Manually Modal -->
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-search-manual" placeholder="Search for students not yet present...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-dropdown" id="student-dropdown"></div>
+        </div>
+    </div>
+
+    <!-- Student List Modal -->
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Manage Student Roster</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Student Name" maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Unique Student Number (USN)" maxlength="20">
+                    <button class="add-student-btn" onclick="addNewStudent()">Add Student</button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-list-search" placeholder="Search all students...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-list-container">
+                <div class="student-count-header">Total Students: <span id="total-student-count">0</span></div>
+                <div class="student-list-display" id="student-list-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session History Modal -->
+    <div id="session-history-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Session History</h3>
+                <button class="close-btn" onclick="closeSessionHistoryModal()">&times;</button>
+            </div>
+            <div id="session-list-container">
+                <div class="student-list-display" id="session-list-display"></div>
+            </div>
+            <div id="session-details-container" style="display: none;">
+                <button class="modal-btn secondary" onclick="backToSessionList()" style="margin-bottom: 15px;">&larr; Back to List</button>
+                <h4 id="session-details-title"></h4>
+                <div class="student-list-display" id="session-details-display"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Modal -->
+    <div id="courses-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3 id="courses-modal-title">Manage Courses</h3>
+                <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
+            </div>
+            <div id="course-list-view">
+                <div class="add-student-section">
+                    <h4>Create New Course</h4>
+                    <div class="add-student-form">
+                        <input type="text" id="new-course-name" placeholder="Enter new course name...">
+                        <button class="add-student-btn" onclick="createNewCourse()">Create Course</button>
+                    </div>
+                </div>
+                <div class="student-list-display" id="courses-list-display"></div>
+            </div>
+            <div id="course-management-view" style="display: none;">
+                <button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back</button>
+                <h4 id="course-management-title"></h4>
+                <p><strong>Enrolled Students:</strong></p>
+                <div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div>
+                <hr style="margin: 20px 0;">
+                <p><strong>Add Students to Course:</strong></p>
+                <input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;">
+                <div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div>
+                <button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px; background: #dc3545;">Delete This Course</button>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
