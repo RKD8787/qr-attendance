@@ -632,6 +632,8 @@ async function populateCoursesList() {
     }
 }
 
+// REPLACE the old createNewCourse function (around line 639) with this one.
+
 async function createNewCourse() {
     const courseNameInput = document.getElementById('new-course-name');
     if (!courseNameInput) return;
@@ -642,7 +644,8 @@ async function createNewCourse() {
     }
 
     try {
-        const { data, error } = await supabaseClient
+        // This part remains the same: insert the new course and get it back.
+        const { data: newCourse, error } = await supabaseClient
             .from('courses')
             .insert({ course_name: courseName })
             .select()
@@ -654,12 +657,36 @@ async function createNewCourse() {
             } else {
                 throw error;
             }
-        } else {
-            courseNameInput.value = '';
-            // This will re-fetch and display the updated list of all courses
-            await populateCoursesList(); 
-            alert(`Course "${data.course_name}" was created!`);
+            return; // Stop if there's an error.
         }
+
+        // *** This is the new, more reliable logic ***
+
+        const listDisplay = document.getElementById('courses-list-display');
+
+        // 1. Remove the "No courses created" message if it's there.
+        const noCoursesMessage = listDisplay.querySelector('.no-students-message');
+        if (noCoursesMessage) {
+            listDisplay.innerHTML = '';
+        }
+
+        // 2. Create the new course element to add to the list.
+        const item = document.createElement('div');
+        item.className = 'student-list-item';
+        item.innerHTML = `
+            <span>${newCourse.course_name}</span>
+            <button class="add-student-btn" onclick="showCourseManagementView(${newCourse.id}, '${newCourse.course_name.replace(/'/g, "\\'")}')">
+                Manage
+            </button>
+        `;
+
+        // 3. Add the new course to the top of the list so it appears instantly.
+        listDisplay.prepend(item);
+
+        // 4. Clear the input and notify the user.
+        courseNameInput.value = '';
+        alert(`Course "${newCourse.course_name}" was created!`);
+
     } catch (err) {
         console.error('Error creating course:', err);
         alert(`An unexpected error occurred: ${err.message}`);
