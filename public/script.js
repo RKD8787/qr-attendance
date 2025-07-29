@@ -708,9 +708,6 @@ async function quickCreateCourse() {
 
 // In script.js
 
-// New function to display sessions with search, sort, and pagination
-// In script.js
-
 // This function now correctly renders the sessions with search and pagination
 function displaySessions() {
     const listDisplay = document.getElementById('session-list-display');
@@ -891,7 +888,6 @@ async function archiveSession(sessionId, sessionName) {
         alert('Failed to archive session: ' + err.message);
     }
 }
-
 function backToSessionList() {
     const listContainer = document.getElementById('session-list-container');
     const detailsContainer = document.getElementById('session-details-container');
