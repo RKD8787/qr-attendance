@@ -928,13 +928,6 @@ async function viewSessionDetails(sessionId, sessionName) {
         }
     }
 }
-
-async function viewSessionDetails(sessionId, sessionName) {
-    // This part is a placeholder for now. 
-    // You would typically show another modal with the detailed attendance list.
-    alert(`Viewing details for session: ${sessionName} (ID: ${sessionId})`);
-}
-
 // =================================================================
 // MODALS (COURSES, STUDENTS, MANUAL ADD)
 // =================================================================
