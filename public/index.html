@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Attendance System</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .student-list-modal-content{max-width:700px;max-height:90vh;overflow-y:auto}.add-student-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:15px;padding:25px;margin-bottom:25px;border:2px solid #e9ecef}.add-student-section h4{color:#333;font-size:1.3rem;font-weight:600;margin-bottom:15px;text-transform:uppercase;letter-spacing:.5px}.add-student-form{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:center}.add-student-form input{padding:15px 20px;border:2px solid #dee2e6;border-radius:10px;font-size:16px;font-weight:500;transition:all .3s ease}.add-student-form input:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 3px rgba(0,123,255,.1)}.add-student-btn{background:linear-gradient(135deg,#28a745,#1e7e34);color:white;border:none;padding:15px 25px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:600;transition:all .3s ease;display:flex;align-items:center;gap:8px;white-space:nowrap}.add-student-btn:hover{background:linear-gradient(135deg,#1e7e34,#155724);transform:translateY(-2px);box-shadow:0 5px 15px rgba(40,167,69,.3)}.student-count-header{background:linear-gradient(135deg,#007bff,#0056b3);color:white;padding:15px 20px;border-radius:10px;margin-bottom:15px;font-size:16px;font-weight:600;text-align:center}.student-list-container{margin:20px 0}.student-list-display{max-height:300px;overflow-y:auto;border:2px solid #e9ecef;border-radius:15px;background:white}.student-list-display::-webkit-scrollbar{width:8px}.student-list-display::-webkit-scrollbar-track{background:#f1f1f1}.student-list-display::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#007bff,#0056b3);border-radius:10px}.student-list-item{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #f1f1f1;font-weight:500;transition:all .2s ease-in-out}.student-list-item:hover{background:linear-gradient(135deg,#f8f9fa,#e9ecef)}.student-list-item:last-child{border-bottom:none}.student-list-item .student-name{flex:1;color:#333;font-size:16px}.delete-student-btn{background:linear-gradient(135deg,#dc3545,#c82333);color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .3s ease;display:flex;align-items:center;gap:5px}.delete-student-btn:hover{background:linear-gradient(135deg,#c82333,#a71e2a);transform:translateY(-2px);box-shadow:0 3px 10px rgba(220,53,69,.3)}.no-students-message{text-align:center;padding:40px 20px;color:#666;font-style:italic;font-size:16px}.add-manually-btn.student-list-btn{background:linear-gradient(135deg,#6f42c1,#5a2d91)}.add-manually-btn.student-list-btn:hover{box-shadow:0 8px 25px rgba(111,66,193,.35)}@media (max-width:768px){.student-list-modal-content{width:95%;margin:5% auto;max-height:95vh}.add-student-form{grid-template-columns:1fr;gap:10px}.add-student-btn{justify-content:center}}
-    </style>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="header">
@@ -28,8 +26,7 @@
                     <h3 id="current-session-title" style="text-align: center; color: #666; margin-bottom: 20px; font-size: 1.2rem; font-weight: 500;">No Active Session</h3>
                     <div class="present-students">
                         <h3>Present Students</h3>
-                        <div id="present-students-list">
-                            </div>
+                        <div id="present-students-list"></div>
                     </div>
                 </div>
 
@@ -44,15 +41,15 @@
                 </div> 
             </div>
 
-          <div class="action-buttons" style="max-width: 900px; margin: 40px auto 0; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-    <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()"><i class="fas fa-rocket"></i> Start New Session</button>
-    <button class="add-manually-btn" onclick="showSessionHistoryModal()" style="background: linear-gradient(135deg, #fd7e14, #f86202);"><i class="fas fa-history"></i> Session History</button>
-    <button class="add-manually-btn" onclick="showStatisticsModal()" style="background: linear-gradient(135deg, #20c997, #17a67d);"><i class="fas fa-chart-bar"></i> Statistics</button>
-    <button class="add-manually-btn" onclick="showAddManuallyModal()"><i class="fas fa-user-plus"></i> Add Attendance Manually</button>
-    <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()"><i class="fas fa-users"></i> Manage Students</button>
-    <button class="add-manually-btn" onclick="showCoursesModal()" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);"><i class="fas fa-book"></i> Manage Courses</button>
-    <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()"><i class="fas fa-file-csv"></i> Export Attendance</button>
-</div>
+            <div class="action-buttons">
+                <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()"><i class="fas fa-rocket"></i> Start New Session</button>
+                <button class="add-manually-btn" onclick="showSessionHistoryModal()" style="background: linear-gradient(135deg, #fd7e14, #f86202);"><i class="fas fa-history"></i> Session History</button>
+                <button class="add-manually-btn" onclick="showStatisticsModal()" style="background: linear-gradient(135deg, #20c997, #17a67d);"><i class="fas fa-chart-bar"></i> Statistics</button>
+                <button class="add-manually-btn" onclick="showAddManuallyModal()"><i class="fas fa-user-plus"></i> Add Attendance Manually</button>
+                <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()"><i class="fas fa-users"></i> Manage Students</button>
+                <button class="add-manually-btn" onclick="showCoursesModal()" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);"><i class="fas fa-book"></i> Manage Courses</button>
+                <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()"><i class="fas fa-file-csv"></i> Export Attendance</button>
+            </div>
         </div>
     </div>
 
@@ -94,95 +91,154 @@
             </div>
         </div>
     </div>
+    
+    <div id="edit-student-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+             <div class="modal-header">
+                <h3 id="edit-student-title">Edit Student</h3>
+                <button class="close-btn" onclick="closeEditStudentModal()">&times;</button>
+            </div>
+            <div class="edit-student-form">
+                <input type="hidden" id="edit-student-original-usn">
+                <div>
+                    <label for="edit-student-name">Student Name</label>
+                    <input type="text" id="edit-student-name" placeholder="Student Name">
+                </div>
+                <div>
+                    <label for="edit-student-usn">Student USN</label>
+                    <input type="text" id="edit-student-usn" placeholder="Unique Student Number">
+                </div>
+                <button class="add-student-btn" onclick="saveStudentDetails()">Save Changes</button>
+            </div>
+            <hr>
+            <h4><i class="fas fa-fingerprint"></i> Registered Fingerprints</h4>
+            <div id="student-fingerprint-list"></div>
+        </div>
+    </div>
 
     <div id="session-history-modal" class="modal">
-    <div class="modal-content student-list-modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-calendar-alt"></i> Session History by Date</h3>
-            <button class="close-btn" onclick="closeSessionHistoryModal()">&times;</button>
-        </div>
-
-        <div id="session-list-container">
-            <div class="session-toolbar">
-                <div class="search-container" style="width: 100%;">
-                    <input type="text" id="session-history-search" placeholder="Search sessions...">
-                </div>
-                <div class="toggle-archive">
-                    <label for="show-archived">Show Archived:</label>
-                    <input type="checkbox" id="show-archived" onchange="fetchAllSessions()">
-                </div>
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-calendar-alt"></i> Session History by Date</h3>
+                <button class="close-btn" onclick="closeSessionHistoryModal()">&times;</button>
             </div>
-            <div class="student-list-display" id="session-list-display">
-                </div>
-        </div>
 
-        <div id="session-details-container" style="display: none;">
-            <button class="modal-btn secondary" onclick="backToSessionList()" style="margin-bottom: 15px;">&larr; Back to Session List</button>
-            <h4 id="session-details-title"></h4>
-            <div class="student-list-display" id="session-details-display">
+            <div id="session-list-container">
+                <div class="session-toolbar">
+                    <div class="search-container" style="width: 100%;">
+                        <input type="text" id="session-history-search" placeholder="Search sessions...">
+                    </div>
+                    <div class="toggle-archive">
+                        <label for="show-archived">Show Archived:</label>
+                        <input type="checkbox" id="show-archived" onchange="fetchAllSessions()">
+                    </div>
                 </div>
+                <div class="student-list-display" id="session-list-display"></div>
+            </div>
+
+            <div id="session-details-container" style="display: none;">
+                <button class="modal-btn secondary" onclick="backToSessionList()" style="margin-bottom: 15px;">&larr; Back to Session List</button>
+                <h4 id="session-details-title"></h4>
+                <div class="student-list-display" id="session-details-display"></div>
+            </div>
         </div>
     </div>
-</div>
+    
     <div id="courses-modal" class="modal">
-    <div class="modal-content student-list-modal-content">
-        <div class="modal-header">
-            <h3 id="courses-modal-title">Manage Courses</h3>
-            <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
-        </div>
-        <div id="course-list-view">
-            <div class="add-student-section">
-                <h4>Create New Course</h4>
-                <div class="add-student-form" style="grid-template-columns: 1fr 1fr auto; gap: 15px;">
-                    <input type="text" id="new-course-name" placeholder="Course Name (e.g., Data Structures)" maxlength="100">
-                    <input type="text" id="new-course-id" placeholder="Course ID (e.g., CS-101)" maxlength="30">
-                    <button class="add-student-btn" onclick="createNewCourse()">Create Course</button>
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3 id="courses-modal-title">Manage Courses</h3>
+                <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
+            </div>
+            <div id="course-list-view">
+                <div class="add-student-section">
+                    <h4>Create New Course</h4>
+                    <div class="add-student-form" style="grid-template-columns: 1fr 1fr auto; gap: 15px;">
+                        <input type="text" id="new-course-name" placeholder="Course Name (e.g., Data Structures)" maxlength="100">
+                        <input type="text" id="new-course-id" placeholder="Course ID (e.g., CS-101)" maxlength="30">
+                        <button class="add-student-btn" onclick="createNewCourse()">Create Course</button>
+                    </div>
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(0,123,255,0.1); border-radius: 8px; font-size: 14px; color: #666;">
+                        <strong>💡 Tip:</strong> Course ID is optional but recommended for easy identification. 
+                        Use formats like CS-101, MATH-201, or ENG-301. Leave blank for auto-assignment.
+                    </div>
                 </div>
-                <div style="margin-top: 10px; padding: 10px; background: rgba(0,123,255,0.1); border-radius: 8px; font-size: 14px; color: #666;">
-                    <strong>💡 Tip:</strong> Course ID is optional but recommended for easy identification. 
-                    Use formats like CS-101, MATH-201, or ENG-301. Leave blank for auto-assignment.
+                <div class="student-list-display" id="courses-list-display"></div>
+            </div>
+            <div id="course-management-view" style="display: none;">
+                <button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back</button>
+                <h4 id="course-management-title"></h4>
+                <p><strong>Enrolled Students:</strong></p>
+                <div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div>
+                <hr style="margin: 20px 0;">
+                <p><strong>Add Students to Course:</strong></p>
+                <input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;">
+                <div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div>
+                <button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px; background: #dc3545;">Delete This Course</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="statistics-modal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; max-height: 95vh;">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-line"></i> Advanced Attendance Statistics</h3>
+                <button class="close-btn" onclick="closeStatisticsModal()">&times;</button>
+            </div>
+
+            <div class="stats-tabs">
+                <button class="stats-tab-btn active" onclick="showStatsTab('overview')">📊 Overview</button>
+                <button class="stats-tab-btn" onclick="showStatsTab('sessions')">🗓️ Session Statistics</button>
+                <button class="stats-tab-btn" onclick="showStatsTab('students')">🧑‍🎓 Student Statistics</button>
+            </div>
+
+            <div id="stats-overview-view" class="stats-view active">
+                <div class="overview-grid">
+                    <div class="stat-card">
+                        <h4>Total Attendance</h4>
+                        <p id="stats-total-attendance">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Average Attendance</h4>
+                        <p id="stats-avg-attendance">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Sessions</h4>
+                        <p id="stats-total-sessions">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Fully Verified</h4>
+                        <p id="stats-fully-verified">0%</p>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h4>Attendance Trend (Last 30 Days)</h4>
+                        <canvas id="attendance-trend-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Verification Methods</h4>
+                        <canvas id="verification-method-chart"></canvas>
+                    </div>
                 </div>
             </div>
-            <div class="student-list-display" id="courses-list-display"></div>
-        </div>
-        <div id="course-management-view" style="display: none;">
-            <button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back</button>
-            <h4 id="course-management-title"></h4>
-            <p><strong>Enrolled Students:</strong></p>
-            <div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div>
-            <hr style="margin: 20px 0;">
-            <p><strong>Add Students to Course:</strong></p>
-            <input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;">
-            <div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div>
-            <button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px; background: #dc3545;">Delete This Course</button>
+
+            <div id="stats-sessions-view" class="stats-view">
+                <div class="stats-toolbar">
+                    <input type="text" id="session-stats-search" class="stats-search" placeholder="Search sessions or courses...">
+                </div>
+                <div class="stats-list-display" id="session-stats-list"></div>
+            </div>
+
+            <div id="stats-students-view" class="stats-view">
+                <div class="stats-toolbar">
+                    <input type="text" id="student-stats-search" class="stats-search" placeholder="Search students by name or USN...">
+                </div>
+                <div class="stats-list-display" id="student-stats-list"></div>
+            </div>
         </div>
     </div>
-</div>
-<div id="statistics-modal" class="modal">
-    <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
-        <div class="modal-header">
-            <h3><i class="fas fa-chart-bar"></i> Attendance Statistics</h3>
-            <button class="close-btn" onclick="closeStatisticsModal()">&times;</button>
-        </div>
 
-        <div class="stats-tabs">
-            <button class="stats-tab-btn active" onclick="showStatsTab('sessions')">Session Statistics</button>
-            <button class="stats-tab-btn" onclick="showStatsTab('students')">Student Statistics</button>
-        </div>
-
-        <div id="stats-sessions-view" class="stats-view active">
-            <input type="text" id="session-stats-search" class="stats-search" placeholder="Search sessions or courses...">
-            <div class="stats-list-display" id="session-stats-list">
-                </div>
-        </div>
-
-        <div id="stats-students-view" class="stats-view">
-            <input type="text" id="student-stats-search" class="stats-search" placeholder="Search students by name or USN...">
-            <div class="stats-list-display" id="student-stats-list">
-                </div>
-        </div>
-    </div>
-</div>
     <script src="script.js"></script>
 </body>
 </html>
