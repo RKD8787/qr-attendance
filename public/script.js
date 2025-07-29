@@ -888,47 +888,7 @@ async function archiveSession(sessionId, sessionName) {
         alert('Failed to archive session: ' + err.message);
     }
 }
-    // 5. Render pagination controls
-    renderPaginationControls(filteredSessions.length);
-}
 
-// New function to render pagination controls
-function renderPaginationControls(totalSessions) {
-    const paginationContainer = document.getElementById('session-pagination');
-    paginationContainer.innerHTML = '';
-    const totalPages = Math.ceil(totalSessions / sessionsPerPage);
-
-    if (totalPages <= 1) return;
-
-    // Previous button
-    const prevButton = document.createElement('button');
-    prevButton.innerHTML = '&laquo; Prev';
-    prevButton.disabled = currentPage === 1;
-    prevButton.onclick = () => {
-        if (currentPage > 1) {
-            currentPage--;
-            displaySessions();
-        }
-    };
-    paginationContainer.appendChild(prevButton);
-
-    // Page number indicator
-    const pageIndicator = document.createElement('span');
-    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
-    paginationContainer.appendChild(pageIndicator);
-
-    // Next button
-    const nextButton = document.createElement('button');
-    nextButton.innerHTML = 'Next &raquo;';
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.onclick = () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            displaySessions();
-        }
-    };
-    paginationContainer.appendChild(nextButton);
-}
 function backToSessionList() {
     const listContainer = document.getElementById('session-list-container');
     const detailsContainer = document.getElementById('session-details-container');
