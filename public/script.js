@@ -710,52 +710,54 @@ function showSessionHistoryModal() {
     const modal = document.getElementById('session-history-modal');
     if (modal) {
         modal.style.display = 'block';
-        backToSessionList();
+        fetchAllSessions(); // Fetch sessions when the modal is opened
         
-        // Fetch all sessions and then display the first page
-        fetchAllSessions();
-
-        // Add event listeners for search and sort
         const searchInput = document.getElementById('session-history-search');
-        searchInput.addEventListener('input', () => {
-            currentPage = 1;
-            displaySessions();
-        });
-
-        const sortSelect = document.getElementById('session-sort');
-        sortSelect.addEventListener('change', () => {
-            currentPage = 1;
-            displaySessions();
-        });
+        searchInput.oninput = fetchAllSessions; // Re-fetch on search
     }
 }
-
 function closeSessionHistoryModal() { 
     const modal = document.getElementById('session-history-modal');
     if (modal) modal.style.display = 'none';
 }
 async function fetchAllSessions() {
     const listDisplay = document.getElementById('session-list-display');
-    if (!listDisplay) return;
+    const showArchived = document.getElementById('show-archived').checked;
+    const searchTerm = document.getElementById('session-history-search').value.toLowerCase();
+    
     listDisplay.innerHTML = '<div class="student-item">Loading sessions...</div>';
 
     try {
-        const { data, error } = await supabaseClient
+        let query = supabaseClient
             .from('sessions')
-            .select('id, session_name, created_at, courses(course_name, course_id)')
+            .select('id, session_name, created_at, is_archived, courses(course_name)')
+            .eq('is_archived', showArchived)
             .order('created_at', { ascending: false });
 
+        if (searchTerm) {
+            query = query.ilike('session_name', `%${searchTerm}%`);
+        }
+            
+        const { data, error } = await query;
         if (error) throw error;
-        allSessions = data || [];
-        currentPage = 1;
-        displaySessions();
+
+        // Group sessions by date
+        const groupedSessions = data.reduce((acc, session) => {
+            const date = new Date(session.created_at).toLocaleDateString('en-CA'); // YYYY-MM-DD format
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(session);
+            return acc;
+        }, {});
+        
+        renderGroupedSessions(groupedSessions);
 
     } catch (err) {
         console.error('Error loading session history:', err);
-        listDisplay.innerHTML = '<div class="no-students-message">Could not load session history.</div>';
+        listDisplay.innerHTML = '<div class="no-students-message">Could not load sessions.</div>';
     }
 }
-
 // New function to display sessions with search, sort, and pagination
 function displaySessions() {
     const listDisplay = document.getElementById('session-list-display');
@@ -819,7 +821,93 @@ function displaySessions() {
             listDisplay.appendChild(item);
         });
     }
+function renderGroupedSessions(groupedSessions) {
+    const listDisplay = document.getElementById('session-list-display');
+    listDisplay.innerHTML = '';
 
+    if (Object.keys(groupedSessions).length === 0) {
+        listDisplay.innerHTML = '<div class="no-students-message">No sessions found.</div>';
+        return;
+    }
+
+    for (const date in groupedSessions) {
+        const sessions = groupedSessions[date];
+        const dateGroup = document.createElement('details');
+        dateGroup.className = 'session-date-group';
+        
+        const summary = document.createElement('summary');
+        summary.className = 'session-date-summary';
+        summary.innerHTML = `
+            <span>${new Date(date).toDateString()}</span>
+            <span class="session-count">${sessions.length} Session(s)</span>
+        `;
+        dateGroup.appendChild(summary);
+
+        sessions.forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'student-list-item';
+            item.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <span class="student-name">${session.session_name}</span>
+                    <small style="display: block; color: #666; margin-top: 5px;">
+                        Course: ${session.courses?.course_name || 'General'}
+                    </small>
+                </div>
+                <div class="session-item-actions">
+                    <button class="action-btn" onclick="viewSessionDetails(${session.id}, '${session.session_name.replace(/'/g, "\\'")}')">View</button>
+                    <button class="action-btn edit" onclick="editSession(${session.id}, '${session.session_name.replace(/'/g, "\\'")}')">Edit</button>
+                    <button class="action-btn delete" onclick="archiveSession(${session.id}, '${session.session_name.replace(/'/g, "\\'")}')">Delete</button>
+                </div>
+            `;
+            dateGroup.appendChild(item);
+        });
+
+        listDisplay.appendChild(dateGroup);
+    }
+}
+
+// New function to edit a session
+async function editSession(sessionId, currentName) {
+    const newName = prompt(`Enter new name for "${currentName}":`, currentName);
+    if (!newName || !newName.trim()) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('sessions')
+            .update({ session_name: newName.trim() })
+            .eq('id', sessionId);
+        
+        if (error) throw error;
+        
+        alert('Session updated successfully!');
+        fetchAllSessions(); // Refresh the list
+    } catch (err) {
+        console.error('Error updating session:', err);
+        alert('Failed to update session: ' + err.message);
+    }
+}
+
+// New function to "soft delete" (archive) a session
+async function archiveSession(sessionId, sessionName) {
+    if (!confirm(`Are you sure you want to delete the session "${sessionName}"? This will archive it but preserve its history.`)) {
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('sessions')
+            .update({ is_archived: true })
+            .eq('id', sessionId);
+        
+        if (error) throw error;
+        
+        alert('Session archived successfully!');
+        fetchAllSessions(); // Refresh the list
+    } catch (err) {
+        console.error('Error archiving session:', err);
+        alert('Failed to archive session: ' + err.message);
+    }
+}
     // 5. Render pagination controls
     renderPaginationControls(filteredSessions.length);
 }
