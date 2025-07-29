@@ -35,7 +35,7 @@ async function initializeApp() {
     if (isStudentPage) {
         initStudentView();
     } else {
-        initFacultyView();
+        initFacultyView(session);
     }
 }
 
