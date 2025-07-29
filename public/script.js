@@ -869,6 +869,64 @@ async function archiveSession(sessionId, sessionName) {
         console.error('Error archiving session:', err);
         alert('Failed to archive session: ' + err.message);
     }
+}// In script.js
+
+function backToSessionList() {
+    const listContainer = document.getElementById('session-list-container');
+    const detailsContainer = document.getElementById('session-details-container');
+    
+    if (listContainer) listContainer.style.display = 'block';
+    if (detailsContainer) detailsContainer.style.display = 'none';
+}
+
+async function viewSessionDetails(sessionId, sessionName) {
+    const listContainer = document.getElementById('session-list-container');
+    const detailsContainer = document.getElementById('session-details-container');
+    const detailsDisplay = document.getElementById('session-details-display');
+    const detailsTitle = document.getElementById('session-details-title');
+    
+    // Hide list and show details view
+    if (listContainer) listContainer.style.display = 'none';
+    if (detailsContainer) detailsContainer.style.display = 'block';
+    if (detailsTitle) detailsTitle.textContent = `Attendance for: ${sessionName}`;
+    if (detailsDisplay) detailsDisplay.innerHTML = '<div class="student-item">Loading attendance...</div>';
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('student, usn, timestamp')
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: true });
+            
+        if (error) throw error;
+        
+        if (!detailsDisplay) return;
+        
+        detailsDisplay.innerHTML = '';
+        if (!data || data.length === 0) {
+            detailsDisplay.innerHTML = '<div class="no-students-message">No attendance was recorded for this session.</div>';
+            return;
+        }
+        
+        // Add a header for the details list
+        const header = `<div class="student-list-item" style="font-weight: bold;"><span>Student</span><span>Time Marked</span></div>`;
+        detailsDisplay.innerHTML = header;
+
+        data.forEach(record => {
+            const item = document.createElement('div');
+            item.className = 'student-item';
+            item.innerHTML = `
+                <span>${record.student} <sub style="color: #666;">${record.usn || ''}</sub></span>
+                <span>${new Date(record.timestamp).toLocaleTimeString()}</span>
+            `;
+            detailsDisplay.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Error loading session details:', err);
+        if (detailsDisplay) {
+            detailsDisplay.innerHTML = '<div class="no-students-message">Could not load attendance details.</div>';
+        }
+    }
 }
 
 async function viewSessionDetails(sessionId, sessionName) {
