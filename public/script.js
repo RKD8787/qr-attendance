@@ -2356,8 +2356,1273 @@ function showLocationPermissionRequest() {
     `;
     document.body.appendChild(modal);
 }
-// In script.js
+// Enhanced attendance system with fingerprint authentication
+const FINGERPRINT_CONFIG = {
+    ENABLE_FINGERPRINT: true,
+    REQUIRE_FINGERPRINT: true,
+    MAX_FINGERPRINTS_PER_STUDENT: 1, // Allow up to 3 fingerprints per student
+    FINGERPRINT_TIMEOUT: 60000, // 60 seconds timeout for fingerprint scan
+    ALLOW_BACKUP_AUTH: false // Set to true to allow submission without fingerprint as fallback
+};
 
+/**
+ * Check if browser supports WebAuthn (fingerprint authentication)
+ */
+function isFingerprintSupported() {
+    return !!(navigator.credentials && navigator.credentials.create && window.PublicKeyCredential);
+}
+
+/**
+ * Generate a unique challenge for fingerprint authentication
+ */
+function generateChallenge() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return array;
+}
+
+/**
+ * Convert string to ArrayBuffer
+ */
+function stringToArrayBuffer(str) {
+    const encoder = new TextEncoder();
+    return encoder.encode(str);
+}
+
+/**
+ * Convert ArrayBuffer to Base64 string
+ */
+function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach(byte => binary += String.fromCharCode(byte));
+    return btoa(binary);
+}
+
+/**
+ * Convert Base64 string to ArrayBuffer
+ */
+function base64ToArrayBuffer(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+/**
+ * Check if student has registered fingerprints
+ */
+async function checkStudentFingerprints(studentName, studentUSN) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('student_fingerprints')
+            .select('id, fingerprint_id, created_at')
+            .eq('student_name', studentName)
+            .eq('student_usn', studentUSN);
+            
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error checking fingerprints:', err);
+        return [];
+    }
+}
+
+/**
+ * Check if fingerprint is already registered to another student
+ */
+async function checkFingerprintDuplicate(credentialId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('student_fingerprints')
+            .select('student_name, student_usn')
+            .eq('fingerprint_id', credentialId)
+            .single();
+            
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        return data;
+    } catch (err) {
+        console.error('Error checking fingerprint duplicate:', err);
+        return null;
+    }
+}
+
+/**
+ * Register a new fingerprint for the student
+ */
+async function registerFingerprint(studentName, studentUSN) {
+    if (!isFingerprintSupported()) {
+        throw new Error('Fingerprint authentication is not supported on this device/browser');
+    }
+
+    try {
+        // Check current fingerprint count
+        const existingFingerprints = await checkStudentFingerprints(studentName, studentUSN);
+        if (existingFingerprints.length >= FINGERPRINT_CONFIG.MAX_FINGERPRINTS_PER_STUDENT) {
+            throw new Error(`Maximum ${FINGERPRINT_CONFIG.MAX_FINGERPRINTS_PER_STUDENT} fingerprints allowed per student`);
+        }
+
+        const challenge = generateChallenge();
+        const userId = stringToArrayBuffer(`${studentUSN}_${studentName}`);
+
+        const createCredentialDefaultArgs = {
+            publicKey: {
+                rp: {
+                    name: "DSCE Attendance System",
+                    id: window.location.hostname,
+                },
+                user: {
+                    id: userId,
+                    name: `${studentName} (${studentUSN})`,
+                    displayName: studentName,
+                },
+                pubKeyCredParams: [{alg: -7, type: "public-key"}],
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform",
+                    userVerification: "required"
+                },
+                timeout: FINGERPRINT_CONFIG.FINGERPRINT_TIMEOUT,
+                challenge: challenge,
+                attestation: "direct"
+            }
+        };
+
+        console.log('🔐 Starting fingerprint registration...');
+        const credential = await navigator.credentials.create(createCredentialDefaultArgs);
+        
+        if (!credential) {
+            throw new Error('Fingerprint registration was cancelled or failed');
+        }
+
+        // Check if this fingerprint is already registered to another student
+        const duplicate = await checkFingerprintDuplicate(arrayBufferToBase64(credential.rawId));
+        if (duplicate) {
+            throw new Error(`This fingerprint is already registered to ${duplicate.student_name} (${duplicate.student_usn})`);
+        }
+
+        // Store the fingerprint in database
+        const { error } = await supabaseClient
+            .from('student_fingerprints')
+            .insert({
+                student_name: studentName,
+                student_usn: studentUSN,
+                fingerprint_id: arrayBufferToBase64(credential.rawId),
+                public_key: arrayBufferToBase64(credential.response.publicKey),
+                attestation_object: arrayBufferToBase64(credential.response.attestationObject),
+                client_data_json: arrayBufferToBase64(credential.response.clientDataJSON),
+                registered_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+
+        console.log('✅ Fingerprint registered successfully');
+        return {
+            success: true,
+            credentialId: arrayBufferToBase64(credential.rawId),
+            fingerprintCount: existingFingerprints.length + 1
+        };
+
+    } catch (err) {
+        console.error('❌ Fingerprint registration error:', err);
+        throw err;
+    }
+}
+
+/**
+ * Authenticate using registered fingerprint
+ */
+async function authenticateFingerprint(studentName, studentUSN) {
+    if (!isFingerprintSupported()) {
+        throw new Error('Fingerprint authentication is not supported on this device/browser');
+    }
+
+    try {
+        // Get student's registered fingerprints
+        const fingerprints = await checkStudentFingerprints(studentName, studentUSN);
+        if (fingerprints.length === 0) {
+            throw new Error('NO_FINGERPRINTS_REGISTERED');
+        }
+
+        const challenge = generateChallenge();
+        const allowCredentials = fingerprints.map(fp => ({
+            id: base64ToArrayBuffer(fp.fingerprint_id),
+            type: 'public-key'
+        }));
+
+        const getCredentialDefaultArgs = {
+            publicKey: {
+                timeout: FINGERPRINT_CONFIG.FINGERPRINT_TIMEOUT,
+                rpId: window.location.hostname,
+                challenge: challenge,
+                allowCredentials: allowCredentials,
+                userVerification: "required"
+            }
+        };
+
+        console.log('🔐 Starting fingerprint authentication...');
+        const assertion = await navigator.credentials.get(getCredentialDefaultArgs);
+        
+        if (!assertion) {
+            throw new Error('Fingerprint authentication was cancelled or failed');
+        }
+
+        // Verify the fingerprint matches the student
+        const credentialId = arrayBufferToBase64(assertion.rawId);
+        const matchingFingerprint = fingerprints.find(fp => fp.fingerprint_id === credentialId);
+        
+        if (!matchingFingerprint) {
+            throw new Error('Fingerprint does not match registered fingerprints');
+        }
+
+        console.log('✅ Fingerprint authenticated successfully');
+        return {
+            success: true,
+            credentialId: credentialId,
+            authenticatedAt: new Date().toISOString()
+        };
+
+    } catch (err) {
+        console.error('❌ Fingerprint authentication error:', err);
+        throw err;
+    }
+}
+
+/**
+ * Show fingerprint registration modal
+ */
+function showFingerprintRegistrationModal(studentName, studentUSN, onSuccess, onCancel) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <h3 style="color: #007bff;">🔐 Fingerprint Setup Required</h3>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h4 style="color: #1976d2; margin-bottom: 15px;">Student: ${studentName}</h4>
+                    <p style="color: #666; margin-bottom: 10px;">USN: <strong>${studentUSN}</strong></p>
+                </div>
+                
+                <p style="margin-bottom: 20px; line-height: 1.6; color: #555;">
+                    You need to register your fingerprint for secure attendance verification. 
+                    This is a one-time setup process.
+                </p>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
+                    <strong style="color: #28a745;">🛡️ Security Benefits:</strong><br>
+                    • Prevents proxy attendance<br>
+                    • Only you can submit your attendance<br>
+                    • Works with any internet connection<br>
+                    • Secure biometric authentication
+                </div>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left; border-left: 4px solid #ffc107;">
+                    <strong style="color: #856404;">📱 Instructions:</strong><br>
+                    1. Click "Register Fingerprint" below<br>
+                    2. Place your finger on the fingerprint sensor<br>
+                    3. Follow the prompts on your device<br>
+                    4. Keep your finger steady until complete
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <button class="modal-btn primary" id="register-fingerprint-btn" style="margin-right: 10px;">
+                    <i class="fas fa-fingerprint"></i> Register Fingerprint
+                </button>
+                <button class="modal-btn secondary" id="cancel-fingerprint-btn">
+                    Cancel
+                </button>
+            </div>
+            
+            <div id="fingerprint-status" style="margin-top: 20px; display: none;"></div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const registerBtn = modal.querySelector('#register-fingerprint-btn');
+    const cancelBtn = modal.querySelector('#cancel-fingerprint-btn');
+    const statusDiv = modal.querySelector('#fingerprint-status');
+    
+    registerBtn.addEventListener('click', async () => {
+        registerBtn.disabled = true;
+        registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = '<p style="color: #007bff;">🔐 Please place your finger on the sensor and follow the prompts...</p>';
+        
+        try {
+            const result = await registerFingerprint(studentName, studentUSN);
+            statusDiv.innerHTML = `<p style="color: #28a745;">✅ Fingerprint registered successfully! (${result.fingerprintCount}/${FINGERPRINT_CONFIG.MAX_FINGERPRINTS_PER_STUDENT})</p>`;
+            
+            setTimeout(() => {
+                modal.remove();
+                onSuccess(result);
+            }, 2000);
+            
+        } catch (err) {
+            console.error('Registration error:', err);
+            statusDiv.innerHTML = `<p style="color: #dc3545;">❌ Registration failed: ${err.message}</p>`;
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-fingerprint"></i> Try Again';
+        }
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+        onCancel();
+    });
+    
+    // Close on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+            onCancel();
+        }
+    });
+}
+
+/**
+ * Show fingerprint authentication modal
+ */
+function showFingerprintAuthModal(studentName, studentUSN, onSuccess, onFailed) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <div class="modal-header">
+                <h3 style="color: #007bff;">🔐 Fingerprint Verification</h3>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <h4 style="color: #1976d2; margin-bottom: 10px;">${studentName}</h4>
+                    <p style="color: #666; margin: 0;">USN: <strong>${studentUSN}</strong></p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; margin: 20px 0;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">👆</div>
+                    <p style="color: #555; margin: 0; font-weight: 500;">
+                        Place your finger on the sensor to verify your identity
+                    </p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <button class="modal-btn primary" id="authenticate-fingerprint-btn" style="margin-right: 10px;">
+                    <i class="fas fa-fingerprint"></i> Scan Fingerprint
+                </button>
+                <button class="modal-btn secondary" id="cancel-auth-btn">
+                    Cancel
+                </button>
+            </div>
+            
+            <div id="auth-status" style="margin-top: 20px; display: none;"></div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const authBtn = modal.querySelector('#authenticate-fingerprint-btn');
+    const cancelBtn = modal.querySelector('#cancel-auth-btn');
+    const statusDiv = modal.querySelector('#auth-status');
+    
+    authBtn.addEventListener('click', async () => {
+        authBtn.disabled = true;
+        authBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Scanning...';
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = '<p style="color: #007bff;">🔐 Scanning fingerprint... Please keep your finger steady</p>';
+        
+        try {
+            const result = await authenticateFingerprint(studentName, studentUSN);
+            statusDiv.innerHTML = '<p style="color: #28a745;">✅ Fingerprint verified successfully!</p>';
+            
+            setTimeout(() => {
+                modal.remove();
+                onSuccess(result);
+            }, 1500);
+            
+        } catch (err) {
+            console.error('Authentication error:', err);
+            statusDiv.innerHTML = `<p style="color: #dc3545;">❌ Verification failed: ${err.message}</p>`;
+            authBtn.disabled = false;
+            authBtn.innerHTML = '<i class="fas fa-fingerprint"></i> Try Again';
+        }
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+        onFailed();
+    });
+    
+    // Auto-start authentication after 1 second
+    setTimeout(() => {
+        if (document.body.contains(modal)) {
+            authBtn.click();
+        }
+    }, 1000);
+}
+
+/**
+ * Enhanced attendance submission with fingerprint authentication
+ */
+async function submitAttendanceWithFingerprint() {
+    const selectedRadio = document.querySelector('input[name="student"]:checked');
+    if (!selectedRadio) {
+        return alert("Please select your name.");
+    }
+
+    const sessionId = new URLSearchParams(window.location.search).get('session');
+    if (!sessionId) {
+        return alert("Invalid or missing session. Please scan the QR code again.");
+    }
+
+    const studentName = selectedRadio.value;
+    const studentUSN = selectedRadio.getAttribute('data-usn');
+
+    // Check if fingerprint authentication is supported
+    if (FINGERPRINT_CONFIG.ENABLE_FINGERPRINT && !isFingerprintSupported()) {
+        if (!FINGERPRINT_CONFIG.ALLOW_BACKUP_AUTH) {
+            return alert('Fingerprint authentication is required but not supported on this device. Please use a device with fingerprint capability.');
+        }
+        console.warn('Fingerprint not supported, proceeding with backup authentication');
+    }
+
+    const submitBtn = document.getElementById('submit-attendance');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Checking Fingerprint Registration...';
+    }
+
+    try {
+        let fingerprintResult = null;
+
+        // Skip fingerprint if not enabled or not supported with backup allowed
+        if (FINGERPRINT_CONFIG.ENABLE_FINGERPRINT && isFingerprintSupported()) {
+            // Check if student has registered fingerprints
+            const existingFingerprints = await checkStudentFingerprints(studentName, studentUSN);
+            
+            if (existingFingerprints.length === 0) {
+                // No fingerprints registered - show registration modal
+                fingerprintResult = await new Promise((resolve, reject) => {
+                    showFingerprintRegistrationModal(
+                        studentName, 
+                        studentUSN,
+                        (result) => {
+                            // After registration, immediately authenticate
+                            showFingerprintAuthModal(
+                                studentName,
+                                studentUSN,
+                                resolve,
+                                () => reject(new Error('Authentication cancelled after registration'))
+                            );
+                        },
+                        () => reject(new Error('Fingerprint registration cancelled'))
+                    );
+                });
+            } else {
+                // Fingerprints exist - authenticate
+                fingerprintResult = await new Promise((resolve, reject) => {
+                    showFingerprintAuthModal(
+                        studentName,
+                        studentUSN,
+                        resolve,
+                        () => reject(new Error('Fingerprint authentication cancelled'))
+                    );
+                });
+            }
+        }
+
+        if (submitBtn) {
+            submitBtn.textContent = 'Verifying Location...';
+        }
+
+        // Continue with location validation (from previous mobile-friendly system)
+        const validationData = await getLocationBasedValidation();
+        
+        // All the existing location and behavior validations...
+        if (MOBILE_FRIENDLY_CONFIG.ENABLE_LOCATION_CHECK) {
+            if (validationData.location.error) {
+                throw new Error('GPS location is required for attendance. Please enable location access and try again.');
+            }
+            
+            if (validationData.location.accuracy > MOBILE_FRIENDLY_CONFIG.MIN_GPS_ACCURACY) {
+                throw new Error(`GPS accuracy too low (${Math.round(validationData.location.accuracy)}m). Please move to an open area and try again.`);
+            }
+            
+            // Distance check
+            const adminLocation = await getAdminLocationForSession(sessionId);
+            if (adminLocation) {
+                const distance = calculateGPSDistance(
+                    validationData.location.latitude,
+                    validationData.location.longitude,
+                    adminLocation.lat,
+                    adminLocation.lon
+                );
+                
+                if (distance > MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN) {
+                    throw new Error(`You are ${Math.round(distance)}m away from the classroom. Maximum allowed distance is ${MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN}m.`);
+                }
+            }
+        }
+
+        // Time and behavior validations...
+        const currentHour = new Date().getHours();
+        if (currentHour < MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.start || 
+            currentHour > MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.end) {
+            throw new Error(`Attendance can only be submitted between ${MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.start}:00 and ${MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.end}:00.`);
+        }
+
+        if (submitBtn) {
+            submitBtn.textContent = 'Submitting Attendance...';
+        }
+
+        // Submit attendance with fingerprint data
+        const attendanceData = {
+            student: studentName,
+            usn: studentUSN,
+            session_id: sessionId,
+            device_id: validationData.deviceId,
+            validation_data: JSON.stringify(validationData),
+            location_verified: true,
+            gps_accuracy: validationData.location.accuracy,
+            fingerprint_verified: !!fingerprintResult,
+            fingerprint_credential_id: fingerprintResult?.credentialId || null,
+            authenticated_at: fingerprintResult?.authenticatedAt || null
+        };
+
+        const { error } = await supabaseClient
+            .from('attendance')
+            .insert(attendanceData);
+
+        if (error?.code === '23505') {
+            alert("You have already submitted your attendance for this session.");
+        } else if (error) {
+            throw error;
+        } else {
+            // Success
+            const selectionPage = document.getElementById('student-selection-page');
+            const successPage = document.getElementById('success-page');
+            
+            if (selectionPage) selectionPage.style.display = 'none';
+            if (successPage) successPage.style.display = 'block';
+            
+            console.log('✅ Attendance submitted successfully with fingerprint verification');
+            
+            // Show success message with verification details
+            setTimeout(() => {
+                alert(`✅ Attendance submitted successfully!\n\n🔐 Fingerprint: ${fingerprintResult ? 'Verified' : 'Not used'}\n📍 Location: Verified\n⏰ Time: ${new Date().toLocaleTimeString()}`);
+            }, 500);
+        }
+
+    } catch (err) {
+        console.error('Attendance submission error:', err);
+        let errorMessage = err.message;
+        
+        if (err.message === 'NO_FINGERPRINTS_REGISTERED') {
+            errorMessage = 'Please register your fingerprint first to submit attendance.';
+        }
+        
+        alert("Failed to submit attendance: " + errorMessage);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Attendance';
+        }
+    }
+}
+
+/**
+ * Initialize fingerprint system
+ */
+function initializeFingerprintSystem() {
+    console.log('🔐 Initializing fingerprint authentication system...');
+    
+    // Check browser support
+    if (!isFingerprintSupported()) {
+        console.warn('⚠️ Fingerprint authentication not supported on this browser/device');
+        if (FINGERPRINT_CONFIG.REQUIRE_FINGERPRINT && !FINGERPRINT_CONFIG.ALLOW_BACKUP_AUTH) {
+            alert('This system requires fingerprint authentication, but your device/browser does not support it. Please use a compatible device.');
+        }
+    } else {
+        console.log('✅ Fingerprint authentication supported');
+    }
+    
+    // Replace the submit button event listener for students
+    if (window.location.pathname.includes('student.html')) {
+        const submitBtn = document.getElementById('submit-attendance');
+        if (submitBtn) {
+            // Remove all existing event listeners
+            const newSubmitBtn = submitBtn.cloneNode(true);
+            submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+            
+            // Add new event listener
+            newSubmitBtn.addEventListener('click', submitAttendanceWithFingerprint);
+        }
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize user interaction tracking (from previous system)
+    initializeUserInteractionTracking();
+    
+    // Initialize fingerprint system
+    initializeFingerprintSystem();
+});
+
+console.log('🔐 Fingerprint attendance system loaded:', {
+    enabled: FINGERPRINT_CONFIG.ENABLE_FINGERPRINT,
+    required: FINGERPRINT_CONFIG.REQUIRE_FINGERPRINT,
+    maxFingerprintsPerStudent: FINGERPRINT_CONFIG.MAX_FINGERPRINTS_PER_STUDENT,
+    browserSupport: isFingerprintSupported()
+});
+// In script.js
+// Faculty dashboard for monitoring fingerprint verification
+async function updatePresentStudentsListWithFingerprint(attendanceData) {
+    const listElement = document.getElementById('present-students-list');
+    updatePresentCount(attendanceData.length);
+
+    if (!listElement) return;
+    listElement.innerHTML = '';
+
+    if (attendanceData.length === 0) {
+        listElement.innerHTML = '<div class="student-item" style="opacity: 0.5; font-style: italic;">No students present</div>';
+        return;
+    }
+
+    attendanceData.forEach(record => {
+        const studentDiv = document.createElement('div');
+        studentDiv.className = 'student-item';
+        
+        // Create verification badges
+        const fingerprintBadge = record.fingerprint_verified 
+            ? '<span class="verification-badge fingerprint-verified">🔐 Verified</span>'
+            : '<span class="verification-badge fingerprint-missing">❌ No Biometric</span>';
+            
+        const locationBadge = record.location_verified
+            ? '<span class="verification-badge location-verified">📍 Location OK</span>'
+            : '<span class="verification-badge location-missing">❌ No GPS</span>';
+
+        studentDiv.innerHTML = `
+            <div style="flex-grow: 1;">
+                <div class="student-name-with-badges">
+                    <span class="student-name">${record.student}</span>
+                    <sub style="color: #666; display: block; margin-top: 2px;">${record.usn || 'N/A'}</sub>
+                </div>
+                <div class="verification-badges" style="margin-top: 8px;">
+                    ${fingerprintBadge}
+                    ${locationBadge}
+                </div>
+                <div class="timestamp" style="font-size: 11px; color: #888; margin-top: 4px;">
+                    ${new Date(record.timestamp).toLocaleTimeString()}
+                </div>
+            </div>
+            <button class="remove-btn" onclick="removeStudentFromSession('${record.student.replace(/'/g, "\\'")}')">Remove</button>
+        `;
+        listElement.appendChild(studentDiv);
+    });
+}
+
+// Enhanced session details view with fingerprint information
+async function viewSessionDetailsWithFingerprint(sessionId, sessionName) {
+    const listContainer = document.getElementById('session-list-container');
+    const detailsContainer = document.getElementById('session-details-container');
+    const detailsDisplay = document.getElementById('session-details-display');
+    const detailsTitle = document.getElementById('session-details-title');
+    
+    if (listContainer) listContainer.style.display = 'none';
+    if (detailsContainer) detailsContainer.style.display = 'block';
+    if (detailsTitle) detailsTitle.textContent = `Attendance for: ${sessionName}`;
+    if (detailsDisplay) detailsDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('student, usn, timestamp, fingerprint_verified, location_verified, gps_accuracy, fingerprint_credential_id')
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: true });
+            
+        if (error) throw error;
+        
+        if (!detailsDisplay) return;
+        
+        // Add summary statistics
+        const totalStudents = data.length;
+        const fingerprintVerified = data.filter(r => r.fingerprint_verified).length;
+        const locationVerified = data.filter(r => r.location_verified).length;
+        const fullyVerified = data.filter(r => r.fingerprint_verified && r.location_verified).length;
+        
+        const summaryHTML = `
+            <div class="verification-summary" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 4px solid #007bff;">
+                <h4 style="margin-bottom: 15px; color: #333;">📊 Verification Summary</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="summary-stat">
+                        <div style="font-size: 24px; font-weight: bold; color: #007bff;">${totalStudents}</div>
+                        <div style="color: #666; font-size: 14px;">Total Submissions</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div style="font-size: 24px; font-weight: bold; color: #28a745;">${fingerprintVerified}</div>
+                        <div style="color: #666; font-size: 14px;">Fingerprint Verified</div>
+                        <div style="color: #28a745; font-size: 12px;">${totalStudents > 0 ? Math.round(fingerprintVerified/totalStudents*100) : 0}%</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div style="font-size: 24px; font-weight: bold; color: #17a2b8;">${locationVerified}</div>
+                        <div style="color: #666; font-size: 14px;">Location Verified</div>
+                        <div style="color: #17a2b8; font-size: 12px;">${totalStudents > 0 ? Math.round(locationVerified/totalStudents*100) : 0}%</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div style="font-size: 24px; font-weight: bold; color: #6f42c1;">${fullyVerified}</div>
+                        <div style="color: #666; font-size: 14px;">Fully Verified</div>
+                        <div style="color: #6f42c1; font-size: 12px;">${totalStudents > 0 ? Math.round(fullyVerified/totalStudents*100) : 0}%</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        detailsDisplay.innerHTML = summaryHTML;
+        
+        if (!data || data.length === 0) {
+            detailsDisplay.innerHTML += '<div class="no-students-message">No attendance recorded.</div>';
+            return;
+        }
+        
+        data.forEach(record => {
+            const item = document.createElement('div');
+            item.className = 'student-item detailed-attendance-item';
+            
+            const fingerprintStatus = record.fingerprint_verified 
+                ? '<span class="verification-badge fingerprint-verified">🔐 Fingerprint</span>'
+                : '<span class="verification-badge fingerprint-missing">❌ No Biometric</span>';
+                
+            const locationStatus = record.location_verified
+                ? `<span class="verification-badge location-verified">📍 GPS (${Math.round(record.gps_accuracy)}m)</span>`
+                : '<span class="verification-badge location-missing">❌ No Location</span>';
+            
+            item.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <div class="student-name" style="margin-bottom: 8px;">
+                        ${record.student} 
+                        <sub style="color: #666;">${record.usn || ''}</sub>
+                    </div>
+                    <div class="verification-badges" style="margin-bottom: 5px;">
+                        ${fingerprintStatus}
+                        ${locationStatus}
+                    </div>
+                </div>
+                <div class="timestamp-column" style="text-align: right; color: #666; font-size: 13px;">
+                    ${new Date(record.timestamp).toLocaleTimeString()}
+                </div>
+            `;
+            detailsDisplay.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Error loading session details:', err);
+        if (detailsDisplay) {
+            detailsDisplay.innerHTML = '<div class="no-students-message">Could not load details.</div>';
+        }
+    }
+}
+
+// Add fingerprint management to student list modal
+async function showStudentListModalWithFingerprint() {
+    const modal = document.getElementById('student-list-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        await populateStudentListDisplayWithFingerprint();
+    }
+}
+
+async function populateStudentListDisplayWithFingerprint(searchTerm = '') {
+    const display = document.getElementById('student-list-display');
+    const countEl = document.getElementById('total-student-count');
+    if (!display || !countEl) return;
+
+    const studentsToDisplay = allStudents.filter(s => 
+        searchTerm === '' || 
+        s.name.toLowerCase().includes(searchTerm) || 
+        (s.usn && s.usn.toLowerCase().includes(searchTerm))
+    );
+    
+    countEl.textContent = studentsToDisplay.length;
+    display.innerHTML = '<div class="student-item">Loading fingerprint data...</div>';
+    
+    try {
+        // Get fingerprint data for all students
+        const { data: fingerprintData, error } = await supabaseClient
+            .from('student_fingerprints')
+            .select('student_name, student_usn, COUNT(*)')
+            .eq('is_active', true);
+            
+        if (error) throw error;
+        
+        // Create a map of student fingerprint counts
+        const fingerprintCounts = {};
+        if (fingerprintData) {
+            fingerprintData.forEach(record => {
+                const key = `${record.student_name}_${record.student_usn}`;
+                fingerprintCounts[key] = (fingerprintCounts[key] || 0) + 1;
+            });
+        }
+        
+        display.innerHTML = '';
+        
+        if (studentsToDisplay.length === 0) {
+            display.innerHTML = '<div class="no-students-message">No students found.</div>';
+        } else {
+            studentsToDisplay.forEach(student => {
+                const item = document.createElement('div');
+                item.className = 'student-list-item';
+                
+                const fingerprintCount = fingerprintCounts[`${student.name}_${student.usn}`] || 0;
+                const fingerprintStatus = fingerprintCount > 0 
+                    ? `<span class="verification-badge fingerprint-verified">🔐 ${fingerprintCount} fingerprint(s)</span>`
+                    : `<span class="verification-badge fingerprint-missing">❌ No fingerprints</span>`;
+                
+                item.innerHTML = `
+                    <div style="flex-grow: 1;">
+                        <span class="student-name">${student.name}</span>
+                        <sub style="color: #666; display: block; margin-top: 2px;">${student.usn || 'N/A'}</sub>
+                        <div style="margin-top: 5px;">${fingerprintStatus}</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        ${fingerprintCount > 0 ? `
+                            <button class="modal-btn secondary" onclick="manageFingerprintsForStudent('${student.name.replace(/'/g, "\\'")}', '${student.usn}')" style="font-size: 12px; padding: 6px 12px;">
+                                Manage Fingerprints
+                            </button>
+                        ` : `
+                            <button class="modal-btn primary" onclick="helpStudentRegisterFingerprint('${student.name.replace(/'/g, "\\'")}', '${student.usn}')" style="font-size: 12px; padding: 6px 12px;">
+                                Help Register
+                            </button>
+                        `}
+                        <button class="delete-student-btn" onclick="deleteStudent('${student.name.replace(/'/g, "\\'")}')">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                `;
+                display.appendChild(item);
+            });
+        }
+    } catch (err) {
+        console.error('Error loading fingerprint data:', err);
+        display.innerHTML = '<div class="no-students-message">Error loading student data.</div>';
+    }
+}
+
+function manageFingerprintsForStudent(studentName, studentUSN) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>🔐 Manage Fingerprints - ${studentName}</h3>
+                <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div style="margin: 20px 0;">
+                <p><strong>Student:</strong> ${studentName}</p>
+                <p><strong>USN:</strong> ${studentUSN}</p>
+            </div>
+            <div id="fingerprint-list-container">
+                <div class="student-item">Loading fingerprints...</div>
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="modal-btn secondary" onclick="this.closest('.modal').remove()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    loadStudentFingerprints(studentName, studentUSN, modal.querySelector('#fingerprint-list-container'));
+}
+
+async function loadStudentFingerprints(studentName, studentUSN, container) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('student_fingerprints')
+            .select('id, fingerprint_id, registered_at, last_used, is_active')
+            .eq('student_name', studentName)
+            .eq('student_usn', studentUSN)
+            .order('registered_at', { ascending: false });
+            
+        if (error) throw error;
+        
+        container.innerHTML = '';
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="no-students-message">No fingerprints registered for this student.</div>';
+            return;
+        }
+        
+        data.forEach((fingerprint, index) => {
+            const item = document.createElement('div');
+            item.className = 'student-list-item';
+            
+            const statusBadge = fingerprint.is_active 
+                ? '<span class="verification-badge fingerprint-verified">Active</span>'
+                : '<span class="verification-badge fingerprint-missing">Inactive</span>';
+            
+            item.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <div class="student-name">Fingerprint #${index + 1}</div>
+                    <small style="color: #666; display: block; margin-top: 2px;">
+                        Registered: ${new Date(fingerprint.registered_at).toLocaleDateString()}<br>
+                        Last Used: ${fingerprint.last_used ? new Date(fingerprint.last_used).toLocaleDateString() : 'Never'}
+                    </small>
+                    <div style="margin-top: 5px;">${statusBadge}</div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    ${fingerprint.is_active ? `
+                        <button class="delete-student-btn" onclick="deactivateFingerprint(${fingerprint.id}, '${studentName.replace(/'/g, "\\'")}', '${studentUSN}')" style="font-size: 12px;">
+                            Deactivate
+                        </button>
+                    ` : `
+                        <button class="modal-btn primary" onclick="reactivateFingerprint(${fingerprint.id}, '${studentName.replace(/'/g, "\\'")}', '${studentUSN}')" style="font-size: 12px;">
+                            Reactivate
+                        </button>
+                    `}
+                    <button class="delete-student-btn" onclick="deleteFingerprint(${fingerprint.id}, '${studentName.replace(/'/g, "\\'")}', '${studentUSN}')" style="background: #dc3545; font-size: 12px;">
+                        Delete
+                    </button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+        
+    } catch (err) {
+        console.error('Error loading fingerprints:', err);
+        container.innerHTML = '<div class="no-students-message">Error loading fingerprint data.</div>';
+    }
+}
+
+async function deactivateFingerprint(fingerprintId, studentName, studentUSN) {
+    if (!confirm(`Deactivate this fingerprint for ${studentName}?`)) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('student_fingerprints')
+            .update({ is_active: false })
+            .eq('id', fingerprintId);
+            
+        if (error) throw error;
+        
+        // Reload the fingerprint list
+        const container = document.querySelector('#fingerprint-list-container');
+        if (container) {
+            await loadStudentFingerprints(studentName, studentUSN, container);
+        }
+        
+        alert('Fingerprint deactivated successfully.');
+    } catch (err) {
+        console.error('Error deactivating fingerprint:', err);
+        alert('Failed to deactivate fingerprint: ' + err.message);
+    }
+}
+
+async function reactivateFingerprint(fingerprintId, studentName, studentUSN) {
+    try {
+        const { error } = await supabaseClient
+            .from('student_fingerprints')
+            .update({ is_active: true })
+            .eq('id', fingerprintId);
+            
+        if (error) throw error;
+        
+        // Reload the fingerprint list
+        const container = document.querySelector('#fingerprint-list-container');
+        if (container) {
+            await loadStudentFingerprints(studentName, studentUSN, container);
+        }
+        
+        alert('Fingerprint reactivated successfully.');
+    } catch (err) {
+        console.error('Error reactivating fingerprint:', err);
+        alert('Failed to reactivate fingerprint: ' + err.message);
+    }
+}
+
+async function deleteFingerprint(fingerprintId, studentName, studentUSN) {
+    if (!confirm(`Permanently delete this fingerprint for ${studentName}?\n\nThis action cannot be undone.`)) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('student_fingerprints')
+            .delete()
+            .eq('id', fingerprintId);
+            
+        if (error) throw error;
+        
+        // Reload the fingerprint list
+        const container = document.querySelector('#fingerprint-list-container');
+        if (container) {
+            await loadStudentFingerprints(studentName, studentUSN, container);
+        }
+        
+        alert('Fingerprint deleted successfully.');
+    } catch (err) {
+        console.error('Error deleting fingerprint:', err);
+        alert('Failed to delete fingerprint: ' + err.message);
+    }
+}
+
+function helpStudentRegisterFingerprint(studentName, studentUSN) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div class="modal-header">
+                <h3>📱 Help Student Register Fingerprint</h3>
+                <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <h4 style="color: #1976d2; margin-bottom: 10px;">Student: ${studentName}</h4>
+                    <p style="color: #666; margin: 0;">USN: <strong>${studentUSN}</strong></p>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left; border-left: 4px solid #ffc107;">
+                    <h4 style="color: #856404; margin-bottom: 15px;">📋 Instructions for Student:</h4>
+                    <ol style="color: #856404; line-height: 1.6;">
+                        <li><strong>Open student attendance page</strong> on their device</li>
+                        <li><strong>Select their name</strong> from the list</li>
+                        <li><strong>Click "Submit Attendance"</strong></li>
+                        <li><strong>Follow fingerprint registration</strong> prompts</li>
+                        <li><strong>Complete location verification</strong></li>
+                    </ol>
+                </div>
+                
+                <div style="background: #d4edda; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left; border-left: 4px solid #28a745;">
+                    <h4 style="color: #155724; margin-bottom: 10px;">✅ Requirements:</h4>
+                    <ul style="color: #155724; line-height: 1.6;">
+                        <li>Device with fingerprint sensor</li>
+                        <li>Modern browser (Chrome, Safari, Firefox)</li>
+                        <li>Location permission enabled</li>
+                        <li>Clean, dry finger for scanning</li>
+                    </ul>
+                </div>
+                
+                <div style="background: #f8d7da; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left; border-left: 4px solid #dc3545;">
+                    <h4 style="color: #721c24; margin-bottom: 10px;">⚠️ Troubleshooting:</h4>
+                    <ul style="color: #721c24; line-height: 1.6;">
+                        <li>Clean fingerprint sensor before scanning</li>
+                        <li>Try different finger if first fails</li>
+                        <li>Ensure finger covers entire sensor</li>
+                        <li>Update browser if registration fails</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <button class="modal-btn primary" onclick="copyRegistrationLink('${studentName}', '${studentUSN}')">
+                    📋 Copy Registration Link
+                </button>
+                <button class="modal-btn secondary" onclick="this.closest('.modal').remove()" style="margin-left: 10px;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function copyRegistrationLink(studentName, studentUSN) {
+    // Generate a direct link to student page (if you have session active)
+    const baseUrl = window.location.origin;
+    const studentUrl = `${baseUrl}/student.html${currentSession ? '?session=' + currentSession.id : ''}`;
+    
+    navigator.clipboard.writeText(studentUrl).then(() => {
+        alert(`Registration link copied!\n\nShare this link with ${studentName}:\n${studentUrl}\n\nThey should:\n1. Open the link on their device\n2. Select their name\n3. Follow fingerprint registration prompts`);
+    }).catch(() => {
+        alert(`Registration Link for ${studentName}:\n\n${studentUrl}\n\nManually share this link with the student.`);
+    });
+}
+
+// Add CSS for verification badges
+function addFingerprintVerificationCSS() {
+    if (document.getElementById('fingerprint-verification-css')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'fingerprint-verification-css';
+    style.textContent = `
+        .verification-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .verification-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: inline-block;
+            line-height: 1.2;
+        }
+        
+        .verification-badge.fingerprint-verified {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .verification-badge.fingerprint-missing {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .verification-badge.location-verified {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+        
+        .verification-badge.location-missing {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .verification-summary {
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .summary-stat {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .detailed-attendance-item {
+            border-left: 4px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .detailed-attendance-item:hover {
+            border-left-color: #007bff;
+            background: rgba(0,123,255,0.05);
+        }
+        
+        .student-name-with-badges .student-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* Enhanced modal styles for fingerprint management */
+        .modal-content h3 {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Responsive design for verification badges */
+        @media (max-width: 768px) {
+            .verification-badges {
+                margin-top: 8px;
+            }
+            
+            .verification-badge {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+            
+            .verification-summary {
+                padding: 15px;
+            }
+            
+            .verification-summary > div {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// Enhanced export function with fingerprint data
+async function exportAttendanceCSVWithFingerprint() {
+    if (!currentSession) {
+        return alert("Please start a session to export attendance.");
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('student, usn, timestamp, fingerprint_verified, location_verified, gps_accuracy, fingerprint_credential_id')
+            .eq('session_id', currentSession.id);
+            
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            return alert("No attendance data to export for this session.");
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Student,USN,Timestamp,Fingerprint Verified,Location Verified,GPS Accuracy (m),Session,Verification Level\n";
+        
+        csvContent += data.map(e => {
+            const verificationLevel = e.fingerprint_verified && e.location_verified ? 'Fully Verified' :
+                                    e.fingerprint_verified ? 'Fingerprint Only' :
+                                    e.location_verified ? 'Location Only' : 'Basic';
+            
+            return `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${e.fingerprint_verified ? 'Yes' : 'No'}","${e.location_verified ? 'Yes' : 'No'}","${Math.round(e.gps_accuracy || 0)}","${currentSession.session_name}","${verificationLevel}"`;
+        }).join("\n");
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", `attendance_${currentSession.session_name}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('✅ Enhanced attendance exported with fingerprint data');
+    } catch (err) {
+        console.error('Error exporting attendance:', err);
+        alert('Failed to export attendance: ' + err.message);
+    }
+}
+
+// Initialize enhanced faculty dashboard
+function initializeEnhancedFacultyDashboard() {
+    // Add CSS for verification badges
+    addFingerprintVerificationCSS();
+    
+    // Override existing functions with enhanced versions
+    window.updatePresentStudentsList = updatePresentStudentsListWithFingerprint;
+    window.viewSessionDetails = viewSessionDetailsWithFingerprint;
+    window.showStudentListModal = showStudentListModalWithFingerprint;
+    window.populateStudentListDisplay = populateStudentListDisplayWithFingerprint;
+    window.exportAttendanceCSV = exportAttendanceCSVWithFingerprint;
+    
+    console.log('✅ Enhanced faculty dashboard with fingerprint monitoring initialized');
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    if (!window.location.pathname.includes('student.html')) {
+        // This is faculty dashboard
+        setTimeout(initializeEnhancedFacultyDashboard, 1000);
+    }
+});
+
+console.log('🔐 Faculty fingerprint monitoring dashboard loaded');
 function setupStudentEventListeners() {
     const submitBtn = document.getElementById('submit-attendance');
     const closeBtn = document.getElementById('close-success');
