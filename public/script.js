@@ -2135,7 +2135,31 @@ function showLocationPermissionRequest() {
     `;
     document.body.appendChild(modal);
 }
+// In script.js
 
+function setupStudentEventListeners() {
+    const submitBtn = document.getElementById('submit-attendance');
+    const closeBtn = document.getElementById('close-success');
+    const searchInput = document.getElementById('student-search');
+
+    if (submitBtn) {
+        // REMOVE the original event listener
+        // submitBtn.addEventListener('click', submitAttendance); 
+        
+        // ADD the new, secure event listener
+        submitBtn.addEventListener('click', submitAttendanceWithLocationValidation); 
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => window.close());
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => 
+            populateStudentListForSelection(e.target.value.toLowerCase().trim())
+        );
+    }
+}
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('student.html')) {
@@ -2159,7 +2183,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.startSessionForCourse = startSessionWithLocationTracking;
     }
 });
-
 console.log('📱 Mobile-friendly proxy prevention loaded:', {
     locationCheck: MOBILE_FRIENDLY_CONFIG.ENABLE_LOCATION_CHECK,
     maxDistance: MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN + 'm',
