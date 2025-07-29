@@ -759,6 +759,9 @@ async function fetchAllSessions() {
     }
 }
 // New function to display sessions with search, sort, and pagination
+// In script.js
+
+// This function now correctly renders the sessions with search and pagination
 function displaySessions() {
     const listDisplay = document.getElementById('session-list-display');
     const searchInput = document.getElementById('session-history-search');
@@ -773,54 +776,43 @@ function displaySessions() {
     });
 
     // 2. Sort sessions
-    const sortBy = sortSelect.value;
-    filteredSessions.sort((a, b) => {
-        switch (sortBy) {
-            case 'oldest':
-                return new Date(a.created_at) - new Date(b.created_at);
-            case 'name_asc':
-                return a.session_name.localeCompare(b.session_name);
-            case 'name_desc':
-                return b.session_name.localeCompare(a.session_name);
-            case 'newest':
-            default:
-                return new Date(b.created_at) - new Date(a.created_at);
-        }
-    });
+    if (sortSelect) {
+        const sortBy = sortSelect.value;
+        filteredSessions.sort((a, b) => {
+            switch (sortBy) {
+                case 'oldest':
+                    return new Date(a.created_at) - new Date(b.created_at);
+                case 'name_asc':
+                    return a.session_name.localeCompare(b.session_name);
+                case 'name_desc':
+                    return b.session_name.localeCompare(a.session_name);
+                case 'newest':
+                default:
+                    return new Date(b.created_at) - new Date(a.created_at);
+            }
+        });
+    }
 
     // 3. Paginate sessions
     const startIndex = (currentPage - 1) * sessionsPerPage;
     const endIndex = startIndex + sessionsPerPage;
     const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
 
-    // 4. Render the list
-    listDisplay.innerHTML = '';
-    if (paginatedSessions.length === 0) {
-        listDisplay.innerHTML = '<div class="no-students-message">No sessions found.</div>';
-    } else {
-        paginatedSessions.forEach(session => {
-            const item = document.createElement('div');
-            item.className = 'student-list-item';
-            const courseName = session.courses ? session.courses.course_name : 'General';
-            const courseId = session.courses ? `(${session.courses.course_id || 'No ID'})` : '';
+    // 4. Render the list by calling renderGroupedSessions
+    renderGroupedSessions(paginatedSessions.reduce((acc, session) => {
+        const date = new Date(session.created_at).toLocaleDateString('en-CA');
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(session);
+        return acc;
+    }, {}));
 
-            item.innerHTML = `
-                <div style="flex-grow: 1;">
-                    <span class="student-name">${session.session_name}</span>
-                    <small style="display: block; color: #6f42c1; margin-top: 5px;">
-                        <strong>Course:</strong> ${courseName} ${courseId}
-                    </small>
-                    <small style="display: block; color: #666; margin-top: 5px;">
-                        <strong>Date:</strong> ${new Date(session.created_at).toLocaleString()}
-                    </small>
-                </div>
-                <button class="add-student-btn" onclick="viewSessionDetails(${session.id}, '${session.session_name.replace(/'/g, "\\'")}')">
-                    <i class="fas fa-eye"></i> View Details
-                </button>
-            `;
-            listDisplay.appendChild(item);
-        });
-    }
+    // 5. Render pagination controls
+    renderPaginationControls(filteredSessions.length);
+}
+
+// This function was missing but is now included
 function renderGroupedSessions(groupedSessions) {
     const listDisplay = document.getElementById('session-list-display');
     listDisplay.innerHTML = '';
@@ -866,7 +858,7 @@ function renderGroupedSessions(groupedSessions) {
     }
 }
 
-// New function to edit a session
+// This function was also missing
 async function editSession(sessionId, currentName) {
     const newName = prompt(`Enter new name for "${currentName}":`, currentName);
     if (!newName || !newName.trim()) return;
@@ -887,7 +879,7 @@ async function editSession(sessionId, currentName) {
     }
 }
 
-// New function to "soft delete" (archive) a session
+// And this function was missing as well
 async function archiveSession(sessionId, sessionName) {
     if (!confirm(`Are you sure you want to delete the session "${sessionName}"? This will archive it but preserve its history.`)) {
         return;
