@@ -643,11 +643,11 @@ async function populateCoursesList() {
     listDisplay.innerHTML = '<div class="student-item" style="text-align: center; padding: 20px;">Loading courses...</div>';
 
     try {
-        // Fetch courses without ordering by created_at since it doesn't exist
+        // Fetch courses ordered by database ID
         const { data: courses, error } = await supabaseClient
             .from('courses')
             .select('*')
-            .order('id', { ascending: false }); // Order by id instead
+            .order('id', { ascending: false });
 
         if (error) {
             console.error('Error fetching courses:', error);
@@ -674,12 +674,15 @@ async function populateCoursesList() {
                 <div style="flex-grow: 1;">
                     <span class="student-name">${course.course_name}</span>
                     <small style="display: block; color: #666; margin-top: 5px;">
-                        Course ID: ${course.id}
+                        Course ID: <strong>${course.course_id || 'Not Set'}</strong> | Database ID: ${course.id}
                     </small>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <button class="add-student-btn" onclick="editCourse(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                        ✏️ Edit
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <button class="add-student-btn" onclick="editCourseName(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                        ✏️ Edit Name
+                    </button>
+                    <button class="add-student-btn" onclick="editCourseId(${course.id}, '${(course.course_id || '').replace(/'/g, "\\'")}')">
+                        🏷️ Edit ID
                     </button>
                     <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
                         ⚙️ Manage
@@ -707,13 +710,23 @@ async function populateCoursesList() {
         `;
     }
 }
+
 async function createNewCourse() {
     const courseNameInput = document.getElementById('new-course-name');
+    const courseIdInput = document.getElementById('new-course-id');
+    
     if (!courseNameInput) return;
 
     const courseName = courseNameInput.value.trim();
+    const courseId = courseIdInput ? courseIdInput.value.trim() : '';
+    
     if (!courseName) {
         return alert('Please enter a course name.');
+    }
+
+    // Validate course ID format if provided
+    if (courseId && !/^[A-Za-z0-9_-]+$/.test(courseId)) {
+        return alert('Course ID can only contain letters, numbers, hyphens, and underscores.');
     }
 
     // Show loading state
@@ -723,16 +736,35 @@ async function createNewCourse() {
     createBtn.textContent = 'Creating...';
 
     try {
+        // Check if course ID already exists (if provided)
+        if (courseId) {
+            const { data: existingCourse, error: checkError } = await supabaseClient
+                .from('courses')
+                .select('id')
+                .eq('course_id', courseId)
+                .single();
+
+            if (existingCourse && !checkError) {
+                alert(`Error: A course with ID "${courseId}" already exists.`);
+                return;
+            }
+        }
+
         // Insert the new course
+        const courseData = { course_name: courseName };
+        if (courseId) {
+            courseData.course_id = courseId;
+        }
+
         const { data: newCourse, error } = await supabaseClient
             .from('courses')
-            .insert({ course_name: courseName })
+            .insert(courseData)
             .select('*')
             .single();
 
         if (error) {
             if (error.code === '23505') {
-                alert(`Error: A course named "${courseName}" already exists.`);
+                alert(`Error: A course with this name or ID already exists.`);
             } else {
                 console.error('Create course error:', error);
                 throw error;
@@ -740,8 +772,9 @@ async function createNewCourse() {
             return;
         }
 
-        // Clear the input field
+        // Clear the input fields
         courseNameInput.value = '';
+        if (courseIdInput) courseIdInput.value = '';
         
         // Add a small delay to ensure the database transaction is complete
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -749,7 +782,7 @@ async function createNewCourse() {
         // Refresh the course list
         await populateCoursesList();
         
-        alert(`Course "${newCourse.course_name}" was created successfully!`);
+        alert(`Course "${newCourse.course_name}" was created successfully!${newCourse.course_id ? ` (ID: ${newCourse.course_id})` : ''}`);
         console.log('✅ Course created successfully:', newCourse);
 
     } catch (err) {
@@ -762,7 +795,7 @@ async function createNewCourse() {
     }
 }
 
-async function editCourse(courseId, currentName) {
+async function editCourseName(courseDbId, currentName) {
     const newName = prompt(`Edit course name:`, currentName);
     
     if (!newName || newName.trim() === '') {
@@ -779,13 +812,13 @@ async function editCourse(courseId, currentName) {
         const { error } = await supabaseClient
             .from('courses')
             .update({ course_name: trimmedName })
-            .eq('id', courseId);
+            .eq('id', courseDbId);
             
         if (error) {
             if (error.code === '23505') {
                 alert(`Error: A course named "${trimmedName}" already exists.`);
             } else {
-                console.error('Update course error:', error);
+                console.error('Update course name error:', error);
                 throw error;
             }
             return;
@@ -796,15 +829,76 @@ async function editCourse(courseId, currentName) {
         await populateCoursesList();
         
         alert(`Course renamed to "${trimmedName}" successfully!`);
-        console.log('✅ Course updated:', trimmedName);
+        console.log('✅ Course name updated:', trimmedName);
         
     } catch (err) {
-        console.error('Error updating course:', err);
-        alert('Failed to update course: ' + err.message);
+        console.error('Error updating course name:', err);
+        alert('Failed to update course name: ' + err.message);
+    }
+}
+async function editCourseId(courseDbId, currentCourseId) {
+    const newCourseId = prompt(
+        `Edit course ID (letters, numbers, hyphens, underscores only):`, 
+        currentCourseId || ''
+    );
+    
+    if (newCourseId === null) {
+        return; // User cancelled
+    }
+    
+    const trimmedId = newCourseId.trim();
+    
+    // Validate course ID format if not empty
+    if (trimmedId && !/^[A-Za-z0-9_-]+$/.test(trimmedId)) {
+        return alert('Course ID can only contain letters, numbers, hyphens, and underscores.');
+    }
+    
+    if (trimmedId === currentCourseId) {
+        return; // No change made
+    }
+    
+    try {
+        // Check if the new course ID already exists (if not empty)
+        if (trimmedId) {
+            const { data: existingCourse, error: checkError } = await supabaseClient
+                .from('courses')
+                .select('id')
+                .eq('course_id', trimmedId)
+                .neq('id', courseDbId) // Exclude current course
+                .single();
+
+            if (existingCourse && !checkError) {
+                return alert(`Error: A course with ID "${trimmedId}" already exists.`);
+            }
+        }
+
+        const { error } = await supabaseClient
+            .from('courses')
+            .update({ course_id: trimmedId || null })
+            .eq('id', courseDbId);
+            
+        if (error) {
+            console.error('Update course ID error:', error);
+            throw error;
+        }
+        
+        // Small delay then refresh
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await populateCoursesList();
+        
+        const message = trimmedId 
+            ? `Course ID updated to "${trimmedId}" successfully!`
+            : 'Course ID cleared successfully!';
+        alert(message);
+        console.log('✅ Course ID updated:', trimmedId);
+        
+    } catch (err) {
+        console.error('Error updating course ID:', err);
+        alert('Failed to update course ID: ' + err.message);
     }
 }
 // New function to delete course from the list view
-async function deleteCourseFromList(courseId, courseName) {
+async function deleteCourseFromList(courseDbId, courseName) {
     if (!confirm(`⚠️ Are you sure you want to delete the course "${courseName}"?\n\nThis will also remove all student enrollments for this course and cannot be undone.`)) {
         return;
     }
@@ -813,7 +907,7 @@ async function deleteCourseFromList(courseId, courseName) {
         const { error } = await supabaseClient
             .from('courses')
             .delete()
-            .eq('id', courseId);
+            .eq('id', courseDbId);
             
         if (error) {
             console.error('Delete course error:', error);
@@ -832,7 +926,6 @@ async function deleteCourseFromList(courseId, courseName) {
         alert('Failed to delete course: ' + err.message);
     }
 }
-
 // Enhanced showCoursesModal to ensure proper initialization
 function showCoursesModal() { 
     const modal = document.getElementById('courses-modal');
@@ -852,7 +945,29 @@ function showCoursesModal() {
         populateCoursesList();
     }, 100);
 }
+function generateCourseIdFromName(courseName) {
+    return courseName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .substring(0, 20); // Limit length
+}
 
+// Function to auto-generate course ID when name is typed
+function setupCourseIdAutoGeneration() {
+    const nameInput = document.getElementById('new-course-name');
+    const idInput = document.getElementById('new-course-id');
+    
+    if (nameInput && idInput) {
+        nameInput.addEventListener('input', function() {
+            // Only auto-generate if ID field is empty
+            if (!idInput.value.trim()) {
+                const suggestedId = generateCourseIdFromName(this.value);
+                idInput.placeholder = suggestedId ? `Suggested: ${suggestedId}` : 'Enter course ID (optional)';
+            }
+        });
+    }
+}
 async function debugCourses() {
     console.log('🔍 Debug: Checking courses in database...');
     try {
