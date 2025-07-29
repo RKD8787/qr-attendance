@@ -6,7 +6,9 @@ let allStudents = [];
 let presentStudents = [];
 let currentCourseId = null;
 let currentSession = null;
-
+let allSessions = [];
+let currentPage = 1;
+const sessionsPerPage = 10;
 // ✅ MAIN ENTRY POINT
 document.addEventListener('DOMContentLoaded', initializeApp);
 
@@ -709,7 +711,22 @@ function showSessionHistoryModal() {
     if (modal) {
         modal.style.display = 'block';
         backToSessionList();
-        populateSessionHistory();
+        
+        // Fetch all sessions and then display the first page
+        fetchAllSessions();
+
+        // Add event listeners for search and sort
+        const searchInput = document.getElementById('session-history-search');
+        searchInput.addEventListener('input', () => {
+            currentPage = 1;
+            displaySessions();
+        });
+
+        const sortSelect = document.getElementById('session-sort');
+        sortSelect.addEventListener('change', () => {
+            currentPage = 1;
+            displaySessions();
+        });
     }
 }
 
@@ -717,7 +734,133 @@ function closeSessionHistoryModal() {
     const modal = document.getElementById('session-history-modal');
     if (modal) modal.style.display = 'none';
 }
+async function fetchAllSessions() {
+    const listDisplay = document.getElementById('session-list-display');
+    if (!listDisplay) return;
+    listDisplay.innerHTML = '<div class="student-item">Loading sessions...</div>';
 
+    try {
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .select('id, session_name, created_at, courses(course_name, course_id)')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        allSessions = data || [];
+        currentPage = 1;
+        displaySessions();
+
+    } catch (err) {
+        console.error('Error loading session history:', err);
+        listDisplay.innerHTML = '<div class="no-students-message">Could not load session history.</div>';
+    }
+}
+
+// New function to display sessions with search, sort, and pagination
+function displaySessions() {
+    const listDisplay = document.getElementById('session-list-display');
+    const searchInput = document.getElementById('session-history-search');
+    const sortSelect = document.getElementById('session-sort');
+
+    // 1. Filter sessions based on search term
+    const searchTerm = searchInput.value.toLowerCase();
+    let filteredSessions = allSessions.filter(session => {
+        const sessionName = session.session_name.toLowerCase();
+        const courseName = session.courses ? session.courses.course_name.toLowerCase() : '';
+        return sessionName.includes(searchTerm) || courseName.includes(searchTerm);
+    });
+
+    // 2. Sort sessions
+    const sortBy = sortSelect.value;
+    filteredSessions.sort((a, b) => {
+        switch (sortBy) {
+            case 'oldest':
+                return new Date(a.created_at) - new Date(b.created_at);
+            case 'name_asc':
+                return a.session_name.localeCompare(b.session_name);
+            case 'name_desc':
+                return b.session_name.localeCompare(a.session_name);
+            case 'newest':
+            default:
+                return new Date(b.created_at) - new Date(a.created_at);
+        }
+    });
+
+    // 3. Paginate sessions
+    const startIndex = (currentPage - 1) * sessionsPerPage;
+    const endIndex = startIndex + sessionsPerPage;
+    const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
+
+    // 4. Render the list
+    listDisplay.innerHTML = '';
+    if (paginatedSessions.length === 0) {
+        listDisplay.innerHTML = '<div class="no-students-message">No sessions found.</div>';
+    } else {
+        paginatedSessions.forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'student-list-item';
+            const courseName = session.courses ? session.courses.course_name : 'General';
+            const courseId = session.courses ? `(${session.courses.course_id || 'No ID'})` : '';
+
+            item.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <span class="student-name">${session.session_name}</span>
+                    <small style="display: block; color: #6f42c1; margin-top: 5px;">
+                        <strong>Course:</strong> ${courseName} ${courseId}
+                    </small>
+                    <small style="display: block; color: #666; margin-top: 5px;">
+                        <strong>Date:</strong> ${new Date(session.created_at).toLocaleString()}
+                    </small>
+                </div>
+                <button class="add-student-btn" onclick="viewSessionDetails(${session.id}, '${session.session_name.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-eye"></i> View Details
+                </button>
+            `;
+            listDisplay.appendChild(item);
+        });
+    }
+
+    // 5. Render pagination controls
+    renderPaginationControls(filteredSessions.length);
+}
+
+// New function to render pagination controls
+function renderPaginationControls(totalSessions) {
+    const paginationContainer = document.getElementById('session-pagination');
+    paginationContainer.innerHTML = '';
+    const totalPages = Math.ceil(totalSessions / sessionsPerPage);
+
+    if (totalPages <= 1) return;
+
+    // Previous button
+    const prevButton = document.createElement('button');
+    prevButton.innerHTML = '&laquo; Prev';
+    prevButton.disabled = currentPage === 1;
+    prevButton.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displaySessions();
+        }
+    };
+    paginationContainer.appendChild(prevButton);
+
+    // Page number indicator
+    const pageIndicator = document.createElement('span');
+    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    paginationContainer.appendChild(pageIndicator);
+
+    // Next button
+    const nextButton = document.createElement('button');
+    nextButton.innerHTML = 'Next &raquo;';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displaySessions();
+        }
+    };
+    paginationContainer.appendChild(nextButton);
+}
 function backToSessionList() {
     const listContainer = document.getElementById('session-list-container');
     const detailsContainer = document.getElementById('session-details-container');
