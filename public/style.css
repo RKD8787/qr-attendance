@@ -253,7 +253,75 @@ body {
     box-shadow: 0 5px 15px rgba(220,53,69,0.4);
 }
 
+/* Date-Grouped Session History Styles */
+.session-date-group {
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
 
+.session-date-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    transition: background 0.3s;
+}
+
+.session-date-summary:hover {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+}
+
+.session-date-summary .session-count {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.session-date-group[open] > .session-date-summary {
+    border-bottom: 2px solid #e9ecef;
+}
+
+.session-item-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.session-item-actions .action-btn {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn.edit {
+    background-color: #ffc107;
+    color: #333;
+}
+.action-btn.edit:hover {
+    background-color: #e0a800;
+}
+
+.action-btn.delete {
+    background-color: #dc3545;
+    color: white;
+}
+.action-btn.delete:hover {
+    background-color: #c82333;
+}
 .action-buttons {
     display: grid;
     /* This will create a flexible grid that wraps nicely */
