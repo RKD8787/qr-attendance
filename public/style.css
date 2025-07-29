@@ -87,9 +87,8 @@ body {
 /* Admin Page Styles - Improved Layout */
 .admin-content {
     display: grid;
-    /* Change the grid-template-columns to create two equal columns */
     grid-template-columns: repeat(2, minmax(0, 600px)); 
-    justify-content: center; /* Center the grid container */
+    justify-content: center;
     gap: 40px;
     align-items: stretch;
     margin: 0 auto;
@@ -148,71 +147,7 @@ body {
     background: linear-gradient(135deg, #007bff, #0056b3);
     border-radius: 10px;
 }
-/* Session History Modal Enhancements */
-.session-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
 
-.sort-options {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sort-options label {
-    font-weight: 600;
-    color: #555;
-}
-
-.sort-options select {
-    padding: 10px;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    gap: 10px;
-}
-
-.pagination-controls button {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.pagination-controls button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #0056b3, #004085);
-    transform: translateY(-2px);
-}
-
-.pagination-controls button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.pagination-controls span {
-    font-weight: 600;
-    font-size: 16px;
-    color: #333;
-}
 .student-item {
     display: flex;
     justify-content: space-between;
@@ -252,178 +187,13 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(220,53,69,0.4);
 }
-/* In public/style.css */
 
-/* Statistics Modal Styles */
-.stats-tabs {
-    display: flex;
-    border-bottom: 2px solid #e9ecef;
-    margin-bottom: 20px;
-}
-
-.stats-tab-btn {
-    padding: 15px 25px;
-    cursor: pointer;
-    border: none;
-    background-color: transparent;
-    font-size: 16px;
-    font-weight: 600;
-    color: #666;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.stats-tab-btn.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
-}
-
-.stats-view {
-    display: none;
-}
-
-.stats-view.active {
-    display: block;
-}
-
-.stats-search {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #dee2e6;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    font-size: 16px;
-}
-
-.stats-list-display {
-    max-height: 55vh;
-    overflow-y: auto;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    padding: 15px;
-    border-bottom: 1px solid #f1f1f1;
-}
-
-.stat-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-}
-
-.stat-item-header .student-name {
-    font-size: 1.1rem;
-}
-
-.stat-item-details {
-    margin-top: 10px;
-}
-
-.progress-bar-container {
-    width: 100%;
-    background-color: #e9ecef;
-    border-radius: 20px;
-    height: 20px;
-    overflow: hidden;
-    position: relative;
-}
-
-.progress-bar {
-    height: 100%;
-    background: linear-gradient(135deg, #28a745, #218838);
-    border-radius: 20px;
-    transition: width 0.5s ease-in-out;
-}
-
-.progress-bar-text {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
-}
-/* Date-Grouped Session History Styles */
-.session-date-group {
-    border: 2px solid #e9ecef;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    overflow: hidden;
-}
-
-.session-date-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    cursor: pointer;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    transition: background 0.3s;
-}
-
-.session-date-summary:hover {
-    background: linear-gradient(135deg, #e9ecef, #dee2e6);
-}
-
-.session-date-summary .session-count {
-    background-color: #007bff;
-    color: white;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 14px;
-}
-
-.session-date-group[open] > .session-date-summary {
-    border-bottom: 2px solid #e9ecef;
-}
-
-.session-item-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.session-item-actions .action-btn {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.action-btn.edit {
-    background-color: #ffc107;
-    color: #333;
-}
-.action-btn.edit:hover {
-    background-color: #e0a800;
-}
-
-.action-btn.delete {
-    background-color: #dc3545;
-    color: white;
-}
-.action-btn.delete:hover {
-    background-color: #c82333;
-}
 .action-buttons {
     display: grid;
-    /* This will create a flexible grid that wraps nicely */
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
     gap: 20px;
     margin-top: 40px;
-    max-width: 1240px; /* Match the total width of the content boxes */
+    max-width: 1240px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -459,15 +229,6 @@ body {
     box-shadow: 0 8px 25px rgba(40,167,69,0.35);
 }
 
-.add-manually-btn.clear-btn {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    color: #000;
-}
-
-.add-manually-btn.clear-btn:hover {
-    box-shadow: 0 8px 25px rgba(255,193,7,0.35);
-}
-
 .add-manually-btn.fresh-btn {
     background: linear-gradient(135deg, #17a2b8, #138496);
 }
@@ -476,43 +237,21 @@ body {
     box-shadow: 0 8px 25px rgba(23,162,184,0.35);
 }
 
-.icon {
-    font-size: 18px;
-}
-
-/* QR Section - Enhanced with Border and Larger Size */
-/* Around line 280 in style.css */
 .qr-section {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border-radius: 20px;
-    padding: 30px; /* Adjusted padding */
+    padding: 30px;
     text-align: center;
     box-shadow: 0 15px 50px rgba(0,0,0,0.1);
-    border: 1px solid rgba(255,255,255,0.2); /* Removed thick border */
+    border: 1px solid rgba(255,255,255,0.2);
     position: relative;
     overflow: hidden;
-    display: flex; /* Use flexbox for centering */
+    display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center; /* Center horizontally */
-    height: 100%; /* Make it take full height of the grid row */
-}
-
-.qr-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, #007bff, #28a745, #ffc107, #dc3545);
-    
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    align-items: center;
+    height: 100%;
 }
 
 .qr-section h3 {
@@ -528,7 +267,7 @@ body {
     background-clip: text;
 }
 
-    .qr-container {
+.qr-container {
     width: fit-content;
     max-width: 100%;
     padding: 20px;
@@ -537,25 +276,19 @@ body {
     justify-content: center;
 }
 
-.qr-container:hover {
-    transform: scale(1.02);
-    box-shadow: 0 15px 45px rgba(0,0,0,0.2);
-    border-color: #007bff;
-}
-
 .qr-instruction {
     color: #666;
     font-size: 18px;
     margin-top: 0px;
     font-weight: 600;
     line-height: 1.5;
-    padding: 0px;
+    padding: 10px;
     background: rgba(0,123,255,0.1);
     border-radius: 10px;
     border: 1px solid rgba(0,123,255,0.2);
 }
 
-/* Student Page Styles - Enhanced Search */
+/* Student Page Styles */
 .student-selection {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
@@ -565,9 +298,7 @@ body {
     max-width: 800px;
     margin: 0 auto;
     border: 1px solid rgba(255,255,255,0.2);
-    height: 100%;
     min-height: 90vh;
-
 }
 
 .student-selection h2 {
@@ -606,18 +337,6 @@ body {
     font-weight: 500;
 }
 
-.search-container input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 6px 25px rgba(0,123,255,0.25);
-    transform: translateY(-2px);
-}
-
-.search-container input::placeholder {
-    color: #999;
-    font-weight: 400;
-}
-
 .search-icon {
     position: absolute;
     right: 20px;
@@ -625,20 +344,6 @@ body {
     transform: translateY(-50%);
     color: #666;
     font-size: 22px;
-    background: #f8f9fa;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-
-.search-container:focus-within .search-icon {
-    background: #007bff;
-    color: white;
-    transform: translateY(-50%) scale(1.1);
 }
 
 .student-list {
@@ -646,20 +351,6 @@ body {
     overflow-y: auto;
     margin-bottom: 30px;
     padding-right: 15px;
-}
-
-.student-list::-webkit-scrollbar {
-    width: 8px;
-}
-
-.student-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.student-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    border-radius: 10px;
 }
 
 .student-checkbox {
@@ -675,18 +366,9 @@ body {
     box-shadow: 0 3px 10px rgba(0,0,0,0.06);
 }
 
-.student-checkbox:hover {
-    background: linear-gradient(135deg, #e9ecef, #dee2e6);
-    border-color: #007bff;
-    transform: translateX(8px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-}
-
 .student-checkbox.selected {
     background: linear-gradient(135deg, #e7f3ff, #cce7ff);
     border-color: #007bff;
-    box-shadow: 0 6px 25px rgba(0,123,255,0.25);
-    transform: scale(1.02);
 }
 
 .student-checkbox input {
@@ -702,18 +384,6 @@ body {
     flex-grow: 1;
     font-weight: 600;
     color: #333;
-}
-
-.no-results {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-    font-style: italic;
-    font-size: 18px;
-}
-
-.no-results p {
-    margin: 0;
 }
 
 .submit-btn {
@@ -733,283 +403,10 @@ body {
     letter-spacing: 1px;
 }
 
-.submit-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1e7e34, #155724);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 35px rgba(40,167,69,0.4);
-}
-
 .submit-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
     opacity: 0.6;
-}
-/* Enhanced course list item styling */
-.student-list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 22px;
-    border-bottom: 1px solid #f1f1f1;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-}
-
-.student-list-item:hover {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-}
-
-.student-list-item:last-child {
-    border-bottom: none;
-}
-
-/* Course name and details styling */
-.student-list-item .student-name {
-    flex: 1;
-    color: #333;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-/* Button group styling for course actions */
-.student-list-item > div:last-child {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-/* Edit button styling */
-.add-student-btn[onclick*="editCourse"] {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    color: #000;
-    padding: 8px 12px;
-    font-size: 14px;
-    min-width: auto;
-}
-
-.add-student-btn[onclick*="editCourse"]:hover {
-    background: linear-gradient(135deg, #e0a800, #d39e00);
-    box-shadow: 0 3px 10px rgba(255,193,7,0.3);
-}
-
-/* Manage button styling (keep existing blue) */
-.add-student-btn[onclick*="showCourseManagementView"] {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    padding: 8px 12px;
-    font-size: 14px;
-    min-width: auto;
-}
-
-/* Delete button styling (keep existing red) */
-.delete-student-btn[onclick*="deleteCourseFromList"] {
-    padding: 8px 12px;
-    font-size: 14px;
-    min-width: auto;
-}
-.add-student-form {
-    display: grid;
-    gap: 15px;
-    align-items: center;
-}
-
-/* Three-column layout for course creation (name, id, button) */
-.add-student-form[style*="grid-template-columns: 1fr 1fr auto"] {
-    grid-template-columns: 1fr 1fr auto;
-}
-
-/* Course ID input styling */
-#new-course-id {
-    font-family: 'Courier New', monospace;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-#new-course-id::placeholder {
-    text-transform: none;
-    letter-spacing: normal;
-    font-family: inherit;
-}
-
-/* Enhanced course list item for multiple buttons */
-.student-list-item > div:last-child {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-}
-
-/* Individual button styling for course actions */
-.add-student-btn[onclick*="editCourseName"] {
-    background: linear-gradient(135deg, #17a2b8, #138496);
-    color: white;
-    padding: 6px 10px;
-    font-size: 13px;
-    min-width: auto;
-    white-space: nowrap;
-}
-
-.add-student-btn[onclick*="editCourseName"]:hover {
-    background: linear-gradient(135deg, #138496, #117a8b);
-    box-shadow: 0 3px 10px rgba(23,162,184,0.3);
-}
-
-.add-student-btn[onclick*="editCourseId"] {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    color: #000;
-    padding: 6px 10px;
-    font-size: 13px;
-    min-width: auto;
-    white-space: nowrap;
-}
-
-.add-student-btn[onclick*="editCourseId"]:hover {
-    background: linear-gradient(135deg, #e0a800, #d39e00);
-    box-shadow: 0 3px 10px rgba(255,193,7,0.3);
-}
-
-.add-student-btn[onclick*="showCourseManagementView"] {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    padding: 6px 10px;
-    font-size: 13px;
-    min-width: auto;
-    white-space: nowrap;
-}
-
-.delete-student-btn[onclick*="deleteCourseFromList"] {
-    padding: 6px 10px;
-    font-size: 13px;
-    min-width: auto;
-    white-space: nowrap;
-}
-
-/* Course info display enhancement */
-.student-list-item .student-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 2px;
-}
-
-.student-list-item small {
-    font-size: 12px;
-    color: #666;
-    line-height: 1.4;
-}
-
-.student-list-item small strong {
-    color: #007bff;
-    font-weight: 600;
-}
-
-/* Info tip styling */
-.add-student-section > div:last-child {
-    margin-top: 15px;
-    padding: 12px;
-    background: rgba(0,123,255,0.1);
-    border-radius: 8px;
-    font-size: 13px;
-    color: #555;
-    border-left: 4px solid #007bff;
-}
-
-/* Responsive design for course buttons */
-@media (max-width: 992px) {
-    .add-student-form[style*="grid-template-columns: 1fr 1fr auto"] {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .student-list-item {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-    
-    .student-list-item > div:last-child {
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    .add-student-btn[onclick*="editCourseName"],
-    .add-student-btn[onclick*="editCourseId"],
-    .add-student-btn[onclick*="showCourseManagementView"],
-    .delete-student-btn[onclick*="deleteCourseFromList"] {
-        flex: 1;
-        min-width: 70px;
-        text-align: center;
-        padding: 8px 6px;
-    }
-}
-
-@media (max-width: 768px) {
-    .student-list-item > div:last-child {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-    
-    .add-student-btn[onclick*="showCourseManagementView"] {
-        grid-column: 1 / -1; /* Span full width */
-    }
-}
-
-/* Enhanced modal for better course management */
-.student-list-modal-content {
-    max-width: 800px;
-    max-height: 90vh;
-}
-
-/* Loading and error states */
-.student-item[style*="text-align: center"] {
-    font-style: italic;
-    color: #666;
-}
-
-/* Success/Error message styling in course creation */
-.course-message {
-    padding: 10px 15px;
-    margin: 10px 0;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.course-message.success {
-    background: rgba(40,167,69,0.1);
-    color: #155724;
-    border-left: 4px solid #28a745;
-}
-
-.course-message.error {
-    background: rgba(220,53,69,0.1);
-    color: #721c24;
-    border-left: 4px solid #dc3545;
-}
-/* Responsive adjustments for course buttons */
-@media (max-width: 768px) {
-    .student-list-item {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-    
-    .student-list-item > div:last-child {
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    
-    .add-student-btn[onclick*="editCourse"],
-    .add-student-btn[onclick*="showCourseManagementView"],
-    .delete-student-btn[onclick*="deleteCourseFromList"] {
-        flex: 1;
-        min-width: 80px;
-        text-align: center;
-    }
 }
 /* Success Page Styles */
 .success-message {
@@ -1029,20 +426,10 @@ body {
     margin-bottom: 25px;
     font-size: 2.4rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .hidden {
     display: none;
-}
-
-.success-message p {
-    color: #666;
-    font-size: 18px;
-    line-height: 1.6;
-    margin-bottom: 35px;
-    font-weight: 500;
 }
 
 .checkmark {
@@ -1057,7 +444,6 @@ body {
     color: white;
     font-size: 60px;
     animation: scaleIn 0.6s ease;
-    box-shadow: 0 10px 35px rgba(40,167,69,0.3);
 }
 
 @keyframes scaleIn {
@@ -1065,7 +451,7 @@ body {
     to { transform: scale(1); }
 }
 
-/* Modal Styles - Enhanced */
+/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -1081,7 +467,7 @@ body {
 
 .modal-content {
     background: white;
-    margin: 6% auto;
+    margin: 5% auto;
     padding: 40px;
     border-radius: 25px;
     width: 90%;
@@ -1104,8 +490,6 @@ body {
     color: #333;
     font-size: 1.6rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .close-btn {
@@ -1114,19 +498,7 @@ body {
     font-size: 28px;
     cursor: pointer;
     color: #666;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
     transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-    background: #f8f9fa;
-    color: #dc3545;
-    transform: scale(1.1);
 }
 
 .student-dropdown {
@@ -1135,154 +507,133 @@ body {
     border: 3px solid #e9ecef;
     border-radius: 15px;
     margin: 20px 0;
-    background: white;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-
-.student-dropdown::-webkit-scrollbar {
-    width: 8px;
-}
-
-.student-dropdown::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.student-dropdown::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    border-radius: 10px;
 }
 
 .dropdown-item {
     padding: 18px 25px;
     cursor: pointer;
     border-bottom: 1px solid #f1f1f1;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 12px;
     font-size: 16px;
     font-weight: 500;
 }
 
-.dropdown-item:hover:not(.no-results) {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    color: #007bff;
-    transform: translateX(5px);
-}
-
-.dropdown-item:last-child {
-    border-bottom: none;
-}
-
-.dropdown-item.no-results {
-    text-align: center;
-    color: #666;
-    font-style: italic;
-    cursor: default;
-    justify-content: center;
-}
-
-.modal-buttons {
-    margin-top: 30px;
-    text-align: center;
-}
-
 .modal-btn {
     padding: 15px 30px;
-    margin: 0 12px;
     border: none;
     border-radius: 12px;
     cursor: pointer;
     font-size: 16px;
     font-weight: 600;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .modal-btn.primary {
     background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
-    box-shadow: 0 5px 18px rgba(0,123,255,0.25);
-}
-
-.modal-btn.primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,123,255,0.35);
 }
 
 .modal-btn.secondary {
     background: linear-gradient(135deg, #6c757d, #545b62);
     color: white;
-    box-shadow: 0 5px 18px rgba(108,117,125,0.25);
 }
 
-.modal-btn.secondary:hover {
-    background: linear-gradient(135deg, #545b62, #454c52);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(108,117,125,0.35);
+/* Edit Student Modal */
+.edit-student-form {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+.edit-student-form label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    display: block;
+}
+.edit-student-form input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 16px;
+}
+#student-fingerprint-list .student-list-item {
+    background: #fff;
+}
+
+/* Statistics Modal */
+#statistics-modal .modal-content {
+    max-width: 1200px;
+}
+.stats-tabs {
+    display: flex;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 20px;
+}
+.stats-tab-btn {
+    padding: 15px 25px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 3px solid transparent;
+}
+.stats-tab-btn.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+.stats-view {
+    display: none;
+}
+.stats-view.active {
+    display: block;
+}
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    border: 2px solid #e9ecef;
+}
+.stat-card h4 {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+.stat-card p {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #007bff;
+}
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+.chart-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 15px;
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
-    .admin-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-    }
-    
-    .container {
-        max-width: 1000px;
+@media (max-width: 992px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 768px) {
+    .admin-content {
+        grid-template-columns: 1fr;
+    }
     .action-buttons {
         grid-template-columns: 1fr;
-        gap: 12px;
     }
-    
-    .header h1 {
-        font-size: 2rem;
-    }
-    
-    .nav-btn {
-        display: block;
-        margin: 10px auto;
-        width: 250px;
-    }
-    
-    .container {
-        padding: 30px 15px;
-    }
-    
-    .present-count {
-        font-size: 2.5rem;
-    }
-    .success-message h2 {
-        font-size: 1.6rem; /* Reduces font size on small screens */
-        line-height: 1.3;  /* Improves text wrapping */
-    }
-    
-    .student-selection {
-        padding: 35px 25px;
-    }
-    
-    .modal-content {
-        margin: 10% auto;
-        width: 95%;
-        padding: 30px 25px;
-    }
-    
-    .search-container {
-        max-width: 100%;
-    }
-    
-    .qr-section {
-        padding: 30px 20px;
-        min-height: 400px;
-    }
-    
-  .admin-content {
-    gap: 50px;
-  }
 }
