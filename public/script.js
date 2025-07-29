@@ -1648,7 +1648,524 @@ async function exportAttendanceCSV() {
         alert('Failed to export attendance: ' + err.message);
     }
 }
+// Mobile-friendly proxy prevention system
+const MOBILE_FRIENDLY_CONFIG = {
+    // Enable/disable features
+    ENABLE_LOCATION_CHECK: true,
+    ENABLE_TIME_WINDOW: true,
+    ENABLE_SESSION_LIMITS: true,
+    ENABLE_DEVICE_TRACKING: true,
+    
+    // Location validation (works with any internet connection)
+    MAX_DISTANCE_FROM_ADMIN: 200,  // 200 meters radius from teacher
+    MIN_GPS_ACCURACY: 50,          // Minimum GPS accuracy required
+    
+    // Time-based validation
+    SESSION_SUBMISSION_WINDOW: 30, // Minutes after QR generation
+    ALLOWED_HOURS: { start: 7, end: 20 }, // 7 AM to 8 PM
+    
+    // Device and behavior tracking
+    MAX_SUBMISSIONS_PER_DEVICE: 1, // One submission per device per session
+    MIN_TIME_ON_PAGE: 10,          // Minimum seconds on page before submission
+    REQUIRE_USER_INTERACTION: true, // Require clicks/scrolls before submission
+    
+    // Admin notification
+    NOTIFY_SUSPICIOUS_ACTIVITY: true
+};
 
+/**
+ * Simple location-based validation that works with mobile WiFi
+ */
+async function getLocationBasedValidation() {
+    const validation = {
+        timestamp: new Date().toISOString(),
+        deviceId: getDeviceFingerprint(),
+        userAgent: navigator.userAgent,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+
+    // Get GPS location (works with any internet connection)
+    validation.location = await getCurrentLocation();
+    
+    // Track user behavior on page
+    validation.behavior = getUserBehaviorMetrics();
+    
+    // Get battery info (helps detect if device is actually being used)
+    validation.battery = await getBatteryLevel();
+    
+    return validation;
+}
+
+/**
+ * Get current GPS location with high accuracy
+ */
+async function getCurrentLocation() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve({ error: 'GPS not supported' });
+            return;
+        }
+
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 30000
+        };
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: position.timestamp,
+                    altitude: position.coords.altitude,
+                    heading: position.coords.heading,
+                    speed: position.coords.speed
+                });
+            },
+            (error) => {
+                resolve({ 
+                    error: error.message,
+                    code: error.code 
+                });
+            },
+            options
+        );
+    });
+}
+
+/**
+ * Generate device fingerprint for tracking
+ */
+function getDeviceFingerprint() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Device fingerprint', 2, 2);
+    
+    const fingerprint = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        new Date().getTimezoneOffset(),
+        navigator.platform,
+        navigator.cookieEnabled,
+        canvas.toDataURL()
+    ].join('|');
+    
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < fingerprint.length; i++) {
+        const char = fingerprint.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return 'device_' + Math.abs(hash).toString(36);
+}
+
+/**
+ * Track user behavior to detect automated submissions
+ */
+function getUserBehaviorMetrics() {
+    return {
+        timeOnPage: Math.floor((Date.now() - window.pageLoadTime) / 1000),
+        mouseMovements: window.mouseMovements || 0,
+        keyStrokes: window.keyStrokes || 0,
+        scrollEvents: window.scrollEvents || 0,
+        clickEvents: window.clickEvents || 0,
+        focusEvents: window.focusEvents || 0
+    };
+}
+
+/**
+ * Get battery level
+ */
+async function getBatteryLevel() {
+    try {
+        if ('getBattery' in navigator) {
+            const battery = await navigator.getBattery();
+            return {
+                level: Math.round(battery.level * 100),
+                charging: battery.charging
+            };
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Calculate distance between two GPS coordinates
+ */
+function calculateGPSDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+/**
+ * Mobile-friendly attendance submission with location validation
+ */
+async function submitAttendanceWithLocationValidation() {
+    const selectedRadio = document.querySelector('input[name="student"]:checked');
+    if (!selectedRadio) {
+        return alert("Please select your name.");
+    }
+
+    const sessionId = new URLSearchParams(window.location.search).get('session');
+    if (!sessionId) {
+        return alert("Invalid or missing session. Please scan the QR code again.");
+    }
+
+    const submitBtn = document.getElementById('submit-attendance');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verifying Location...';
+    }
+
+    try {
+        // Get validation data
+        const validationData = await getLocationBasedValidation();
+        
+        // Validation 1: Check if GPS location is available
+        if (MOBILE_FRIENDLY_CONFIG.ENABLE_LOCATION_CHECK) {
+            if (validationData.location.error) {
+                throw new Error('GPS location is required for attendance. Please enable location access and try again.');
+            }
+            
+            if (validationData.location.accuracy > MOBILE_FRIENDLY_CONFIG.MIN_GPS_ACCURACY) {
+                throw new Error(`GPS accuracy too low (${Math.round(validationData.location.accuracy)}m). Please move to an open area and try again.`);
+            }
+        }
+
+        // Validation 2: Check distance from admin/classroom
+        if (MOBILE_FRIENDLY_CONFIG.ENABLE_LOCATION_CHECK) {
+            const adminLocation = await getAdminLocationForSession(sessionId);
+            if (adminLocation) {
+                const distance = calculateGPSDistance(
+                    validationData.location.latitude,
+                    validationData.location.longitude,
+                    adminLocation.lat,
+                    adminLocation.lon
+                );
+                
+                if (distance > MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN) {
+                    throw new Error(`You are ${Math.round(distance)}m away from the classroom. Maximum allowed distance is ${MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN}m.`);
+                }
+            }
+        }
+
+        // Validation 3: Time window check
+        if (MOBILE_FRIENDLY_CONFIG.ENABLE_TIME_WINDOW) {
+            const sessionStartTime = await getSessionStartTime(sessionId);
+            if (sessionStartTime) {
+                const minutesSinceStart = (Date.now() - new Date(sessionStartTime)) / (1000 * 60);
+                if (minutesSinceStart > MOBILE_FRIENDLY_CONFIG.SESSION_SUBMISSION_WINDOW) {
+                    throw new Error(`Attendance window closed. You can only submit attendance within ${MOBILE_FRIENDLY_CONFIG.SESSION_SUBMISSION_WINDOW} minutes of session start.`);
+                }
+            }
+        }
+
+        // Validation 4: Working hours check
+        const currentHour = new Date().getHours();
+        if (currentHour < MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.start || 
+            currentHour > MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.end) {
+            throw new Error(`Attendance can only be submitted between ${MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.start}:00 and ${MOBILE_FRIENDLY_CONFIG.ALLOWED_HOURS.end}:00.`);
+        }
+
+        // Validation 5: Device tracking
+        if (MOBILE_FRIENDLY_CONFIG.ENABLE_DEVICE_TRACKING) {
+            const existingSubmission = await checkDeviceAlreadySubmitted(validationData.deviceId, sessionId);
+            if (existingSubmission) {
+                throw new Error('This device has already submitted attendance for this session.');
+            }
+        }
+
+        // Validation 6: User interaction check
+        if (MOBILE_FRIENDLY_CONFIG.REQUIRE_USER_INTERACTION) {
+            const behavior = validationData.behavior;
+            if (behavior.timeOnPage < MOBILE_FRIENDLY_CONFIG.MIN_TIME_ON_PAGE) {
+                throw new Error('Please spend some time on the page before submitting attendance.');
+            }
+            
+            if (behavior.mouseMovements + behavior.clickEvents + behavior.scrollEvents < 3) {
+                throw new Error('Please interact with the page (scroll, click, or move mouse) before submitting.');
+            }
+        }
+
+        if (submitBtn) {
+            submitBtn.textContent = 'Submitting Attendance...';
+        }
+
+        // Submit attendance with validation data
+        const { error } = await supabaseClient
+            .from('attendance')
+            .insert({
+                student: selectedRadio.value,
+                usn: selectedRadio.getAttribute('data-usn'),
+                session_id: sessionId,
+                device_id: validationData.deviceId,
+                validation_data: JSON.stringify(validationData),
+                location_verified: true,
+                gps_accuracy: validationData.location.accuracy
+            });
+
+        if (error?.code === '23505') {
+            alert("You have already submitted your attendance for this session.");
+        } else if (error) {
+            throw error;
+        } else {
+            // Success
+            const selectionPage = document.getElementById('student-selection-page');
+            const successPage = document.getElementById('success-page');
+            
+            if (selectionPage) selectionPage.style.display = 'none';
+            if (successPage) successPage.style.display = 'block';
+            
+            console.log('✅ Attendance submitted successfully with location verification');
+        }
+
+    } catch (err) {
+        console.error('Attendance submission error:', err);
+        alert("Failed to submit attendance: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Attendance';
+        }
+    }
+}
+
+/**
+ * Get admin location for the session
+ */
+async function getAdminLocationForSession(sessionId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .select('admin_location')
+            .eq('id', sessionId)
+            .single();
+            
+        if (error) throw error;
+        return data?.admin_location ? JSON.parse(data.admin_location) : null;
+    } catch (err) {
+        console.error('Error getting admin location:', err);
+        return null;
+    }
+}
+
+/**
+ * Get session start time
+ */
+async function getSessionStartTime(sessionId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .select('created_at')
+            .eq('id', sessionId)
+            .single();
+            
+        if (error) throw error;
+        return data?.created_at;
+    } catch (err) {
+        console.error('Error getting session start time:', err);
+        return null;
+    }
+}
+
+/**
+ * Check if device already submitted attendance
+ */
+async function checkDeviceAlreadySubmitted(deviceId, sessionId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('attendance')
+            .select('id')
+            .eq('device_id', deviceId)
+            .eq('session_id', sessionId)
+            .single();
+            
+        return !error && data;
+    } catch (err) {
+        return false;
+    }
+}
+
+/**
+ * Enhanced session creation with admin location (works with mobile WiFi)
+ */
+async function startSessionWithLocationTracking(courseId, courseName, courseCode = null) {
+    const modal = document.getElementById('course-selection-modal');
+    if (modal) {
+        modal.remove();
+        document.removeEventListener('keydown', handleCourseSearchKeydown);
+    }
+    
+    const displayName = courseCode ? `${courseName} (${courseCode})` : courseName;
+    const defaultSessionName = `${displayName} - ${new Date().toLocaleDateString()}`;
+    
+    const sessionName = prompt(
+        `Enter a name for this session:\n\nCourse: ${displayName}`, 
+        defaultSessionName
+    );
+    
+    if (!sessionName || !sessionName.trim()) return;
+
+    const startButton = document.querySelector('.add-manually-btn.fresh-btn');
+    if (startButton) {
+        startButton.disabled = true;
+        startButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting Location...';
+    }
+
+    try {
+        // Get admin's current location
+        const adminLocation = await getCurrentLocation();
+        
+        if (adminLocation.error) {
+            const proceed = confirm('Could not get your location for verification. Students will not be location-verified. Continue anyway?');
+            if (!proceed) return;
+        }
+
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .insert({ 
+                session_name: sessionName.trim(), 
+                course_id: courseId,
+                admin_location: adminLocation.error ? null : JSON.stringify({
+                    lat: adminLocation.latitude,
+                    lon: adminLocation.longitude,
+                    accuracy: adminLocation.accuracy,
+                    timestamp: new Date().toISOString()
+                })
+            })
+            .select('*, courses(course_name, course_id)')
+            .single();
+            
+        if (error) throw error;
+        
+        updateActiveSession(data);
+        
+        const successMessage = `✅ Session "${sessionName}" started successfully!\n\nCourse: ${displayName}\nLocation verification: ${adminLocation.error ? 'DISABLED (no GPS)' : 'ENABLED'}`;
+        alert(successMessage);
+        
+        console.log('✅ Session started with location tracking:', data);
+        
+    } catch (err) {
+        console.error('Error creating session:', err);
+        alert("Failed to create session: " + err.message);
+    } finally {
+        if (startButton) {
+            startButton.disabled = false;
+            startButton.innerHTML = '<i class="fas fa-rocket"></i> Start New Session';
+        }
+    }
+}
+
+/**
+ * Track user interactions to prevent automated submissions
+ */
+function initializeUserInteractionTracking() {
+    window.pageLoadTime = Date.now();
+    window.mouseMovements = 0;
+    window.keyStrokes = 0;
+    window.scrollEvents = 0;
+    window.clickEvents = 0;
+    window.focusEvents = 0;
+
+    // Track mouse movements
+    document.addEventListener('mousemove', () => {
+        window.mouseMovements++;
+    });
+
+    // Track key presses
+    document.addEventListener('keydown', () => {
+        window.keyStrokes++;
+    });
+
+    // Track scroll events
+    document.addEventListener('scroll', () => {
+        window.scrollEvents++;
+    });
+
+    // Track click events
+    document.addEventListener('click', () => {
+        window.clickEvents++;
+    });
+
+    // Track focus events
+    window.addEventListener('focus', () => {
+        window.focusEvents++;
+    });
+}
+
+/**
+ * Show location permission request with instructions
+ */
+function showLocationPermissionRequest() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <h3 style="color: #007bff; margin-bottom: 20px;">📍 Location Required</h3>
+            <p style="margin-bottom: 20px; line-height: 1.6;">
+                To prevent proxy attendance, we need to verify your location. 
+                Please allow location access when prompted.
+            </p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <strong>Why we need location:</strong><br>
+                • Ensure you're physically present in class<br>
+                • Prevent remote attendance submission<br>
+                • Works with any WiFi (including mobile hotspot)
+            </div>
+            <button class="modal-btn primary" onclick="this.closest('.modal').remove()">
+                I Understand
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Initialize everything when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.pathname.includes('student.html')) {
+        // Initialize user interaction tracking
+        initializeUserInteractionTracking();
+        
+        // Show location permission info
+        setTimeout(showLocationPermissionRequest, 2000);
+        
+        // Replace the submit button event listener
+        const submitBtn = document.getElementById('submit-attendance');
+        if (submitBtn) {
+            submitBtn.removeEventListener('click', submitAttendance);
+            submitBtn.addEventListener('click', submitAttendanceWithLocationValidation);
+        }
+    }
+    
+    // Replace session creation function for faculty
+    if (!window.location.pathname.includes('student.html')) {
+        // Override the original function
+        window.startSessionForCourse = startSessionWithLocationTracking;
+    }
+});
+
+console.log('📱 Mobile-friendly proxy prevention loaded:', {
+    locationCheck: MOBILE_FRIENDLY_CONFIG.ENABLE_LOCATION_CHECK,
+    maxDistance: MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN + 'm',
+    timeWindow: MOBILE_FRIENDLY_CONFIG.SESSION_SUBMISSION_WINDOW + ' minutes',
+    deviceTracking: MOBILE_FRIENDLY_CONFIG.ENABLE_DEVICE_TRACKING
+});
 async function logout() {
     try {
         await supabaseClient.auth.signOut();
