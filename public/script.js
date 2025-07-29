@@ -706,62 +706,9 @@ async function quickCreateCourse() {
     }
 }
 
-function showSessionHistoryModal() {
-    const modal = document.getElementById('session-history-modal');
-    if (modal) {
-        modal.style.display = 'block';
-        fetchAllSessions(); // Fetch sessions when the modal is opened
-        
-        const searchInput = document.getElementById('session-history-search');
-        searchInput.oninput = fetchAllSessions; // Re-fetch on search
-    }
-}
-function closeSessionHistoryModal() { 
-    const modal = document.getElementById('session-history-modal');
-    if (modal) modal.style.display = 'none';
-}
-async function fetchAllSessions() {
-    const listDisplay = document.getElementById('session-list-display');
-    const showArchived = document.getElementById('show-archived').checked;
-    const searchTerm = document.getElementById('session-history-search').value.toLowerCase();
-    
-    listDisplay.innerHTML = '<div class="student-item">Loading sessions...</div>';
-
-    try {
-        let query = supabaseClient
-            .from('sessions')
-            .select('id, session_name, created_at, is_archived, courses(course_name)')
-            .eq('is_archived', showArchived)
-            .order('created_at', { ascending: false });
-
-        if (searchTerm) {
-            query = query.ilike('session_name', `%${searchTerm}%`);
-        }
-            
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Group sessions by date
-        const groupedSessions = data.reduce((acc, session) => {
-            const date = new Date(session.created_at).toLocaleDateString('en-CA'); // YYYY-MM-DD format
-            if (!acc[date]) {
-                acc[date] = [];
-            }
-            acc[date].push(session);
-            return acc;
-        }, {});
-        
-        renderGroupedSessions(groupedSessions);
-
-    } catch (err) {
-        console.error('Error loading session history:', err);
-        listDisplay.innerHTML = '<div class="no-students-message">Could not load sessions.</div>';
-    }
-}
-// New function to display sessions with search, sort, and pagination
 // In script.js
 
-// This function now correctly renders the sessions with search and pagination
+// New function to display sessions with search, sort, and pagination
 function displaySessions() {
     const listDisplay = document.getElementById('session-list-display');
     const searchInput = document.getElementById('session-history-search');
@@ -775,7 +722,7 @@ function displaySessions() {
         return sessionName.includes(searchTerm) || courseName.includes(searchTerm);
     });
 
-    // 2. Sort sessions
+    // 2. Sort sessions (if sort dropdown exists)
     if (sortSelect) {
         const sortBy = sortSelect.value;
         filteredSessions.sort((a, b) => {
@@ -798,21 +745,22 @@ function displaySessions() {
     const endIndex = startIndex + sessionsPerPage;
     const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
 
-    // 4. Render the list by calling renderGroupedSessions
-    renderGroupedSessions(paginatedSessions.reduce((acc, session) => {
+    // 4. Group the paginated sessions by date
+    const groupedSessions = paginatedSessions.reduce((acc, session) => {
         const date = new Date(session.created_at).toLocaleDateString('en-CA');
         if (!acc[date]) {
             acc[date] = [];
         }
         acc[date].push(session);
         return acc;
-    }, {}));
+    }, {});
 
-    // 5. Render pagination controls
+    // 5. Render the grouped sessions and pagination
+    renderGroupedSessions(groupedSessions);
     renderPaginationControls(filteredSessions.length);
-}
+} // <-- The closing brace for displaySessions is here, in the correct place.
 
-// This function was missing but is now included
+// Function to render the date-grouped sessions
 function renderGroupedSessions(groupedSessions) {
     const listDisplay = document.getElementById('session-list-display');
     listDisplay.innerHTML = '';
@@ -858,7 +806,47 @@ function renderGroupedSessions(groupedSessions) {
     }
 }
 
-// This function was also missing
+// Function to render pagination controls
+function renderPaginationControls(totalSessions) {
+    const paginationContainer = document.getElementById('session-pagination');
+    if (!paginationContainer) return; // Exit if the container doesn't exist
+    
+    paginationContainer.innerHTML = '';
+    const totalPages = Math.ceil(totalSessions / sessionsPerPage);
+
+    if (totalPages <= 1) return;
+
+    // Previous button
+    const prevButton = document.createElement('button');
+    prevButton.innerHTML = '&laquo; Prev';
+    prevButton.disabled = currentPage === 1;
+    prevButton.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displaySessions();
+        }
+    };
+    paginationContainer.appendChild(prevButton);
+
+    // Page number indicator
+    const pageIndicator = document.createElement('span');
+    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    paginationContainer.appendChild(pageIndicator);
+
+    // Next button
+    const nextButton = document.createElement('button');
+    nextButton.innerHTML = 'Next &raquo;';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displaySessions();
+        }
+    };
+    paginationContainer.appendChild(nextButton);
+}
+
+// Function to edit a session
 async function editSession(sessionId, currentName) {
     const newName = prompt(`Enter new name for "${currentName}":`, currentName);
     if (!newName || !newName.trim()) return;
@@ -879,7 +867,7 @@ async function editSession(sessionId, currentName) {
     }
 }
 
-// And this function was missing as well
+// Function to "soft delete" (archive) a session
 async function archiveSession(sessionId, sessionName) {
     if (!confirm(`Are you sure you want to delete the session "${sessionName}"? This will archive it but preserve its history.`)) {
         return;
