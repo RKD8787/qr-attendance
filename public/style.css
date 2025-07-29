@@ -582,7 +582,186 @@ body {
     font-size: 14px;
     min-width: auto;
 }
+.add-student-form {
+    display: grid;
+    gap: 15px;
+    align-items: center;
+}
 
+/* Three-column layout for course creation (name, id, button) */
+.add-student-form[style*="grid-template-columns: 1fr 1fr auto"] {
+    grid-template-columns: 1fr 1fr auto;
+}
+
+/* Course ID input styling */
+#new-course-id {
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#new-course-id::placeholder {
+    text-transform: none;
+    letter-spacing: normal;
+    font-family: inherit;
+}
+
+/* Enhanced course list item for multiple buttons */
+.student-list-item > div:last-child {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+/* Individual button styling for course actions */
+.add-student-btn[onclick*="editCourseName"] {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.add-student-btn[onclick*="editCourseName"]:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    box-shadow: 0 3px 10px rgba(23,162,184,0.3);
+}
+
+.add-student-btn[onclick*="editCourseId"] {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #000;
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.add-student-btn[onclick*="editCourseId"]:hover {
+    background: linear-gradient(135deg, #e0a800, #d39e00);
+    box-shadow: 0 3px 10px rgba(255,193,7,0.3);
+}
+
+.add-student-btn[onclick*="showCourseManagementView"] {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+.delete-student-btn[onclick*="deleteCourseFromList"] {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+/* Course info display enhancement */
+.student-list-item .student-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.student-list-item small {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.student-list-item small strong {
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* Info tip styling */
+.add-student-section > div:last-child {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(0,123,255,0.1);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #555;
+    border-left: 4px solid #007bff;
+}
+
+/* Responsive design for course buttons */
+@media (max-width: 992px) {
+    .add-student-form[style*="grid-template-columns: 1fr 1fr auto"] {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .student-list-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .student-list-item > div:last-child {
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .add-student-btn[onclick*="editCourseName"],
+    .add-student-btn[onclick*="editCourseId"],
+    .add-student-btn[onclick*="showCourseManagementView"],
+    .delete-student-btn[onclick*="deleteCourseFromList"] {
+        flex: 1;
+        min-width: 70px;
+        text-align: center;
+        padding: 8px 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    .student-list-item > div:last-child {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .add-student-btn[onclick*="showCourseManagementView"] {
+        grid-column: 1 / -1; /* Span full width */
+    }
+}
+
+/* Enhanced modal for better course management */
+.student-list-modal-content {
+    max-width: 800px;
+    max-height: 90vh;
+}
+
+/* Loading and error states */
+.student-item[style*="text-align: center"] {
+    font-style: italic;
+    color: #666;
+}
+
+/* Success/Error message styling in course creation */
+.course-message {
+    padding: 10px 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.course-message.success {
+    background: rgba(40,167,69,0.1);
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.course-message.error {
+    background: rgba(220,53,69,0.1);
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
 /* Responsive adjustments for course buttons */
 @media (max-width: 768px) {
     .student-list-item {
