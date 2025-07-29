@@ -361,77 +361,346 @@ async function submitAttendance() {
 
 async function showCourseSelectionModal() {
     try {
+        // Fetch all courses with more details
         const { data: courses, error } = await supabaseClient
             .from('courses')
-            .select('id, course_name');
+            .select('*')
+            .order('course_name', { ascending: true });
             
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching courses:', error);
+            throw error;
+        }
         
         if (!courses || courses.length === 0) {
-            return alert('Please create a course first via the "Manage Courses" button.');
+            return alert('No courses found. Please create a course first via the "Manage Courses" button.');
         }
 
+        // Create enhanced modal with search functionality
         const modal = document.createElement('div');
         modal.className = 'modal';
+        modal.id = 'course-selection-modal';
         modal.style.display = 'block';
+        
+        // Close modal when clicking outside
         modal.onclick = (e) => { 
-            if (e.target === modal) modal.remove(); 
+            if (e.target === modal) {
+                modal.remove();
+                document.removeEventListener('keydown', handleCourseSearchKeydown);
+            }
         };
         
-        let courseOptionsHTML = courses.map(course => 
-            `<button class="modal-btn primary" style="margin: 10px; width: 80%;" onclick="startSessionForCourse(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                ${course.course_name}
-            </button>`
-        ).join('');
-        
         modal.innerHTML = `
-            <div class="modal-content">
+            <div class="modal-content" style="max-width: 700px;">
                 <div class="modal-header">
-                    <h3>Select a Course to Start Session</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    <h3>🚀 Select Course to Start Session</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove(); document.removeEventListener('keydown', handleCourseSearchKeydown)">&times;</button>
                 </div>
-                <div style="text-align: center;">
-                    ${courseOptionsHTML}
+                
+                <!-- Search Section -->
+                <div class="search-container" style="margin-bottom: 20px;">
+                    <input type="text" id="course-selection-search" placeholder="Search courses by name or ID..." autocomplete="off">
+                    <div class="search-icon">🔍</div>
+                </div>
+                
+                <!-- Course Count -->
+                <div class="student-count-header" style="margin-bottom: 15px;">
+                    Available Courses: <span id="course-selection-count">${courses.length}</span>
+                </div>
+                
+                <!-- Courses List -->
+                <div class="student-list-display" id="course-selection-list" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Courses will be populated here -->
+                </div>
+                
+                <!-- Quick Actions -->
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef; text-align: center;">
+                    <button class="modal-btn secondary" onclick="this.closest('.modal').remove(); document.removeEventListener('keydown', handleCourseSearchKeydown)" style="margin-right: 10px;">
+                        Cancel
+                    </button>
+                    <button class="modal-btn primary" onclick="showCoursesModal(); this.closest('.modal').remove(); document.removeEventListener('keydown', handleCourseSearchKeydown)">
+                        + Create New Course
+                    </button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
+        
+        // Populate the course list
+        populateCourseSelectionList(courses);
+        
+        // Setup search functionality
+        setupCourseSelectionSearch(courses);
+        
+        // Focus on search input
+        setTimeout(() => {
+            const searchInput = document.getElementById('course-selection-search');
+            if (searchInput) searchInput.focus();
+        }, 100);
+        
+        console.log('✅ Course selection modal created with', courses.length, 'courses');
+        
     } catch (err) {
-        console.error('Error fetching courses:', err);
-        alert('Could not fetch courses: ' + err.message);
+        console.error('Error creating course selection modal:', err);
+        alert('Could not load courses: ' + err.message);
+    }
+}
+function populateCourseSelectionList(courses, searchTerm = '') {
+    const listContainer = document.getElementById('course-selection-list');
+    const countElement = document.getElementById('course-selection-count');
+    
+    if (!listContainer) return;
+    
+    // Filter courses based on search term
+    const filteredCourses = courses.filter(course => {
+        if (!searchTerm.trim()) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        const nameMatch = course.course_name.toLowerCase().includes(searchLower);
+        const idMatch = course.course_id && course.course_id.toLowerCase().includes(searchLower);
+        
+        return nameMatch || idMatch;
+    });
+    
+    // Update count
+    if (countElement) {
+        countElement.textContent = filteredCourses.length;
+    }
+    
+    // Clear and populate list
+    listContainer.innerHTML = '';
+    
+    if (filteredCourses.length === 0) {
+        listContainer.innerHTML = `
+            <div class="no-students-message">
+                ${searchTerm.trim() ? 'No courses found matching your search.' : 'No courses available.'}
+                <br><br>
+                <button class="modal-btn primary" onclick="showCoursesModal(); document.getElementById('course-selection-modal').remove(); document.removeEventListener('keydown', handleCourseSearchKeydown)">
+                    Create Your First Course
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    filteredCourses.forEach(course => {
+        const courseItem = document.createElement('div');
+        courseItem.className = 'student-list-item course-selection-item';
+        courseItem.style.cursor = 'pointer';
+        courseItem.style.transition = 'all 0.3s ease';
+        
+        // Create course display with highlighting for search terms
+        let courseName = course.course_name;
+        let courseId = course.course_id || 'No ID';
+        
+        if (searchTerm.trim()) {
+            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            courseName = courseName.replace(regex, '<mark style="background: #ffeb3b; padding: 2px;">$1</mark>');
+            if (course.course_id) {
+                courseId = courseId.replace(regex, '<mark style="background: #ffeb3b; padding: 2px;">$1</mark>');
+            }
+        }
+        
+        courseItem.innerHTML = `
+            <div style="flex-grow: 1;">
+                <div class="student-name" style="font-size: 16px; margin-bottom: 5px;">
+                    ${courseName}
+                </div>
+                <small style="color: #666; font-size: 13px;">
+                    Course ID: <strong style="color: #007bff;">${courseId}</strong>
+                    ${course.course_description ? `<br>Description: ${course.course_description}` : ''}
+                </small>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <button class="add-student-btn" style="background: linear-gradient(135deg, #17a2b8, #138496); white-space: nowrap;">
+                    🚀 Start Session
+                </button>
+            </div>
+        `;
+        
+        // Add click handlers
+        courseItem.onclick = () => startSessionForCourse(course.id, course.course_name, course.course_id);
+        
+        // Add hover effects
+        courseItem.addEventListener('mouseenter', function() {
+            this.style.background = 'linear-gradient(135deg, #e7f3ff, #cce7ff)';
+            this.style.transform = 'translateX(5px)';
+            this.style.boxShadow = '0 4px 15px rgba(0,123,255,0.2)';
+        });
+        
+        courseItem.addEventListener('mouseleave', function() {
+            this.style.background = '';
+            this.style.transform = '';
+            this.style.boxShadow = '';
+        });
+        
+        listContainer.appendChild(courseItem);
+    });
+}
+
+function setupCourseSelectionSearch(courses) {
+    const searchInput = document.getElementById('course-selection-search');
+    if (!searchInput) return;
+    
+    // Real-time search
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim();
+        populateCourseSelectionList(courses, searchTerm);
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', handleCourseSearchKeydown);
+    
+    // Clear search button
+    searchInput.addEventListener('focus', function() {
+        if (this.value.trim()) {
+            this.select();
+        }
+    });
+}
+
+function handleCourseSearchKeydown(event) {
+    const modal = document.getElementById('course-selection-modal');
+    if (!modal) return;
+    
+    // ESC to close modal
+    if (event.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', handleCourseSearchKeydown);
+        return;
+    }
+    
+    // Arrow key navigation
+    const courseItems = modal.querySelectorAll('.course-selection-item');
+    if (courseItems.length === 0) return;
+    
+    const currentFocused = modal.querySelector('.course-selection-item.keyboard-focused');
+    let currentIndex = currentFocused ? Array.from(courseItems).indexOf(currentFocused) : -1;
+    
+    if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        currentIndex = (currentIndex + 1) % courseItems.length;
+        updateKeyboardFocus(courseItems, currentIndex);
+    } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        currentIndex = currentIndex <= 0 ? courseItems.length - 1 : currentIndex - 1;
+        updateKeyboardFocus(courseItems, currentIndex);
+    } else if (event.key === 'Enter' && currentFocused) {
+        event.preventDefault();
+        currentFocused.click();
     }
 }
 
-async function startSessionForCourse(courseId, courseName) {
-    const modal = document.querySelector('.modal');
-    if (modal) modal.remove();
+function updateKeyboardFocus(courseItems, newIndex) {
+    // Remove previous focus
+    courseItems.forEach(item => {
+        item.classList.remove('keyboard-focused');
+        item.style.background = '';
+        item.style.transform = '';
+        item.style.boxShadow = '';
+    });
+    
+    // Add new focus
+    if (courseItems[newIndex]) {
+        const item = courseItems[newIndex];
+        item.classList.add('keyboard-focused');
+        item.style.background = 'linear-gradient(135deg, #fff3cd, #ffeaa7)';
+        item.style.transform = 'translateX(5px)';
+        item.style.boxShadow = '0 4px 15px rgba(255,193,7,0.3)';
+        
+        // Scroll into view
+        item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+async function startSessionForCourse(courseId, courseName, courseCode = null) {
+    // Close the modal first
+    const modal = document.getElementById('course-selection-modal');
+    if (modal) {
+        modal.remove();
+        document.removeEventListener('keydown', handleCourseSearchKeydown);
+    }
+    
+    const displayName = courseCode ? `${courseName} (${courseCode})` : courseName;
+    const defaultSessionName = `${displayName} - ${new Date().toLocaleDateString()}`;
     
     const sessionName = prompt(
-        `Enter a name for this session for "${courseName}":`, 
-        `Session on ${new Date().toLocaleDateString()}`
+        `Enter a name for this session:\n\nCourse: ${displayName}`, 
+        defaultSessionName
     );
     
-    if (!sessionName) return;
+    if (!sessionName || !sessionName.trim()) return;
+
+    // Show loading state
+    const startButton = document.querySelector('.add-manually-btn.fresh-btn');
+    if (startButton) {
+        startButton.disabled = true;
+        startButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting Session...';
+    }
 
     try {
         const { data, error } = await supabaseClient
             .from('sessions')
             .insert({ 
-                session_name: sessionName, 
+                session_name: sessionName.trim(), 
                 course_id: courseId 
             })
-            .select('*, courses(course_name)')
+            .select('*, courses(course_name, course_id)')
+            .single();
+            
+        if (error) {
+            console.error('Error creating session:', error);
+            throw error;
+        }
+        
+        updateActiveSession(data);
+        
+        const successMessage = `✅ Session "${sessionName}" started successfully!\n\nCourse: ${displayName}\nYou can now generate QR codes for attendance.`;
+        alert(successMessage);
+        
+        console.log('✅ Session started:', data);
+        
+    } catch (err) {
+        console.error('Error creating session:', err);
+        alert("Failed to create session: " + err.message);
+    } finally {
+        // Restore button state
+        if (startButton) {
+            startButton.disabled = false;
+            startButton.innerHTML = '<i class="fas fa-rocket"></i> Start New Session';
+        }
+    }
+}
+
+// Quick course creation function (can be called from course selection modal)
+async function quickCreateCourse() {
+    const courseName = prompt('Enter course name:');
+    if (!courseName || !courseName.trim()) return;
+    
+    const courseId = prompt('Enter course ID (optional):', generateCourseIdFromName(courseName));
+    
+    try {
+        const courseData = { course_name: courseName.trim() };
+        if (courseId && courseId.trim()) {
+            courseData.course_id = courseId.trim();
+        }
+        
+        const { data: newCourse, error } = await supabaseClient
+            .from('courses')
+            .insert(courseData)
+            .select('*')
             .single();
             
         if (error) throw error;
         
-        updateActiveSession(data);
-        alert(`✅ Session "${sessionName}" has started!`);
-        console.log('✅ Session started:', data);
+        alert(`Course "${newCourse.course_name}" created successfully!`);
+        
+        // Immediately start session with the new course
+        await startSessionForCourse(newCourse.id, newCourse.course_name, newCourse.course_id);
+        
     } catch (err) {
-        console.error('Error creating session:', err);
-        alert("Failed to create session: " + err.message);
+        console.error('Error creating course:', err);
+        alert('Failed to create course: ' + err.message);
     }
 }
 
