@@ -1,122 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Faculty Login - QR Attendance</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .login-box {
-      background: white;
-      padding: 40px 35px;
-      border-radius: 20px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-      animation: fadeIn 0.8s ease;
-    }
-    .login-box h2 {
-      margin-bottom: 30px;
-      font-size: 2rem;
-      color: #2a5298;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .login-box input {
-      width: 100%;
-      padding: 15px 20px;
-      margin: 15px 0;
-      border-radius: 10px;
-      border: 2px solid #e0e0e0;
-      font-size: 16px;
-      transition: 0.3s;
-    }
-    .login-box input:focus {
-      border-color: #2a5298;
-      outline: none;
-      box-shadow: 0 0 10px rgba(42,82,152,0.2);
-    }
-    .login-box button {
-      background: linear-gradient(135deg, #28a745, #1e7e34);
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-      border: none;
-      padding: 15px 25px;
-      border-radius: 10px;
-      width: 100%;
-      margin-top: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 25px rgba(40,167,69,0.25);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .login-box button:hover {
-      background: linear-gradient(135deg, #1e7e34, #155724);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(40,167,69,0.4);
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Attendance System</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="login-box">
-    <h2>Faculty Login</h2>
-    <form id="login-form">
-      <input type="email" id="email" placeholder="Enter Email" required />
-      <input type="password" id="password" placeholder="Enter Password" required />
-      <button type="submit">Login</button>
-    </form>
-  </div>
+    <div class="header">
+        <h1><big><strong> Dayananda Sagar College Of Engineering</strong></big></h1>
+        <h2>Attendance Portal</h2>
+    </div>
+   <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script>
-    // Initialize Supabase client
-    const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <div class="container">
+        <div id="admin-page" class="page active">
+            <div class="admin-content">
+                <div class="present-count-card">
+                    <div class="present-count">Present: <span id="present-count">0</span></div>
+                    <h3 id="current-session-title">No Active Session</h3>
+                    <div class="present-students">
+                        <h3>Present Students</h3>
+                        <div id="present-students-list"></div>
+                    </div>
+                </div>
 
-    // Handle the login form submission
-    document.getElementById('login-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const loginButton = e.target.querySelector('button');
+                <div class="qr-section">
+                    <h3>Scan to Mark Attendance</h3>
+                    <div class="qr-container">
+                        <div id="qr-code-container">
+                            <p>Start a new session to generate a QR code.</p>
+                        </div>
+                    </div>
+                    <p class="qr-instruction">Start a session to generate a new QR code</p>
+                </div> 
+            </div>
 
-      loginButton.disabled = true;
-      loginButton.textContent = 'Logging in...';
+            <div class="action-buttons">
+                <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()"><i class="fas fa-rocket"></i> Start New Session</button>
+                <button class="add-manually-btn" onclick="showSessionHistoryModal()"><i class="fas fa-history"></i> Session History</button>
+                <button class="add-manually-btn" onclick="showStatisticsModal()"><i class="fas fa-chart-bar"></i> Statistics</button>
+                <button class="add-manually-btn" onclick="showAddManuallyModal()"><i class="fas fa-user-plus"></i> Add Manually</button>
+                <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()"><i class="fas fa-users"></i> Manage Students</button>
+                <button class="add-manually-btn" onclick="showCoursesModal()"><i class="fas fa-book"></i> Manage Courses</button>
+                <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+            </div>
+        </div>
+    </div>
 
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
+    <div id="add-manually-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-search-manual" placeholder="Search for students not yet present...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-dropdown" id="student-dropdown"></div>
+        </div>
+    </div>
 
-        if (error) throw error;
+    <div id="student-list-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3>Manage Student Roster</h3>
+                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+            </div>
+            <div class="add-student-section">
+                <h4>Add New Student</h4>
+                <div class="add-student-form">
+                    <input type="text" id="new-student-name" placeholder="Student Name" maxlength="50">
+                    <input type="text" id="new-student-usn" placeholder="Unique Student Number (USN)" maxlength="20">
+                    <button class="add-student-btn" onclick="addNewStudent()">Add Student</button>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="student-list-search" placeholder="Search all students...">
+                <div class="search-icon">🔍</div>
+            </div>
+            <div class="student-list-container">
+                <div class="student-count-header">Total Students: <span id="total-student-count">0</span></div>
+                <div class="student-list-display" id="student-list-display"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="edit-student-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+             <div class="modal-header">
+                <h3 id="edit-student-title">Edit Student</h3>
+                <button class="close-btn" onclick="closeEditStudentModal()">&times;</button>
+            </div>
+            <div class="edit-student-form">
+                <input type="hidden" id="edit-student-original-usn">
+                <div>
+                    <label for="edit-student-name">Student Name</label>
+                    <input type="text" id="edit-student-name" placeholder="Student Name">
+                </div>
+                <div>
+                    <label for="edit-student-usn">Student USN</label>
+                    <input type="text" id="edit-student-usn" placeholder="Unique Student Number">
+                </div>
+                <button class="add-student-btn" onclick="saveStudentDetails()">Save Changes</button>
+            </div>
+            <hr>
+            <h4><i class="fas fa-fingerprint"></i> Registered Fingerprints</h4>
+            <div id="student-fingerprint-list"></div>
+        </div>
+    </div>
 
-        // On successful login, redirect to the main faculty page
-        window.location.href = 'index.html';
+    <div id="session-history-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-calendar-alt"></i> Session History</h3>
+                <button class="close-btn" onclick="closeSessionHistoryModal()">&times;</button>
+            </div>
+            <div id="session-list-container">
+                <div class="session-toolbar">
+                    <div class="search-container">
+                        <input type="text" id="session-history-search" placeholder="Search sessions...">
+                    </div>
+                    <div>
+                        <label for="show-archived">Show Archived:</label>
+                        <input type="checkbox" id="show-archived" onchange="fetchAllSessions()">
+                    </div>
+                </div>
+                <div class="student-list-display" id="session-list-display"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="courses-modal" class="modal">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3 id="courses-modal-title">Manage Courses</h3>
+                <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
+            </div>
+            <div id="course-list-view">
+                <div class="add-student-section">
+                    <h4>Create New Course</h4>
+                    <div class="add-student-form">
+                        <input type="text" id="new-course-name" placeholder="Course Name">
+                        <input type="text" id="new-course-id" placeholder="Course ID (e.g., CS-101)">
+                        <button class="add-student-btn" onclick="createNewCourse()">Create</button>
+                    </div>
+                </div>
+                <div class="student-list-display" id="courses-list-display"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="statistics-modal" class="modal">
+        <div class="modal-content" style="max-width: 1200px; max-height: 95vh;">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-line"></i> Attendance Statistics</h3>
+                <button class="close-btn" onclick="closeStatisticsModal()">&times;</button>
+            </div>
+            <div class="stats-tabs">
+                <button class="stats-tab-btn active" onclick="showStatsTab('overview')">📊 Overview</button>
+                <button class="stats-tab-btn" onclick="showStatsTab('students')">🧑‍🎓 Students</button>
+            </div>
+            <div id="stats-overview-view" class="stats-view active">
+                <div class="overview-grid">
+                    <div class="stat-card">
+                        <h4>Total Attendance</h4>
+                        <p id="stats-total-attendance">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Avg. Attendance</h4>
+                        <p id="stats-avg-attendance">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Sessions</h4>
+                        <p id="stats-total-sessions">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Fully Verified</h4>
+                        <p id="stats-fully-verified">0%</p>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h4>Attendance Trend (Last 30 Days)</h4>
+                        <canvas id="attendance-trend-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Verification Methods</h4>
+                        <canvas id="verification-method-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="stats-students-view" class="stats-view">
+                <div class="stats-toolbar">
+                    <input type="text" id="student-stats-search" class="stats-search" placeholder="Search students by name or USN...">
+                </div>
+                <div class="stats-list-display" id="student-stats-list"></div>
+            </div>
+        </div>
+    </div>
 
-      } catch (error) {
-        alert('Login failed: ' + error.message);
-      } finally {
-        loginButton.disabled = false;
-        loginButton.textContent = 'Login';
-      }
-    });
-  </script>
+    <script src="script.js"></script>
 </body>
 </html>
