@@ -709,6 +709,9 @@ async function quickCreateCourse() {
 // In script.js
 
 // New function to display sessions with search, sort, and pagination
+// In script.js
+
+// This function now correctly renders the sessions with search and pagination
 function displaySessions() {
     const listDisplay = document.getElementById('session-list-display');
     const searchInput = document.getElementById('session-history-search');
@@ -758,7 +761,7 @@ function displaySessions() {
     // 5. Render the grouped sessions and pagination
     renderGroupedSessions(groupedSessions);
     renderPaginationControls(filteredSessions.length);
-} // <-- The closing brace for displaySessions is here, in the correct place.
+} // <-- This is the correct closing brace for the displaySessions function.
 
 // Function to render the date-grouped sessions
 function renderGroupedSessions(groupedSessions) {
@@ -809,7 +812,7 @@ function renderGroupedSessions(groupedSessions) {
 // Function to render pagination controls
 function renderPaginationControls(totalSessions) {
     const paginationContainer = document.getElementById('session-pagination');
-    if (!paginationContainer) return; // Exit if the container doesn't exist
+    if (!paginationContainer) return; 
     
     paginationContainer.innerHTML = '';
     const totalPages = Math.ceil(totalSessions / sessionsPerPage);
