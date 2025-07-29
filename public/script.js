@@ -643,11 +643,11 @@ async function populateCoursesList() {
     listDisplay.innerHTML = '<div class="student-item" style="text-align: center; padding: 20px;">Loading courses...</div>';
 
     try {
-        // Fetch courses with explicit ordering
+        // Fetch courses without ordering by created_at since it doesn't exist
         const { data: courses, error } = await supabaseClient
             .from('courses')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('id', { ascending: false }); // Order by id instead
 
         if (error) {
             console.error('Error fetching courses:', error);
@@ -674,7 +674,7 @@ async function populateCoursesList() {
                 <div style="flex-grow: 1;">
                     <span class="student-name">${course.course_name}</span>
                     <small style="display: block; color: #666; margin-top: 5px;">
-                        Created: ${new Date(course.created_at).toLocaleDateString()}
+                        Course ID: ${course.id}
                     </small>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
@@ -761,6 +761,7 @@ async function createNewCourse() {
         createBtn.textContent = originalText;
     }
 }
+
 async function editCourse(courseId, currentName) {
     const newName = prompt(`Edit course name:`, currentName);
     
@@ -831,13 +832,34 @@ async function deleteCourseFromList(courseId, courseName) {
         alert('Failed to delete course: ' + err.message);
     }
 }
+
+// Enhanced showCoursesModal to ensure proper initialization
+function showCoursesModal() { 
+    const modal = document.getElementById('courses-modal');
+    if (!modal) {
+        console.error('Courses modal not found');
+        return;
+    }
+    
+    console.log('🚀 Opening courses modal...');
+    modal.style.display = 'block';
+    
+    // Reset to list view
+    backToCoursesList(); 
+    
+    // Load courses with a small delay to ensure modal is fully displayed
+    setTimeout(() => {
+        populateCoursesList();
+    }, 100);
+}
+
 async function debugCourses() {
     console.log('🔍 Debug: Checking courses in database...');
     try {
         const { data, error } = await supabaseClient
             .from('courses')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('id', { ascending: false });
             
         if (error) {
             console.error('❌ Debug error:', error);
