@@ -601,10 +601,23 @@ function renderCourseList(courses) {
         const item = document.createElement('div');
         item.className = 'student-list-item';
         item.innerHTML = `
-            <span>${course.course_name}</span>
-            <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                Manage
-            </button>
+            <div style="flex-grow: 1;">
+                <span class="student-name">${course.course_name}</span>
+                <small style="display: block; color: #666; margin-top: 5px;">
+                    Created: ${new Date(course.created_at).toLocaleDateString()}
+                </small>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="add-student-btn" onclick="editCourse(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                    ✏️ Edit
+                </button>
+                <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                    ⚙️ Manage
+                </button>
+                <button class="delete-student-btn" onclick="deleteCourseFromList(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
+                    🗑️ Delete
+                </button>
+            </div>
         `;
         listDisplay.appendChild(item);
     });
@@ -614,7 +627,7 @@ async function populateCoursesList() {
     const listDisplay = document.getElementById('courses-list-display');
     if (!listDisplay) return;
 
-    listDisplay.innerHTML = '<div class="student-item">Loading...</div>';
+    listDisplay.innerHTML = '<div class="student-item">Loading courses...</div>';
 
     try {
         const { data, error } = await supabaseClient
@@ -625,10 +638,11 @@ async function populateCoursesList() {
         if (error) throw error;
 
         renderCourseList(data);
+        console.log('✅ Courses loaded:', data?.length || 0);
 
     } catch (err) {
         console.error('Error loading courses:', err);
-        listDisplay.innerHTML = '<div class="no-students-message">Could not load courses.</div>';
+        listDisplay.innerHTML = '<div class="no-students-message">Could not load courses. Please try again.</div>';
     }
 }
 
@@ -657,33 +671,83 @@ async function createNewCourse() {
             return;
         }
 
-        const listDisplay = document.getElementById('courses-list-display');
-        
-        const noCoursesMessage = listDisplay.querySelector('.no-students-message');
-        if (noCoursesMessage) {
-            listDisplay.innerHTML = '';
-        }
-
-        const item = document.createElement('div');
-        item.className = 'student-list-item';
-        item.innerHTML = `
-            <span>${newCourse.course_name}</span>
-            <button class="add-student-btn" onclick="showCourseManagementView(${newCourse.id}, '${newCourse.course_name.replace(/'/g, "\\'")}')">
-                Manage
-            </button>
-        `;
-
-        listDisplay.prepend(item);
-
+        // Clear the input field
         courseNameInput.value = '';
+        
+        // Refresh the entire course list to show the new course
+        await populateCoursesList();
+        
         alert(`Course "${newCourse.course_name}" was created successfully!`);
+        console.log('✅ Course created:', newCourse);
 
     } catch (err) {
         console.error('Error creating course:', err);
         alert(`An unexpected error occurred: ${err.message}`);
     }
 }
+async function editCourse(courseId, currentName) {
+    const newName = prompt(`Edit course name:`, currentName);
+    
+    if (!newName || newName.trim() === '') {
+        return; // User cancelled or entered empty string
+    }
+    
+    const trimmedName = newName.trim();
+    
+    if (trimmedName === currentName) {
+        return; // No change made
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('courses')
+            .update({ course_name: trimmedName })
+            .eq('id', courseId);
+            
+        if (error) {
+            if (error.code === '23505') {
+                alert(`Error: A course named "${trimmedName}" already exists.`);
+            } else {
+                throw error;
+            }
+            return;
+        }
+        
+        // Refresh the course list
+        await populateCoursesList();
+        alert(`Course renamed to "${trimmedName}" successfully!`);
+        console.log('✅ Course updated:', trimmedName);
+        
+    } catch (err) {
+        console.error('Error updating course:', err);
+        alert('Failed to update course: ' + err.message);
+    }
+}
 
+// New function to delete course from the list view
+async function deleteCourseFromList(courseId, courseName) {
+    if (!confirm(`⚠️ Are you sure you want to delete the course "${courseName}"?\n\nThis will also remove all student enrollments for this course and cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('courses')
+            .delete()
+            .eq('id', courseId);
+            
+        if (error) throw error;
+        
+        // Refresh the course list
+        await populateCoursesList();
+        alert(`Course "${courseName}" has been deleted successfully.`);
+        console.log('✅ Course deleted:', courseName);
+        
+    } catch (err) {
+        console.error('Error deleting course:', err);
+        alert('Failed to delete course: ' + err.message);
+    }
+}
 function showCourseManagementView(courseId, courseName) {
     currentCourseId = courseId;
     const listView = document.getElementById('course-list-view');
@@ -828,11 +892,27 @@ async function removeStudentFromCourse(studentUsn, courseId) {
 }
 
 async function deleteCourse() {
-    if (!currentCourseId || !confirm("⚠️ Permanently delete this course and all its enrollment records?")) {
+    if (!currentCourseId) {
+        alert('No course selected for deletion.');
         return;
     }
     
+    // Get the course name for confirmation
     try {
+        const { data: course, error: fetchError } = await supabaseClient
+            .from('courses')
+            .select('course_name')
+            .eq('id', currentCourseId)
+            .single();
+            
+        if (fetchError) throw fetchError;
+        
+        const courseName = course?.course_name || 'Unknown Course';
+        
+        if (!confirm(`⚠️ Are you sure you want to permanently delete "${courseName}"?\n\nThis will remove:\n• The course itself\n• All student enrollments\n• All associated sessions and attendance records\n\nThis action cannot be undone!`)) {
+            return;
+        }
+        
         const { error } = await supabaseClient
             .from('courses')
             .delete()
@@ -840,10 +920,14 @@ async function deleteCourse() {
             
         if (error) throw error;
         
+        // Go back to course list and refresh
         backToCoursesList();
-        populateCoursesList();
-        console.log('✅ Course deleted');
-    } catch (err) { 
+        await populateCoursesList();
+        
+        alert(`Course "${courseName}" has been permanently deleted.`);
+        console.log('✅ Course deleted from management view:', courseName);
+        
+    } catch (err) {
         console.error('Error deleting course:', err);
         alert('Failed to delete course: ' + err.message);
     }
