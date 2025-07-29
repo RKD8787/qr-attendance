@@ -376,47 +376,35 @@ function closeStatisticsModal() {
 }
 
 function showStatsTab(tabName) {
-    // Hide all views, deactivate all tabs
     document.querySelectorAll('.stats-view').forEach(view => view.classList.remove('active'));
     document.querySelectorAll('.stats-tab-btn').forEach(btn => btn.classList.remove('active'));
-
-    // Show the selected view and activate the tab
     document.getElementById(`stats-${tabName}-view`).classList.add('active');
     document.querySelector(`.stats-tab-btn[onclick="showStatsTab('${tabName}')"]`).classList.add('active');
 
-    // Fetch the relevant data
-    if (tabName === 'sessions') {
-        fetchSessionStatistics();
-    } else if (tabName === 'students') {
-        fetchStudentStatistics();
-    }
+    if (tabName === 'sessions') fetchSessionStatistics();
+    else if (tabName === 'students') fetchStudentStatistics();
 }
 
 async function fetchSessionStatistics() {
     const listDisplay = document.getElementById('session-stats-list');
     listDisplay.innerHTML = '<div class="student-item">Loading statistics...</div>';
-
     try {
-        // This is a complex query to get all data needed in one go
         const { data, error } = await supabaseClient.rpc('get_session_statistics');
         if (error) throw error;
-        
         renderSessionStatistics(data);
     } catch (err) {
         console.error("Error fetching session stats:", err);
-        listDisplay.innerHTML = '<div class="no-students-message">Could not load session statistics.</div>';
+        listDisplay.innerHTML = '<div class="no-students-message">Could not load session statistics. Ensure SQL function is created.</div>';
     }
 }
 
 function renderSessionStatistics(stats) {
     const listDisplay = document.getElementById('session-stats-list');
     listDisplay.innerHTML = '';
-    
     if (!stats || stats.length === 0) {
         listDisplay.innerHTML = '<div class="no-students-message">No session data found.</div>';
         return;
     }
-
     stats.forEach(stat => {
         const percentage = stat.total_enrolled > 0 ? (stat.present_count / stat.total_enrolled) * 100 : 0;
         const item = document.createElement('div');
@@ -431,8 +419,7 @@ function renderSessionStatistics(stats) {
                     <div class="progress-bar" style="width: ${percentage.toFixed(2)}%;"></div>
                     <span class="progress-bar-text">${stat.present_count} / ${stat.total_enrolled} Attended (${percentage.toFixed(0)}%)</span>
                 </div>
-            </div>
-        `;
+            </div>`;
         listDisplay.appendChild(item);
     });
 }
@@ -440,27 +427,23 @@ function renderSessionStatistics(stats) {
 async function fetchStudentStatistics() {
     const listDisplay = document.getElementById('student-stats-list');
     listDisplay.innerHTML = '<div class="student-item">Loading statistics...</div>';
-    
     try {
         const { data, error } = await supabaseClient.rpc('get_student_statistics');
         if (error) throw error;
-        
         renderStudentStatistics(data);
     } catch (err) {
         console.error("Error fetching student stats:", err);
-        listDisplay.innerHTML = '<div class="no-students-message">Could not load student statistics.</div>';
+        listDisplay.innerHTML = '<div class="no-students-message">Could not load student statistics. Ensure SQL function is created.</div>';
     }
 }
 
 function renderStudentStatistics(stats) {
     const listDisplay = document.getElementById('student-stats-list');
     listDisplay.innerHTML = '';
-    
     if (!stats || stats.length === 0) {
         listDisplay.innerHTML = '<div class="no-students-message">No student data found.</div>';
         return;
     }
-
     stats.forEach(stat => {
         const percentage = stat.total_sessions > 0 ? (stat.attended_sessions / stat.total_sessions) * 100 : 0;
         const item = document.createElement('div');
@@ -474,11 +457,11 @@ function renderStudentStatistics(stats) {
                     <div class="progress-bar" style="width: ${percentage.toFixed(2)}%;"></div>
                     <span class="progress-bar-text">${stat.attended_sessions} / ${stat.total_sessions} Attended (${percentage.toFixed(0)}%)</span>
                 </div>
-            </div>
-        `;
+            </div>`;
         listDisplay.appendChild(item);
     });
 }
+
 // =================================================================
 // SESSION MANAGEMENT (START NEW / HISTORY)
 // =================================================================
