@@ -118,34 +118,39 @@
 
     <!-- Courses Modal -->
     <div id="courses-modal" class="modal">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3 id="courses-modal-title">Manage Courses</h3>
-                <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
-            </div>
-            <div id="course-list-view">
-                <div class="add-student-section">
-                    <h4>Create New Course</h4>
-                    <div class="add-student-form">
-                        <input type="text" id="new-course-name" placeholder="Enter new course name...">
-                        <button class="add-student-btn" onclick="createNewCourse()">Create Course</button>
-                    </div>
+    <div class="modal-content student-list-modal-content">
+        <div class="modal-header">
+            <h3 id="courses-modal-title">Manage Courses</h3>
+            <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
+        </div>
+        <div id="course-list-view">
+            <div class="add-student-section">
+                <h4>Create New Course</h4>
+                <div class="add-student-form" style="grid-template-columns: 1fr 1fr auto; gap: 15px;">
+                    <input type="text" id="new-course-name" placeholder="Course Name (e.g., Data Structures)" maxlength="100">
+                    <input type="text" id="new-course-id" placeholder="Course ID (e.g., CS-101)" maxlength="30">
+                    <button class="add-student-btn" onclick="createNewCourse()">Create Course</button>
                 </div>
-                <div class="student-list-display" id="courses-list-display"></div>
+                <div style="margin-top: 10px; padding: 10px; background: rgba(0,123,255,0.1); border-radius: 8px; font-size: 14px; color: #666;">
+                    <strong>💡 Tip:</strong> Course ID is optional but recommended for easy identification. 
+                    Use formats like CS-101, MATH-201, or ENG-301. Leave blank for auto-assignment.
+                </div>
             </div>
-            <div id="course-management-view" style="display: none;">
-                <button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back</button>
-                <h4 id="course-management-title"></h4>
-                <p><strong>Enrolled Students:</strong></p>
-                <div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div>
-                <hr style="margin: 20px 0;">
-                <p><strong>Add Students to Course:</strong></p>
-                <input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;">
-                <div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div>
-                <button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px; background: #dc3545;">Delete This Course</button>
-            </div>
+            <div class="student-list-display" id="courses-list-display"></div>
+        </div>
+        <div id="course-management-view" style="display: none;">
+            <button class="modal-btn secondary" onclick="backToCoursesList()" style="margin-bottom: 20px;">&larr; Back</button>
+            <h4 id="course-management-title"></h4>
+            <p><strong>Enrolled Students:</strong></p>
+            <div class="student-list-display" id="course-student-list-display" style="margin-top: 10px; max-height: 200px;"></div>
+            <hr style="margin: 20px 0;">
+            <p><strong>Add Students to Course:</strong></p>
+            <input type="text" id="add-student-search" placeholder="Search for students to add..." style="width: 100%; padding: 10px; margin-top: 10px;">
+            <div class="student-list-display" id="add-student-to-course-display" style="margin-top: 10px; max-height: 200px;"></div>
+            <button class="delete-student-btn" onclick="deleteCourse()" style="width: 100%; margin-top: 20px; padding: 15px; background: #dc3545;">Delete This Course</button>
         </div>
     </div>
+</div>
 
     <script src="script.js"></script>
 </body>
