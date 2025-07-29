@@ -9,6 +9,7 @@ let currentSession = null;
 let allSessions = [];
 let currentPage = 1;
 const sessionsPerPage = 10;
+
 // ✅ MAIN ENTRY POINT
 document.addEventListener('DOMContentLoaded', initializeApp);
 
@@ -70,7 +71,7 @@ async function fetchCurrentSessionAttendance() {
     try {
         const { data, error } = await supabaseClient
             .from('attendance')
-            .select('student, usn, timestamp')
+            .select('student, usn, timestamp, fingerprint_verified, location_verified')
             .eq('session_id', currentSession.id)
             .order('timestamp', { ascending: false });
 
@@ -146,6 +147,7 @@ function initFacultyView() {
     // Set up polling and event listeners
     setInterval(fetchCurrentSessionAttendance, 5000);
     setupAllModalSearchListeners();
+    initializeEnhancedFacultyDashboard();
     console.log('✅ Faculty view initialized');
 }
 
@@ -245,6 +247,9 @@ function initStudentView() {
     console.log('🚀 Initializing student view...');
     populateStudentListForSelection();
     setupStudentEventListeners();
+    initializeUserInteractionTracking();
+    initializeFingerprintSystem();
+    setTimeout(showLocationPermissionRequest, 2000);
 }
 
 function populateStudentListForSelection(searchTerm = '') {
@@ -292,7 +297,9 @@ function setupStudentEventListeners() {
     const searchInput = document.getElementById('student-search');
 
     if (submitBtn) {
-        submitBtn.addEventListener('click', submitAttendance);
+        const newSubmitBtn = submitBtn.cloneNode(true);
+        submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+        newSubmitBtn.addEventListener('click', submitAttendanceWithFingerprint);
     }
     
     if (closeBtn) {
@@ -356,7 +363,6 @@ async function submitAttendance() {
         }
     }
 }
-// In script.js
 
 // =================================================================
 // STATISTICS MODAL
@@ -504,23 +510,18 @@ async function showCourseSelectionModal() {
                     <button class="close-btn" onclick="this.closest('.modal').remove(); document.removeEventListener('keydown', handleCourseSearchKeydown)">&times;</button>
                 </div>
                 
-                <!-- Search Section -->
                 <div class="search-container" style="margin-bottom: 20px;">
                     <input type="text" id="course-selection-search" placeholder="Search courses by name or ID..." autocomplete="off">
                     <div class="search-icon">🔍</div>
                 </div>
                 
-                <!-- Course Count -->
                 <div class="student-count-header" style="margin-bottom: 15px;">
                     Available Courses: <span id="course-selection-count">${courses.length}</span>
                 </div>
                 
-                <!-- Courses List -->
                 <div class="student-list-display" id="course-selection-list" style="max-height: 400px; overflow-y: auto;">
-                    <!-- Courses will be populated here -->
-                </div>
+                    </div>
                 
-                <!-- Quick Actions -->
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e9ecef; text-align: center;">
                     <button class="modal-btn secondary" onclick="this.closest('.modal').remove(); document.removeEventListener('keydown', handleCourseSearchKeydown)" style="margin-right: 10px;">
                         Cancel
@@ -811,8 +812,6 @@ async function quickCreateCourse() {
     }
 }
 
-// In script.js
-
 // =================================================================
 // SESSION HISTORY
 // =================================================================
@@ -974,7 +973,7 @@ async function archiveSession(sessionId, sessionName) {
         console.error('Error archiving session:', err);
         alert('Failed to archive session: ' + err.message);
     }
-}// In script.js
+}
 
 function backToSessionList() {
     const listContainer = document.getElementById('session-list-container');
@@ -999,7 +998,7 @@ async function viewSessionDetails(sessionId, sessionName) {
     try {
         const { data, error } = await supabaseClient
             .from('attendance')
-            .select('student, usn, timestamp')
+            .select('student, usn, timestamp, fingerprint_verified, location_verified, gps_accuracy')
             .eq('session_id', sessionId)
             .order('timestamp', { ascending: true });
             
@@ -1070,6 +1069,7 @@ function showCoursesModal() {
     // Load courses with a small delay to ensure modal is fully displayed
     setTimeout(() => {
         populateCoursesList();
+        setupCourseIdAutoGeneration();
     }, 100);
 }
 
@@ -1087,41 +1087,6 @@ function backToCoursesList() {
     currentCourseId = null;
 }
 
-function renderCourseList(courses) {
-    const listDisplay = document.getElementById('courses-list-display');
-    if (!listDisplay) return;
-
-    listDisplay.innerHTML = '';
-    if (!courses || courses.length === 0) {
-        listDisplay.innerHTML = '<div class="no-students-message">No courses created.</div>';
-        return;
-    }
-
-    courses.forEach(course => {
-        const item = document.createElement('div');
-        item.className = 'student-list-item';
-        item.innerHTML = `
-            <div style="flex-grow: 1;">
-                <span class="student-name">${course.course_name}</span>
-                <small style="display: block; color: #666; margin-top: 5px;">
-                    Created: ${new Date(course.created_at).toLocaleDateString()}
-                </small>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <button class="add-student-btn" onclick="editCourse(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="add-student-btn" onclick="showCourseManagementView(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                    <i class="fas fa-cog"></i> Manage
-                </button>
-                <button class="delete-student-btn" onclick="deleteCourseFromList(${course.id}, '${course.course_name.replace(/'/g, "\\'")}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-        listDisplay.appendChild(item);
-    });
-}
 async function populateCoursesList() {
     const listDisplay = document.getElementById('courses-list-display');
     if (!listDisplay) {
@@ -1416,25 +1381,7 @@ async function deleteCourseFromList(courseDbId, courseName) {
         alert('Failed to delete course: ' + err.message);
     }
 }
-// Enhanced showCoursesModal to ensure proper initialization
-function showCoursesModal() { 
-    const modal = document.getElementById('courses-modal');
-    if (!modal) {
-        console.error('Courses modal not found');
-        return;
-    }
-    
-    console.log('🚀 Opening courses modal...');
-    modal.style.display = 'block';
-    
-    // Reset to list view
-    backToCoursesList(); 
-    
-    // Load courses with a small delay to ensure modal is fully displayed
-    setTimeout(() => {
-        populateCoursesList();
-    }, 100);
-}
+
 function generateCourseIdFromName(courseName) {
     return courseName
         .toLowerCase()
@@ -1841,7 +1788,7 @@ async function exportAttendanceCSV() {
     try {
         const { data, error } = await supabaseClient
             .from('attendance')
-            .select('student, usn, timestamp')
+            .select('student, usn, timestamp, fingerprint_verified, location_verified, gps_accuracy')
             .eq('session_id', currentSession.id);
             
         if (error) throw error;
@@ -1851,10 +1798,15 @@ async function exportAttendanceCSV() {
         }
 
         let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Student,USN,Timestamp,Session\n";
-        csvContent += data.map(e => 
-            `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${currentSession.session_name}"`
-        ).join("\n");
+        csvContent += "Student,USN,Timestamp,Fingerprint Verified,Location Verified,GPS Accuracy (m),Session,Verification Level\n";
+        
+        csvContent += data.map(e => {
+            const verificationLevel = e.fingerprint_verified && e.location_verified ? 'Fully Verified' :
+                                    e.fingerprint_verified ? 'Fingerprint Only' :
+                                    e.location_verified ? 'Location Only' : 'Basic';
+            
+            return `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${e.fingerprint_verified ? 'Yes' : 'No'}","${e.location_verified ? 'Yes' : 'No'}","${Math.round(e.gps_accuracy || 0)}","${currentSession.session_name}","${verificationLevel}"`;
+        }).join("\n");
         
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
@@ -1863,7 +1815,7 @@ async function exportAttendanceCSV() {
         link.click();
         document.body.removeChild(link);
         
-        console.log('✅ Attendance exported');
+        console.log('✅ Enhanced attendance exported with fingerprint data');
     } catch (err) {
         console.error('Error exporting attendance:', err);
         alert('Failed to export attendance: ' + err.message);
@@ -2967,14 +2919,6 @@ function initializeFingerprintSystem() {
     }
 }
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize user interaction tracking (from previous system)
-    initializeUserInteractionTracking();
-    
-    // Initialize fingerprint system
-    initializeFingerprintSystem();
-});
 
 console.log('🔐 Fingerprint attendance system loaded:', {
     enabled: FINGERPRINT_CONFIG.ENABLE_FINGERPRINT,
@@ -3556,49 +3500,6 @@ function addFingerprintVerificationCSS() {
     document.head.appendChild(style);
 }
 
-// Enhanced export function with fingerprint data
-async function exportAttendanceCSVWithFingerprint() {
-    if (!currentSession) {
-        return alert("Please start a session to export attendance.");
-    }
-    
-    try {
-        const { data, error } = await supabaseClient
-            .from('attendance')
-            .select('student, usn, timestamp, fingerprint_verified, location_verified, gps_accuracy, fingerprint_credential_id')
-            .eq('session_id', currentSession.id);
-            
-        if (error) throw error;
-        
-        if (!data || data.length === 0) {
-            return alert("No attendance data to export for this session.");
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Student,USN,Timestamp,Fingerprint Verified,Location Verified,GPS Accuracy (m),Session,Verification Level\n";
-        
-        csvContent += data.map(e => {
-            const verificationLevel = e.fingerprint_verified && e.location_verified ? 'Fully Verified' :
-                                    e.fingerprint_verified ? 'Fingerprint Only' :
-                                    e.location_verified ? 'Location Only' : 'Basic';
-            
-            return `"${e.student}","${e.usn || ''}","${new Date(e.timestamp).toLocaleString()}","${e.fingerprint_verified ? 'Yes' : 'No'}","${e.location_verified ? 'Yes' : 'No'}","${Math.round(e.gps_accuracy || 0)}","${currentSession.session_name}","${verificationLevel}"`;
-        }).join("\n");
-        
-        const link = document.createElement("a");
-        link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", `attendance_${currentSession.session_name}_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        console.log('✅ Enhanced attendance exported with fingerprint data');
-    } catch (err) {
-        console.error('Error exporting attendance:', err);
-        alert('Failed to export attendance: ' + err.message);
-    }
-}
-
 // Initialize enhanced faculty dashboard
 function initializeEnhancedFacultyDashboard() {
     // Add CSS for verification badges
@@ -3609,72 +3510,12 @@ function initializeEnhancedFacultyDashboard() {
     window.viewSessionDetails = viewSessionDetailsWithFingerprint;
     window.showStudentListModal = showStudentListModalWithFingerprint;
     window.populateStudentListDisplay = populateStudentListDisplayWithFingerprint;
-    window.exportAttendanceCSV = exportAttendanceCSVWithFingerprint;
+    window.exportAttendanceCSV = exportAttendanceCSV;
+    window.startSessionForCourse = startSessionWithLocationTracking;
     
     console.log('✅ Enhanced faculty dashboard with fingerprint monitoring initialized');
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    if (!window.location.pathname.includes('student.html')) {
-        // This is faculty dashboard
-        setTimeout(initializeEnhancedFacultyDashboard, 1000);
-    }
-});
-
-console.log('🔐 Faculty fingerprint monitoring dashboard loaded');
-function setupStudentEventListeners() {
-    const submitBtn = document.getElementById('submit-attendance');
-    const closeBtn = document.getElementById('close-success');
-    const searchInput = document.getElementById('student-search');
-
-    if (submitBtn) {
-        // REMOVE the original event listener
-        // submitBtn.addEventListener('click', submitAttendance); 
-        
-        // ADD the new, secure event listener
-        submitBtn.addEventListener('click', submitAttendanceWithLocationValidation); 
-    }
-    
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => window.close());
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => 
-            populateStudentListForSelection(e.target.value.toLowerCase().trim())
-        );
-    }
-}
-// Initialize everything when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.pathname.includes('student.html')) {
-        // Initialize user interaction tracking
-        initializeUserInteractionTracking();
-        
-        // Show location permission info
-        setTimeout(showLocationPermissionRequest, 2000);
-        
-        // Replace the submit button event listener
-        const submitBtn = document.getElementById('submit-attendance');
-        if (submitBtn) {
-            submitBtn.removeEventListener('click', submitAttendance);
-            submitBtn.addEventListener('click', submitAttendanceWithLocationValidation);
-        }
-    }
-    
-    // Replace session creation function for faculty
-    if (!window.location.pathname.includes('student.html')) {
-        // Override the original function
-        window.startSessionForCourse = startSessionWithLocationTracking;
-    }
-});
-console.log('📱 Mobile-friendly proxy prevention loaded:', {
-    locationCheck: MOBILE_FRIENDLY_CONFIG.ENABLE_LOCATION_CHECK,
-    maxDistance: MOBILE_FRIENDLY_CONFIG.MAX_DISTANCE_FROM_ADMIN + 'm',
-    timeWindow: MOBILE_FRIENDLY_CONFIG.SESSION_SUBMISSION_WINDOW + ' minutes',
-    deviceTracking: MOBILE_FRIENDLY_CONFIG.ENABLE_DEVICE_TRACKING
-});
 async function logout() {
     try {
         await supabaseClient.auth.signOut();
