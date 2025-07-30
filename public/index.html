@@ -3,209 +3,815 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Attendance System</title>
-    <link rel="stylesheet" href="style.css">
+    <title>QR Attendance System - Faculty Dashboard</title>
+    <meta name="description" content="Faculty dashboard for QR-based attendance management system">
+    <meta name="keywords" content="attendance, QR code, faculty, education, management">
     
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Favicon and PWA -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e5aa8">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://unpkg.com">
 </head>
 <body>
-    <div class="header">
-        <h1><big><strong> Dayananda Sagar College Of Engineering</strong></big></h1>
-        <h2>Attendance Portal</h2>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-qrcode"></i>
+            </div>
+            <h2>Loading Dashboard...</h2>
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+        </div>
     </div>
-   <button class="nav-btn active" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Logout</button>
 
+    <!-- Main Header -->
+    <header class="header">
+        <h1><strong>Dayananda Sagar College Of Engineering</strong></h1>
+        <h2><i class="fas fa-chalkboard-teacher"></i> Faculty Attendance Portal</h2>
+        
+        <!-- Logout Button -->
+        <button class="logout-btn" onclick="logout()" title="Logout" aria-label="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+        </button>
+    </header>
+
+    <!-- Main Container -->
     <div class="container">
+        <!-- Faculty Dashboard -->
         <div id="admin-page" class="page active">
+            
+            <!-- Dashboard Content -->
             <div class="admin-content">
+                
+                <!-- Present Students Card -->
                 <div class="present-count-card">
-                    <div class="present-count">Present: <span id="present-count">0</span></div>
-                    <h3 id="current-session-title">No Active Session</h3>
+                    <div class="present-count" id="present-count">0</div>
+                    <h3 id="current-session-title">
+                        <i class="fas fa-pause-circle" style="color: #dc3545;"></i>
+                        No Active Session
+                    </h3>
+                    
                     <div class="present-students">
-                        <h3>Present Students</h3>
-                        <div id="present-students-list"></div>
-                    </div>
-                </div>
-
-                <div class="qr-section">
-                    <h3>Scan to Mark Attendance</h3>
-                    <div class="qr-container">
-                        <div id="qr-code-container">
-                            <p>Start a new session to generate a QR code.</p>
+                        <h3><i class="fas fa-users"></i> Present Students</h3>
+                        <div id="present-students-list" class="student-list-scroll">
+                            <div class="no-students-message">
+                                <i class="fas fa-users" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                                <p>No students present yet</p>
+                            </div>
                         </div>
                     </div>
-                    <p class="qr-instruction">Start a session to generate a new QR code</p>
-                </div> 
+                </div>
+
+                <!-- QR Code Section -->
+                <div class="qr-section">
+                    <h3><i class="fas fa-qrcode"></i> Scan to Mark Attendance</h3>
+                    <div class="qr-container">
+                        <div id="qr-code-container">
+                            <div class="no-session-message">
+                                <i class="fas fa-qrcode" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px;"></i>
+                                <p>Start a new session to generate a QR code</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="qr-instruction">
+                        <i class="fas fa-info-circle"></i>
+                        Students can scan this QR code to mark their attendance
+                    </p>
+                </div>
             </div>
 
+            <!-- Action Buttons -->
             <div class="action-buttons">
-                <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()"><i class="fas fa-rocket"></i> Start New Session</button>
-                <button class="add-manually-btn" onclick="showSessionHistoryModal()"><i class="fas fa-history"></i> Session History</button>
-                <button class="add-manually-btn" onclick="showStatisticsModal()"><i class="fas fa-chart-bar"></i> Statistics</button>
-                <button class="add-manually-btn" onclick="showAddManuallyModal()"><i class="fas fa-user-plus"></i> Add Manually</button>
-                <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()"><i class="fas fa-users"></i> Manage Students</button>
-                <button class="add-manually-btn" onclick="showCoursesModal()"><i class="fas fa-book"></i> Manage Courses</button>
-                <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+                <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()" title="Start New Session (Ctrl+N)">
+                    <i class="fas fa-rocket"></i>
+                    Start New Session
+                </button>
+                
+                <button class="add-manually-btn" onclick="showSessionHistoryModal()" title="View Session History (Ctrl+H)">
+                    <i class="fas fa-history"></i>
+                    Session History
+                </button>
+                
+                <button class="add-manually-btn" onclick="showStatisticsModal()" title="View Statistics (Ctrl+S)">
+                    <i class="fas fa-chart-bar"></i>
+                    Statistics
+                </button>
+                
+                <button class="add-manually-btn" onclick="showAddManuallyModal()" title="Add Student Manually (Ctrl+M)">
+                    <i class="fas fa-user-plus"></i>
+                    Add Manually
+                </button>
+                
+                <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()" title="Manage Students (Ctrl+U)">
+                    <i class="fas fa-users"></i>
+                    Manage Students
+                </button>
+                
+                <button class="add-manually-btn" onclick="showCoursesModal()" title="Manage Courses">
+                    <i class="fas fa-book"></i>
+                    Manage Courses
+                </button>
+                
+                <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()" title="Export to CSV (Ctrl+E)">
+                    <i class="fas fa-file-csv"></i>
+                    Export CSV
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="add-manually-modal" class="modal">
+    <!-- Enhanced Manual Add Modal -->
+    <div id="add-manually-modal" class="modal" role="dialog" aria-labelledby="manual-add-title" aria-hidden="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Add Student Manually</h3>
-                <button class="close-btn" onclick="closeAddManuallyModal()">&times;</button>
+                <h3 id="manual-add-title"><i class="fas fa-user-plus"></i> Add Student Manually</h3>
+                <button class="close-btn" onclick="closeAddManuallyModal()" aria-label="Close">&times;</button>
             </div>
-            <div class="search-container">
-                <input type="text" id="student-search-manual" placeholder="Search for students not yet present...">
-                <div class="search-icon">🔍</div>
+            
+            <div class="modal-body">
+                <div class="search-container">
+                    <input type="text" 
+                           id="student-search-manual" 
+                           placeholder="Search for students not yet present..." 
+                           autocomplete="off"
+                           aria-label="Search students">
+                    <div class="search-icon" aria-hidden="true">🔍</div>
+                </div>
+                
+                <div class="student-dropdown" id="student-dropdown" role="listbox">
+                    <!-- Students will be populated here -->
+                </div>
             </div>
-            <div class="student-dropdown" id="student-dropdown"></div>
         </div>
     </div>
 
-    <div id="student-list-modal" class="modal">
+    <!-- Enhanced Student List Modal -->
+    <div id="student-list-modal" class="modal" role="dialog" aria-labelledby="student-list-title" aria-hidden="true">
         <div class="modal-content student-list-modal-content">
             <div class="modal-header">
-                <h3>Manage Student Roster</h3>
-                <button class="close-btn" onclick="closeStudentListModal()">&times;</button>
+                <h3 id="student-list-title"><i class="fas fa-users"></i> Manage Student Roster</h3>
+                <button class="close-btn" onclick="closeStudentListModal()" aria-label="Close">&times;</button>
             </div>
-            <div class="add-student-section">
-                <h4>Add New Student</h4>
-                <div class="add-student-form">
-                    <input type="text" id="new-student-name" placeholder="Student Name" maxlength="50">
-                    <input type="text" id="new-student-usn" placeholder="Unique Student Number (USN)" maxlength="20">
-                    <button class="add-student-btn" onclick="addNewStudent()">Add Student</button>
-                </div>
-            </div>
-            <div class="search-container">
-                <input type="text" id="student-list-search" placeholder="Search all students...">
-                <div class="search-icon">🔍</div>
-            </div>
-            <div class="student-list-container">
-                <div class="student-count-header">Total Students: <span id="total-student-count">0</span></div>
-                <div class="student-list-display" id="student-list-display"></div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="edit-student-modal" class="modal">
-        <div class="modal-content student-list-modal-content">
-             <div class="modal-header">
-                <h3 id="edit-student-title">Edit Student</h3>
-                <button class="close-btn" onclick="closeEditStudentModal()">&times;</button>
-            </div>
-            <div class="edit-student-form">
-                <input type="hidden" id="edit-student-original-usn">
-                <div>
-                    <label for="edit-student-name">Student Name</label>
-                    <input type="text" id="edit-student-name" placeholder="Student Name">
-                </div>
-                <div>
-                    <label for="edit-student-usn">Student USN</label>
-                    <input type="text" id="edit-student-usn" placeholder="Unique Student Number">
-                </div>
-                <button class="add-student-btn" onclick="saveStudentDetails()">Save Changes</button>
-            </div>
-            <hr>
-            <h4><i class="fas fa-fingerprint"></i> Registered Fingerprints</h4>
-            <div id="student-fingerprint-list"></div>
-        </div>
-    </div>
-
-    <div id="session-history-modal" class="modal">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-calendar-alt"></i> Session History</h3>
-                <button class="close-btn" onclick="closeSessionHistoryModal()">&times;</button>
-            </div>
-            <div id="session-list-container">
-                <div class="session-toolbar">
-                    <div class="search-container">
-                        <input type="text" id="session-history-search" placeholder="Search sessions...">
-                    </div>
-                    <div>
-                        <label for="show-archived">Show Archived:</label>
-                        <input type="checkbox" id="show-archived" onchange="fetchAllSessions()">
-                    </div>
-                </div>
-                <div class="student-list-display" id="session-list-display"></div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="courses-modal" class="modal">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3 id="courses-modal-title">Manage Courses</h3>
-                <button class="close-btn" onclick="closeCoursesModal()">&times;</button>
-            </div>
-            <div id="course-list-view">
+            
+            <div class="modal-body">
+                <!-- Add New Student Section -->
                 <div class="add-student-section">
-                    <h4>Create New Course</h4>
+                    <h4><i class="fas fa-plus-circle"></i> Add New Student</h4>
                     <div class="add-student-form">
-                        <input type="text" id="new-course-name" placeholder="Course Name">
-                        <input type="text" id="new-course-id" placeholder="Course ID (e.g., CS-101)">
-                        <button class="add-student-btn" onclick="createNewCourse()">Create</button>
+                        <input type="text" 
+                               id="new-student-name" 
+                               placeholder="Student Name" 
+                               maxlength="50"
+                               aria-label="Student Name"
+                               required>
+                        <input type="text" 
+                               id="new-student-usn" 
+                               placeholder="Unique Student Number (USN)" 
+                               maxlength="20"
+                               aria-label="Student USN"
+                               required>
+                        <button class="add-student-btn" onclick="addNewStudent()">
+                            <i class="fas fa-plus"></i> Add Student
+                        </button>
                     </div>
                 </div>
-                <div class="student-list-display" id="courses-list-display"></div>
+                
+                <!-- Search Section -->
+                <div class="search-container">
+                    <input type="text" 
+                           id="student-list-search" 
+                           placeholder="Search all students..."
+                           autocomplete="off"
+                           aria-label="Search students">
+                    <div class="search-icon" aria-hidden="true">🔍</div>
+                </div>
+                
+                <!-- Student List Container -->
+                <div class="student-list-container">
+                    <div class="student-count-header">
+                        <i class="fas fa-users"></i>
+                        Total Students: <span id="total-student-count">0</span>
+                    </div>
+                    <div class="student-list-display" id="student-list-display" role="list">
+                        <!-- Students will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     
-    <div id="statistics-modal" class="modal">
+    <!-- Enhanced Edit Student Modal -->
+    <div id="edit-student-modal" class="modal" role="dialog" aria-labelledby="edit-student-title" aria-hidden="true">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3 id="edit-student-title"><i class="fas fa-user-edit"></i> Edit Student</h3>
+                <button class="close-btn" onclick="closeEditStudentModal()" aria-label="Close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="edit-student-form">
+                    <input type="hidden" id="edit-student-original-usn">
+                    
+                    <div class="form-group">
+                        <label for="edit-student-name">
+                            <i class="fas fa-user"></i> Student Name
+                        </label>
+                        <input type="text" 
+                               id="edit-student-name" 
+                               placeholder="Student Name"
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-student-usn">
+                            <i class="fas fa-id-card"></i> Student USN
+                        </label>
+                        <input type="text" 
+                               id="edit-student-usn" 
+                               placeholder="Unique Student Number"
+                               required>
+                    </div>
+                    
+                    <button class="add-student-btn" onclick="saveStudentDetails()">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+                
+                <hr class="divider">
+                
+                <div class="fingerprint-section">
+                    <h4><i class="fas fa-fingerprint"></i> Registered Fingerprints</h4>
+                    <div id="student-fingerprint-list">
+                        <!-- Fingerprint data will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session History Modal -->
+    <div id="session-history-modal" class="modal" role="dialog" aria-labelledby="session-history-title" aria-hidden="true">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3 id="session-history-title">
+                    <i class="fas fa-calendar-alt"></i> Session History
+                </h3>
+                <button class="close-btn" onclick="closeSessionHistoryModal()" aria-label="Close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="session-list-container">
+                    <div class="session-toolbar">
+                        <div class="search-container">
+                            <input type="text" 
+                                   id="session-history-search" 
+                                   placeholder="Search sessions..."
+                                   autocomplete="off">
+                            <div class="search-icon">🔍</div>
+                        </div>
+                        <div class="toolbar-controls">
+                            <label for="show-archived" class="checkbox-label">
+                                <input type="checkbox" id="show-archived" onchange="fetchAllSessions()">
+                                <span class="checkmark"></span>
+                                Show Archived
+                            </label>
+                        </div>
+                    </div>
+                    <div class="student-list-display" id="session-list-display" role="list">
+                        <!-- Session history will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Courses Management Modal -->
+    <div id="courses-modal" class="modal" role="dialog" aria-labelledby="courses-title" aria-hidden="true">
+        <div class="modal-content student-list-modal-content">
+            <div class="modal-header">
+                <h3 id="courses-title"><i class="fas fa-book"></i> Manage Courses</h3>
+                <button class="close-btn" onclick="closeCoursesModal()" aria-label="Close">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="course-list-view">
+                    <div class="add-student-section">
+                        <h4><i class="fas fa-plus-circle"></i> Create New Course</h4>
+                        <div class="add-student-form">
+                            <input type="text" 
+                                   id="new-course-name" 
+                                   placeholder="Course Name"
+                                   aria-label="Course Name"
+                                   required>
+                            <input type="text" 
+                                   id="new-course-id" 
+                                   placeholder="Course ID (e.g., CS-101)"
+                                   aria-label="Course ID"
+                                   required>
+                            <button class="add-student-btn" onclick="createNewCourse()">
+                                <i class="fas fa-plus"></i> Create
+                            </button>
+                        </div>
+                    </div>
+                    <div class="student-list-display" id="courses-list-display" role="list">
+                        <!-- Courses will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enhanced Statistics Modal -->
+    <div id="statistics-modal" class="modal" role="dialog" aria-labelledby="statistics-title" aria-hidden="true">
         <div class="modal-content" style="max-width: 1200px; max-height: 95vh;">
             <div class="modal-header">
-                <h3><i class="fas fa-chart-line"></i> Attendance Statistics</h3>
-                <button class="close-btn" onclick="closeStatisticsModal()">&times;</button>
+                <h3 id="statistics-title">
+                    <i class="fas fa-chart-line"></i> Attendance Statistics
+                </h3>
+                <button class="close-btn" onclick="closeStatisticsModal()" aria-label="Close">&times;</button>
             </div>
-            <div class="stats-tabs">
-                <button class="stats-tab-btn active" onclick="showStatsTab('overview')">📊 Overview</button>
-                <button class="stats-tab-btn" onclick="showStatsTab('students')">🧑‍🎓 Students</button>
-            </div>
-            <div id="stats-overview-view" class="stats-view active">
-                <div class="overview-grid">
-                    <div class="stat-card">
-                        <h4>Total Attendance</h4>
-                        <p id="stats-total-attendance">0</p>
+            
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <div class="stats-tabs" role="tablist">
+                    <button class="stats-tab-btn active" 
+                            onclick="showStatsTab('overview')" 
+                            role="tab" 
+                            aria-selected="true"
+                            aria-controls="stats-overview-view">
+                        📊 Overview
+                    </button>
+                    <button class="stats-tab-btn" 
+                            onclick="showStatsTab('students')" 
+                            role="tab" 
+                            aria-selected="false"
+                            aria-controls="stats-students-view">
+                        🧑‍🎓 Students
+                    </button>
+                </div>
+                
+                <!-- Overview Tab -->
+                <div id="stats-overview-view" class="stats-view active" role="tabpanel">
+                    <div class="overview-grid">
+                        <div class="stat-card">
+                            <h4>Total Attendance</h4>
+                            <p id="stats-total-attendance">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Average Attendance</h4>
+                            <p id="stats-avg-attendance">0%</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Total Sessions</h4>
+                            <p id="stats-total-sessions">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Fully Verified</h4>
+                            <p id="stats-fully-verified">0%</p>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <h4>Avg. Attendance</h4>
-                        <p id="stats-avg-attendance">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Total Sessions</h4>
-                        <p id="stats-total-sessions">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Fully Verified</h4>
-                        <p id="stats-fully-verified">0%</p>
+                    
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Attendance Trend (Last 30 Days)</h4>
+                            <canvas id="attendance-trend-chart" aria-label="Attendance trend chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Verification Methods</h4>
+                            <canvas id="verification-method-chart" aria-label="Verification methods chart"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <h4>Attendance Trend (Last 30 Days)</h4>
-                        <canvas id="attendance-trend-chart"></canvas>
+                
+                <!-- Students Tab -->
+                <div id="stats-students-view" class="stats-view" role="tabpanel">
+                    <div class="stats-toolbar">
+                        <input type="text" 
+                               id="student-stats-search" 
+                               class="stats-search" 
+                               placeholder="Search students by name or USN..."
+                               autocomplete="off">
                     </div>
-                    <div class="chart-container">
-                        <h4>Verification Methods</h4>
-                        <canvas id="verification-method-chart"></canvas>
+                    <div class="stats-list-display" id="student-stats-list" role="list">
+                        <!-- Student statistics will be populated here -->
                     </div>
                 </div>
-            </div>
-            <div id="stats-students-view" class="stats-view">
-                <div class="stats-toolbar">
-                    <input type="text" id="student-stats-search" class="stats-search" placeholder="Search students by name or USN...">
-                </div>
-                <div class="stats-list-display" id="student-stats-list"></div>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true">
+        <!-- Toast notifications will be inserted here -->
+    </div>
+
+    <!-- Keyboard Shortcuts Help -->
+    <div id="shortcuts-help" class="shortcuts-help hidden">
+        <div class="shortcuts-content">
+            <h3><i class="fas fa-keyboard"></i> Keyboard Shortcuts</h3>
+            <div class="shortcuts-list">
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>N</kbd>
+                    <span>Start New Session</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>H</kbd>
+                    <span>Session History</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>S</kbd>
+                    <span>Statistics</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>M</kbd>
+                    <span>Add Manually</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>U</kbd>
+                    <span>Manage Students</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>Ctrl</kbd> + <kbd>E</kbd>
+                    <span>Export CSV</span>
+                </div>
+                <div class="shortcut-item">
+                    <kbd>?</kbd>
+                    <span>Show/Hide Shortcuts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="script.js"></script>
+    
+    <!-- Additional Inline Scripts -->
+    <script>
+        // Hide loading screen once page is loaded
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 300);
+            }
+        });
+
+        // Show/hide keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                const shortcutsHelp = document.getElementById('shortcuts-help');
+                if (shortcutsHelp) {
+                    shortcutsHelp.classList.toggle('hidden');
+                }
+            }
+        });
+
+        // Close shortcuts when clicking outside
+        document.addEventListener('click', (e) => {
+            const shortcutsHelp = document.getElementById('shortcuts-help');
+            if (shortcutsHelp && !shortcutsHelp.contains(e.target) && !shortcutsHelp.classList.contains('hidden')) {
+                shortcutsHelp.classList.add('hidden');
+            }
+        });
+
+        // Auto-hide toast notifications
+        document.addEventListener('DOMContentLoaded', () => {
+            const style = document.createElement('style');
+            style.textContent = `
+                .loading-screen {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    transition: opacity 0.3s ease;
+                }
+
+                .loading-content {
+                    text-align: center;
+                    color: white;
+                }
+
+                .loading-logo {
+                    font-size: 4rem;
+                    margin-bottom: 1rem;
+                    animation: pulse 1.5s ease-in-out infinite alternate;
+                }
+
+                .loading-content h2 {
+                    font-size: 1.8rem;
+                    margin-bottom: 2rem;
+                    font-weight: 300;
+                }
+
+                .spinner {
+                    width: 50px;
+                    height: 50px;
+                    border: 4px solid rgba(255,255,255,0.3);
+                    border-top: 4px solid white;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto;
+                }
+
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    100% { transform: scale(1.1); }
+                }
+
+                .toast-container {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 2000;
+                    max-width: 400px;
+                }
+
+                .error-toast, .success-toast {
+                    background: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideIn 0.3s ease-out;
+                    border-left: 4px solid;
+                }
+
+                .error-toast {
+                    border-left-color: #dc3545;
+                    color: #721c24;
+                }
+
+                .success-toast {
+                    border-left-color: #28a745;
+                    color: #155724;
+                }
+
+                .error-toast i, .success-toast i {
+                    font-size: 1.2rem;
+                }
+
+                .error-toast button, .success-toast button {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: inherit;
+                    margin-left: auto;
+                }
+
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+
+                .shortcuts-help {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+                    z-index: 1500;
+                    max-width: 400px;
+                    width: 90%;
+                }
+
+                .shortcuts-help.hidden {
+                    display: none;
+                }
+
+                .shortcuts-content h3 {
+                    color: var(--primary-blue);
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+
+                .shortcut-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #eee;
+                }
+
+                .shortcut-item:last-child {
+                    border-bottom: none;
+                }
+
+                kbd {
+                    background: #f8f9fa;
+                    border: 1px solid #dee2e6;
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    font-size: 0.8rem;
+                    font-family: monospace;
+                }
+
+                .qr-url-display {
+                    margin-top: 15px;
+                    text-align: center;
+                }
+
+                .qr-url-display small {
+                    display: block;
+                    color: #666;
+                    margin-bottom: 5px;
+                }
+
+                .qr-url-display input {
+                    width: 100%;
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    font-size: 0.9rem;
+                    margin-bottom: 5px;
+                }
+
+                .qr-url-display button {
+                    background: var(--primary-blue);
+                    color: white;
+                    border: none;
+                    padding: 8px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                }
+
+                .retry-btn {
+                    background: var(--primary-blue);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-top: 10px;
+                }
+
+                .divider {
+                    border: none;
+                    height: 2px;
+                    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+                    margin: 25px 0;
+                    border-radius: 1px;
+                }
+
+                .form-group {
+                    margin-bottom: 20px;
+                }
+
+                .form-group label {
+                    display: block;
+                    margin-bottom: 8px;
+                    font-weight: 600;
+                    color: var(--primary-blue);
+                }
+
+                .checkbox-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    color: var(--primary-blue);
+                }
+
+                .student-list-scroll {
+                    max-height: 350px;
+                    overflow-y: auto;
+                    padding-right: 10px;
+                }
+
+                .dropdown-student-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #eee;
+                    transition: background-color 0.2s ease;
+                }
+
+                .dropdown-student-item:hover {
+                    background-color: #f8f9fa;
+                }
+
+                .add-student-manual-btn {
+                    background: var(--success-green);
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    transition: all 0.2s ease;
+                }
+
+                .add-student-manual-btn:hover {
+                    background: #1e7e34;
+                    transform: scale(1.05);
+                }
+
+                .no-students-available, .no-results, .error-message, .no-session-message, .no-students-message {
+                    text-align: center;
+                    padding: 30px 20px;
+                    color: #666;
+                }
+
+                .fingerprint-section {
+                    margin-top: 20px;
+                }
+
+                .fingerprint-placeholder {
+                    text-align: center;
+                    padding: 30px;
+                    color: #666;
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    border: 2px dashed #dee2e6;
+                }
+
+                .student-badges {
+                    display: flex;
+                    gap: 5px;
+                    margin-top: 5px;
+                }
+
+                .badge {
+                    font-size: 0.8rem;
+                    padding: 2px 6px;
+                    border-radius: 10px;
+                    background: rgba(40, 167, 69, 0.1);
+                    color: #28a745;
+                }
+
+                .fingerprint-badge {
+                    background: rgba(255, 193, 7, 0.1);
+                    color: #ffc107;
+                }
+
+                .location-badge {
+                    background: rgba(23, 162, 184, 0.1);
+                    color: #17a2b8;
+                }
+
+                .attendance-time {
+                    font-size: 0.8rem;
+                    color: #666;
+                    font-style: italic;
+                }
+
+                .student-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .student-name {
+                    font-weight: 600;
+                    color: var(--dark-text);
+                }
+
+                .student-usn {
+                    font-size: 0.9rem;
+                    color: var(--muted-text);
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
 </body>
 </html>
