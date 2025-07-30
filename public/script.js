@@ -2307,28 +2307,6 @@ window.addEventListener('offline', () => {
     showToast('Connection lost. Some features may not work.', 'error');
 });
 
-// =================================================================
-// PERFORMANCE OPTIMIZATIONS
-// =================================================================
-
-// Debounce function for search inputs
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Apply debouncing to search functions
-const debouncedPopulateStudentList = debounce(populateStudentListDisplayWithFingerprint, 300);
-const debouncedPopulateFacultyDropdown = debounce(populateFacultyStudentDropdown, 300);
-const debouncedFetchStudentStats = debounce(fetchStudentStatistics, 300);
-const debouncedFilterSessions = debounce(filterSessionHistory, 300);
 
 // =================================================================
 // FINAL INITIALIZATION
