@@ -2366,16 +2366,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // =================================================================
 // FINAL INITIALIZATION
 // =================================================================
-
-// Ensure all components are ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize tooltips for buttons
-    const buttons = document.querySelectorAll('button[title]');
-    buttons.forEach(button => {
-        button.addEventListener('mouseenter', (e) => {
-            // Could implement custom tooltip here if needed
-        });
-    });
     
     // Initialize focus management for modals
     document.addEventListener('keydown', (e) => {
