@@ -29,88 +29,65 @@ document.addEventListener('DOMContentLoaded', initializeApp);
  * Initializes the Supabase client, checks auth, fetches data, and starts the correct UI.
  */
 async function initializeApp() {
-    // Show loading screen
-    showLoadingScreen(true);
+    console.log('Initializing QR Attendance System...');
     
     try {
         const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
         
-        // Validate environment
-        if (!SUPABASE_URL || !SUPABASE_KEY) {
-            throw new Error('Missing Supabase configuration');
-        }
-        
+        // Initialize Supabase client
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('Supabase client initialized');
         
         // Test connection
         await testDatabaseConnection();
+        console.log('Database connection successful');
         
     } catch (error) {
         console.error('Database connection error:', error);
         showToast('FATAL: Could not connect to the database. Please check your connection.', 'error');
-        showLoadingScreen(false);
         return;
     }
 
-    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-    if (sessionError) {
-        console.error('Session error:', sessionError);
-        showToast('Authentication error. Please try again.', 'error');
-    }
-    
+    // Check if we're on different pages
     const isStudentPage = window.location.pathname.includes('student.html');
     const isLoginPage = window.location.pathname.includes('login.html');
 
-    // Handle authentication routing
-    if (!session && !isStudentPage && !isLoginPage) {
-        showLoadingScreen(false);
-        return window.location.href = 'login.html';
+    if (isStudentPage) {
+        await initStudentView();
+        return;
     }
 
-    // Initialize data with error handling
+    if (isLoginPage) {
+        // Login page logic would go here
+        return;
+    }
+
+    // For faculty dashboard (index.html)
     try {
+        // Initialize data
         await Promise.all([
             fetchAllStudents(),
             fetchAllCourses()
         ]);
+        
+        console.log('Initial data loaded successfully');
+        console.log('Students:', allStudents.length);
+        console.log('Courses:', allCourses.length);
+        
+        await initFacultyView();
+        setupKeyboardShortcuts();
+        setupNetworkMonitoring();
+        
     } catch (error) {
         console.error('Data initialization error:', error);
         showToast('Failed to load initial data. Some features may not work properly.', 'error');
     }
-
-    // Initialize appropriate view
-    if (isStudentPage) {
-        await initStudentView();
-    } else if (!isLoginPage) {
-        await initFacultyView();
-    }
-
-    setupKeyboardShortcuts();
-    setupNetworkMonitoring();
-    setupServiceWorker();
-    
-    showLoadingScreen(false);
 }
 
 // =================================================================
 // UTILITY AND HELPER FUNCTIONS
 // =================================================================
-
-function showLoadingScreen(show) {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-        if (show) {
-            loadingScreen.style.display = 'flex';
-            loadingScreen.style.opacity = '1';
-        } else {
-            loadingScreen.style.opacity = '0';
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-            }, 300);
-        }
-    }
-}
 
 async function testDatabaseConnection() {
     try {
@@ -140,18 +117,6 @@ function setupNetworkMonitoring() {
         isOnline = false;
         showToast('Connection lost. Working in offline mode.', 'error');
     });
-}
-
-async function setupServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            // Register service worker for offline functionality
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            console.log('Service Worker registered successfully:', registration);
-        } catch (error) {
-            console.log('Service Worker registration failed:', error);
-        }
-    }
 }
 
 async function retryFailedOperations() {
@@ -191,15 +156,18 @@ async function executeWithRetry(operation, maxRetries = MAX_RETRIES) {
 }
 
 // =================================================================
-// DATA FETCHING & STATE MANAGEMENT (ENHANCED)
+// DATA FETCHING & STATE MANAGEMENT
 // =================================================================
 
 async function fetchAllStudents() {
     try {
+        console.log('Fetching all students...');
+        
         // Check cache first
         const now = Date.now();
         if (studentsCache.has('students') && (now - lastFetchTime) < CACHE_DURATION) {
             allStudents = studentsCache.get('students');
+            console.log('Using cached student data:', allStudents.length);
             return;
         }
 
@@ -220,6 +188,8 @@ async function fetchAllStudents() {
         studentsCache.set('students', students);
         lastFetchTime = now;
         
+        console.log('Students fetched successfully:', students.length);
+        
     } catch (err) {
         console.error('Error fetching students:', err);
         
@@ -236,6 +206,8 @@ async function fetchAllStudents() {
 
 async function fetchAllCourses() {
     try {
+        console.log('Fetching all courses...');
+        
         const operation = async () => {
             const { data, error } = await supabaseClient
                 .from('courses')
@@ -247,6 +219,7 @@ async function fetchAllCourses() {
         };
 
         allCourses = await executeWithRetry(operation);
+        console.log('Courses fetched successfully:', allCourses.length);
         
     } catch (err) {
         console.error('Error fetching courses:', err);
@@ -262,6 +235,8 @@ async function fetchCurrentSessionAttendance() {
     }
 
     try {
+        console.log('Fetching attendance for session:', currentSession.id);
+        
         const operation = async () => {
             const { data, error } = await supabaseClient
                 .from('attendance')
@@ -277,6 +252,8 @@ async function fetchCurrentSessionAttendance() {
         presentStudents = attendanceData.map(record => record.student);
         updatePresentStudentsList(attendanceData);
         
+        console.log('Attendance data fetched:', attendanceData.length, 'records');
+        
     } catch (err) {
         console.error('Error fetching attendance:', err);
         if (isOnline) {
@@ -287,6 +264,8 @@ async function fetchCurrentSessionAttendance() {
 
 async function fetchAllSessions(includeArchived = false) {
     try {
+        console.log('Fetching all sessions...');
+        
         const operation = async () => {
             let query = supabaseClient
                 .from('sessions')
@@ -323,6 +302,7 @@ async function fetchAllSessions(includeArchived = false) {
             }
         }));
         
+        console.log('Sessions fetched successfully:', allSessions.length);
         populateSessionHistoryList();
         
     } catch (err) {
@@ -333,6 +313,8 @@ async function fetchAllSessions(includeArchived = false) {
 }
 
 function updateActiveSession(sessionData) {
+    console.log('Updating active session:', sessionData);
+    
     currentSession = sessionData;
     const qrContainer = document.getElementById('qr-code-container');
     const sessionTitle = document.getElementById('current-session-title');
@@ -372,14 +354,15 @@ function updateActiveSession(sessionData) {
 // FACULTY VIEW FUNCTIONS
 // =================================================================
 
-// =================================================================
-// ENHANCED FACULTY VIEW FUNCTIONS
-// =================================================================
-
 async function initFacultyView() {
     try {
+        console.log('Initializing faculty view...');
+        
+        // Check for existing session
         const lastSessionId = localStorage.getItem('sessionId');
         if (lastSessionId) {
+            console.log('Found existing session ID:', lastSessionId);
+            
             const { data, error } = await supabaseClient
                 .from('sessions')
                 .select('*, courses(course_name)')
@@ -387,8 +370,10 @@ async function initFacultyView() {
                 .single();
                 
             if (data && !error) {
+                console.log('Restored session:', data);
                 updateActiveSession(data);
             } else {
+                console.log('Session not found or expired');
                 updateActiveSession(null);
                 localStorage.removeItem('sessionId');
             }
@@ -401,7 +386,7 @@ async function initFacultyView() {
             if (currentSession && isOnline) {
                 fetchCurrentSessionAttendance();
             }
-        }, 5000);
+        }, 10000); // Every 10 seconds
         
         // Clean up interval on page unload
         window.addEventListener('beforeunload', () => {
@@ -410,6 +395,8 @@ async function initFacultyView() {
         
         setupAllModalSearchListeners();
         setupRealtimeSubscriptions();
+        
+        console.log('Faculty view initialized successfully');
         
     } catch (error) {
         console.error('Error initializing faculty view:', error);
@@ -421,6 +408,8 @@ function setupRealtimeSubscriptions() {
     if (!supabaseClient) return;
     
     try {
+        console.log('Setting up realtime subscriptions...');
+        
         // Subscribe to attendance changes
         const attendanceSubscription = supabaseClient
             .channel('attendance_changes')
@@ -460,12 +449,16 @@ function setupRealtimeSubscriptions() {
 
 function generateQR(sessionId) {
     const qrContainer = document.getElementById('qr-code-container');
-    if (!qrContainer) return;
+    if (!qrContainer) {
+        console.error('QR container not found');
+        return;
+    }
     
     qrContainer.innerHTML = '<div class="qr-loading">Generating QR code...</div>';
     
     try {
         const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
+        console.log('Generating QR for URL:', studentUrl);
         
         // Validate URL before generating QR
         if (!studentUrl || !sessionId) {
@@ -509,13 +502,7 @@ function generateQR(sessionId) {
         `;
         qrContainer.appendChild(infoDiv);
         
-        // Auto-refresh QR code every 30 minutes for security
-        setTimeout(() => {
-            if (currentSession && currentSession.id === sessionId) {
-                generateQR(sessionId);
-                showToast('QR code refreshed for security', 'info');
-            }
-        }, 30 * 60 * 1000);
+        console.log('QR code generated successfully');
         
     } catch (error) {
         console.error('QR generation error:', error);
@@ -585,7 +572,11 @@ function updatePresentStudentsList(attendanceData) {
     const listElement = document.getElementById('present-students-list');
     updatePresentCount(attendanceData.length);
 
-    if (!listElement) return;
+    if (!listElement) {
+        console.error('Present students list element not found');
+        return;
+    }
+    
     listElement.innerHTML = '';
 
     if (attendanceData.length === 0) {
@@ -622,6 +613,8 @@ function updatePresentStudentsList(attendanceData) {
         
         listElement.appendChild(studentDiv);
     });
+    
+    console.log('Present students list updated:', attendanceData.length, 'students');
 }
 
 function updatePresentCount(count) {
@@ -652,7 +645,9 @@ async function removeStudentFromSession(studentName, usn) {
 // STUDENT VIEW FUNCTIONS
 // =================================================================
 
-function initStudentView() {
+async function initStudentView() {
+    console.log('Initializing student view...');
+    
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session');
     
@@ -661,6 +656,7 @@ function initStudentView() {
         return;
     }
     
+    await fetchAllStudents(); // Load students first
     loadSessionForStudent(sessionId);
     setupStudentSearch();
 }
@@ -868,11 +864,17 @@ function filterStudentList(searchTerm) {
 }
 
 function showSuccessPage(student, timestamp) {
-    document.getElementById('student-selection-page').classList.add('hidden');
-    document.getElementById('success-page').classList.remove('hidden');
+    const selectionPage = document.getElementById('student-selection-page');
+    const successPage = document.getElementById('success-page');
     
-    document.getElementById('success-student-name').textContent = student.name;
-    document.getElementById('success-timestamp').textContent = timestamp.toLocaleString();
+    if (selectionPage) selectionPage.classList.add('hidden');
+    if (successPage) successPage.classList.remove('hidden');
+    
+    const nameEl = document.getElementById('success-student-name');
+    const timestampEl = document.getElementById('success-timestamp');
+    
+    if (nameEl) nameEl.textContent = student.name;
+    if (timestampEl) timestampEl.textContent = timestamp.toLocaleString();
     
     // Auto-close after 10 seconds
     setTimeout(() => {
@@ -881,9 +883,13 @@ function showSuccessPage(student, timestamp) {
 }
 
 function showErrorPage(message) {
-    document.getElementById('student-selection-page').classList.add('hidden');
-    document.getElementById('error-page').classList.remove('hidden');
-    document.getElementById('error-message-text').textContent = message;
+    const selectionPage = document.getElementById('student-selection-page');
+    const errorPage = document.getElementById('error-page');
+    const messageEl = document.getElementById('error-message-text');
+    
+    if (selectionPage) selectionPage.classList.add('hidden');
+    if (errorPage) errorPage.classList.remove('hidden');
+    if (messageEl) messageEl.textContent = message;
 }
 
 // =================================================================
@@ -891,6 +897,8 @@ function showErrorPage(message) {
 // =================================================================
 
 function setupAllModalSearchListeners() {
+    console.log('Setting up modal search listeners...');
+    
     const studentListSearch = document.getElementById('student-list-search');
     if (studentListSearch) {
         studentListSearch.addEventListener('input', (e) => {
@@ -922,6 +930,13 @@ function setupAllModalSearchListeners() {
 
 // Course Selection Modal
 function showCourseSelectionModal() {
+    console.log('Showing course selection modal...');
+    
+    if (allCourses.length === 0) {
+        showToast('No courses found. Please create a course first.', 'error');
+        return;
+    }
+    
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -964,6 +979,8 @@ function showCourseSelectionModal() {
 }
 
 async function createNewSession() {
+    console.log('Creating new session...');
+    
     const sessionName = document.getElementById('session-name-input')?.value.trim();
     const courseId = document.getElementById('course-select')?.value;
     
@@ -990,6 +1007,7 @@ async function createNewSession() {
         
         if (error) throw error;
         
+        console.log('Session created successfully:', data);
         updateActiveSession(data);
         showToast('Session started successfully!', 'success');
         document.querySelector('.modal').remove();
@@ -1002,19 +1020,32 @@ async function createNewSession() {
 
 // Student List Modal
 function showStudentListModal() { 
-    document.getElementById('student-list-modal').style.display = 'block';
-    populateStudentListDisplayWithFingerprint();
+    console.log('Showing student list modal...');
+    
+    const modal = document.getElementById('student-list-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateStudentListDisplayWithFingerprint();
+    } else {
+        console.error('Student list modal not found');
+    }
 }
 
 function closeStudentListModal() { 
-    document.getElementById('student-list-modal').style.display = 'none';
+    const modal = document.getElementById('student-list-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 async function populateStudentListDisplayWithFingerprint(searchTerm = '') {
     const listElement = document.getElementById('student-list-display');
     const countElement = document.getElementById('total-student-count');
     
-    if (!listElement) return;
+    if (!listElement) {
+        console.error('Student list display element not found');
+        return;
+    }
     
     if (countElement) {
         countElement.textContent = allStudents.length;
@@ -1060,6 +1091,8 @@ async function populateStudentListDisplayWithFingerprint(searchTerm = '') {
 }
 
 async function addNewStudent() {
+    console.log('Adding new student...');
+    
     const nameInput = document.getElementById('new-student-name');
     const usnInput = document.getElementById('new-student-usn');
     
@@ -1131,16 +1164,25 @@ function showEditStudentModal(usn) {
     const student = allStudents.find(s => s.usn === usn);
     if (!student) return;
     
+    const modal = document.getElementById('edit-student-modal');
+    if (!modal) {
+        console.error('Edit student modal not found');
+        return;
+    }
+    
     document.getElementById('edit-student-title').textContent = `Edit ${student.name}`;
     document.getElementById('edit-student-original-usn').value = student.usn;
     document.getElementById('edit-student-name').value = student.name;
     document.getElementById('edit-student-usn').value = student.usn;
     loadStudentFingerprints(student.usn);
-    document.getElementById('edit-student-modal').style.display = 'block';
+    modal.style.display = 'block';
 }
 
 function closeEditStudentModal() {
-    document.getElementById('edit-student-modal').style.display = 'none';
+    const modal = document.getElementById('edit-student-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 async function saveStudentDetails() {
@@ -1187,22 +1229,37 @@ async function loadStudentFingerprints(usn) {
 
 // Manual Add Modal
 function showAddManuallyModal() { 
+    console.log('Showing add manually modal...');
+    
     if (!currentSession) {
         showToast('Please start a session first', 'error');
         return;
     }
-    document.getElementById('add-manually-modal').style.display = 'block';
-    populateFacultyStudentDropdown();
+    
+    const modal = document.getElementById('add-manually-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateFacultyStudentDropdown();
+    } else {
+        console.error('Add manually modal not found');
+    }
 }
 
 function closeAddManuallyModal() { 
-    document.getElementById('add-manually-modal').style.display = 'none';
-    document.getElementById('student-search-manual').value = '';
+    const modal = document.getElementById('add-manually-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        const searchInput = document.getElementById('student-search-manual');
+        if (searchInput) searchInput.value = '';
+    }
 }
 
 function populateFacultyStudentDropdown(searchTerm = '') {
     const dropdownElement = document.getElementById('student-dropdown');
-    if (!dropdownElement) return;
+    if (!dropdownElement) {
+        console.error('Student dropdown element not found');
+        return;
+    }
     
     // Filter out students who are already present
     const availableStudents = allStudents.filter(student => 
@@ -1241,6 +1298,8 @@ function populateFacultyStudentDropdown(searchTerm = '') {
 }
 
 async function addStudentManually(studentName, usn) {
+    console.log('Adding student manually:', studentName, usn);
+    
     if (!currentSession) {
         showToast('No active session', 'error');
         return;
@@ -1286,17 +1345,30 @@ async function addStudentManually(studentName, usn) {
 
 // Session History Modal
 function showSessionHistoryModal() {
-    document.getElementById('session-history-modal').style.display = 'block';
-    fetchAllSessions();
+    console.log('Showing session history modal...');
+    
+    const modal = document.getElementById('session-history-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        fetchAllSessions();
+    } else {
+        console.error('Session history modal not found');
+    }
 }
 
 function closeSessionHistoryModal() { 
-    document.getElementById('session-history-modal').style.display = 'none';
+    const modal = document.getElementById('session-history-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function populateSessionHistoryList() {
     const listElement = document.getElementById('session-list-display');
-    if (!listElement) return;
+    if (!listElement) {
+        console.error('Session list display element not found');
+        return;
+    }
     
     if (allSessions.length === 0) {
         listElement.innerHTML = `
@@ -1317,7 +1389,7 @@ function populateSessionHistoryList() {
         const courseName = session.courses ? session.courses.course_name : 'General';
         const courseId = session.courses ? session.courses.course_id : '';
         const createdDate = new Date(session.created_at).toLocaleString();
-        const attendanceCount = session.attendance ? session.attendance.length : 0;
+        const attendanceCount = session.attendance_count || 0;
         
         sessionDiv.innerHTML = `
             <div class="session-info">
@@ -1446,17 +1518,30 @@ async function deleteSession(sessionId, sessionName) {
 
 // Courses Modal
 function showCoursesModal() { 
-    document.getElementById('courses-modal').style.display = 'block';
-    populateCoursesList();
+    console.log('Showing courses modal...');
+    
+    const modal = document.getElementById('courses-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateCoursesList();
+    } else {
+        console.error('Courses modal not found');
+    }
 }
 
 function closeCoursesModal() { 
-    document.getElementById('courses-modal').style.display = 'none';
+    const modal = document.getElementById('courses-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 async function populateCoursesList() {
     const listElement = document.getElementById('courses-list-display');
-    if (!listElement) return;
+    if (!listElement) {
+        console.error('Courses list display element not found');
+        return;
+    }
     
     await fetchAllCourses();
     
@@ -1494,6 +1579,8 @@ async function populateCoursesList() {
 }
 
 async function createNewCourse() {
+    console.log('Creating new course...');
+    
     const nameInput = document.getElementById('new-course-name');
     const idInput = document.getElementById('new-course-id');
     
@@ -1589,12 +1676,23 @@ async function deleteCourse(id, courseName) {
 
 // Statistics Modal
 function showStatisticsModal() {
-    document.getElementById('statistics-modal').style.display = 'block';
-    showStatsTab('overview');
+    console.log('Showing statistics modal...');
+    
+    const modal = document.getElementById('statistics-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        showStatsTab('overview');
+    } else {
+        console.error('Statistics modal not found');
+    }
 }
 
 function closeStatisticsModal() {
-    document.getElementById('statistics-modal').style.display = 'none';
+    const modal = document.getElementById('statistics-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
     if (attendanceChart) {
         attendanceChart.destroy();
         attendanceChart = null;
@@ -1660,10 +1758,15 @@ async function loadOverviewStatistics() {
         const fullyVerifiedPercent = totalAttendance > 0 ? Math.round((fullyVerified / totalAttendance) * 100) : 0;
         
         // Update overview cards
-        document.getElementById('stats-total-attendance').textContent = totalAttendance;
-        document.getElementById('stats-avg-attendance').textContent = `${avgAttendance}%`;
-        document.getElementById('stats-total-sessions').textContent = totalSessions;
-        document.getElementById('stats-fully-verified').textContent = `${fullyVerifiedPercent}%`;
+        const totalAttendanceEl = document.getElementById('stats-total-attendance');
+        const avgAttendanceEl = document.getElementById('stats-avg-attendance');
+        const totalSessionsEl = document.getElementById('stats-total-sessions');
+        const fullyVerifiedEl = document.getElementById('stats-fully-verified');
+        
+        if (totalAttendanceEl) totalAttendanceEl.textContent = totalAttendance;
+        if (avgAttendanceEl) avgAttendanceEl.textContent = `${avgAttendance}%`;
+        if (totalSessionsEl) totalSessionsEl.textContent = totalSessions;
+        if (fullyVerifiedEl) fullyVerifiedEl.textContent = `${fullyVerifiedPercent}%`;
         
         // Generate charts
         generateAttendanceTrendChart(attendanceData);
@@ -1897,6 +2000,8 @@ async function fetchStudentStatistics(searchTerm = '') {
 // =================================================================
 
 async function exportAttendanceCSV() {
+    console.log('Exporting attendance CSV...');
+    
     try {
         const { data: attendanceData, error } = await supabaseClient
             .from('attendance')
@@ -1958,6 +2063,8 @@ async function exportAttendanceCSV() {
 }
 
 async function exportSessionCSV(sessionId) {
+    console.log('Exporting session CSV for:', sessionId);
+    
     try {
         const { data: attendanceData, error } = await supabaseClient
             .from('attendance')
@@ -2021,11 +2128,9 @@ async function exportSessionCSV(sessionId) {
 // UTILITY FUNCTIONS
 // =================================================================
 
-// =================================================================
-// ENHANCED UTILITY FUNCTIONS
-// =================================================================
-
 function showToast(message, type = 'info', duration = 5000) {
+    console.log('Toast:', type, message);
+    
     const container = document.getElementById('toast-container');
     if (!container) {
         console.warn('Toast container not found, falling back to alert');
@@ -2092,20 +2197,6 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
-function announceToScreenReader(message) {
-    const announcement = document.createElement('div');
-    announcement.setAttribute('aria-live', 'polite');
-    announcement.setAttribute('aria-atomic', 'true');
-    announcement.className = 'sr-only';
-    announcement.textContent = message;
-    
-    document.body.appendChild(announcement);
-    
-    setTimeout(() => {
-        document.body.removeChild(announcement);
-    }, 1000);
-}
-
 function getTimeAgo(date) {
     const now = new Date();
     const diffInMs = now - date;
@@ -2150,83 +2241,6 @@ function getCurrentPosition() {
     });
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-function throttle(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-// Enhanced validation functions
-function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function validateUSN(usn) {
-    // Customize this regex based on your institution's USN format
-    const usnRegex = /^[A-Z0-9]{8,15}$/i;
-    return usnRegex.test(usn.trim());
-}
-
-function validateStudentName(name) {
-    const nameRegex = /^[a-zA-Z\s]{2,50}$/;
-    return nameRegex.test(name.trim());
-}
-
-function sanitizeInput(input) {
-    return input.trim().replace(/[<>]/g, '');
-}
-
-// Local storage helpers with error handling
-function safeLocalStorageGet(key, defaultValue = null) {
-    try {
-        const value = localStorage.getItem(key);
-        return value !== null ? JSON.parse(value) : defaultValue;
-    } catch (error) {
-        console.warn('LocalStorage read error:', error);
-        return defaultValue;
-    }
-}
-
-function safeLocalStorageSet(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-        return true;
-    } catch (error) {
-        console.warn('LocalStorage write error:', error);
-        return false;
-    }
-}
-
-function safeLocalStorageRemove(key) {
-    try {
-        localStorage.removeItem(key);
-        return true;
-    } catch (error) {
-        console.warn('LocalStorage remove error:', error);
-        return false;
-    }
-}
-
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         // Only trigger shortcuts if no modal is open and not in input field
@@ -2265,6 +2279,7 @@ function setupKeyboardShortcuts() {
         }
     });
 }
+
 // =================================================================
 // AUTHENTICATION FUNCTIONS
 // =================================================================
@@ -2298,41 +2313,26 @@ window.addEventListener('unhandledrejection', (event) => {
     showToast('A network error occurred. Please check your connection.', 'error');
 });
 
-// Network status monitoring
-window.addEventListener('online', () => {
-    showToast('Connection restored', 'success');
-});
-
-window.addEventListener('offline', () => {
-    showToast('Connection lost. Some features may not work.', 'error');
-});
-
-
-// =================================================================
-// FINAL INITIALIZATION
-// =================================================================
-    
-    // Initialize focus management for modals
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            const modal = document.querySelector('.modal[style*="block"]');
-            if (modal) {
-                const focusableElements = modal.querySelectorAll(
-                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                );
-                const firstElement = focusableElements[0];
-                const lastElement = focusableElements[focusableElements.length - 1];
-                
-                if (e.shiftKey && document.activeElement === firstElement) {
-                    e.preventDefault();
-                    lastElement.focus();
-                } else if (!e.shiftKey && document.activeElement === lastElement) {
-                    e.preventDefault();
-                    firstElement.focus();
-                }
+// Initialize focus management for modals
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+        const modal = document.querySelector('.modal[style*="block"]');
+        if (modal) {
+            const focusableElements = modal.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+            
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            } else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
             }
         }
-    });
-    
-    console.log('QR Attendance System initialized successfully');
+    }
 });
+
+console.log('QR Attendance System script loaded successfully');
