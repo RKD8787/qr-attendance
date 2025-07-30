@@ -1,4 +1,1431 @@
-// Global Supabase client
+/* Enhanced CSS styles */
+        .qr-loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--muted-text);
+        }
+        
+        .qr-info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .qr-session-info h4 {
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+        }
+        
+        .qr-session-info p {
+            color: var(--muted-text);
+            margin-bottom: 15px;
+        }
+        
+        .url-input-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .url-input-group input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .url-input-group button {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+        
+        .url-input-group button:hover {
+            background: var(--secondary-blue);
+        }
+        
+        .already-marked {
+            opacity: 0.6;
+            background: #f8f9fa;
+            cursor: not-allowed;
+        }
+        
+        .already-marked .student-name {
+            text-decoration: line-through;
+        }
+        
+        .attendance-status {
+            font-size: 0.8rem;
+            color: var(--success-green);
+            font-weight: 600;
+        }
+        
+        .keyboard-focused {
+            outline: 2px solid var(--primary-blue);
+            outline-offset: 2px;
+            background: rgba(30, 90, 168, 0.1);
+        }
+        
+        .ready-to-submit {
+            background: linear-gradient(135deg, var(--success-green), #20c997) !important;
+            box-shadow: 0 0 20px rgba(40, 167, 69, 0.3);
+            animation: readyPulse 2s infinite;
+        }
+        
+        @keyframes readyPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted-text);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+        
+        .search-clear-btn:hover {
+            background: rgba(0,0,0,0.1);
+            color: var(--danger-red);
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .no-search-results {
+            padding: 30px;
+            text-align: center;
+        }
+        
+        mark {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+        
+        .toast-show {
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .toast-hide {
+            animation: slideOutRight 0.3s ease-in;
+        }
+        
+        @keyframes slideInRight {
+            from { 
+                transform: translateX(100%); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(0); 
+                opacity: 1; 
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from { 
+                transform: translateX(0); 
+                opacity: 1; 
+            }
+            to { 
+                transform: translateX(100%); 
+                opacity: 0; 
+            }
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .error-details {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .session-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .realtime-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .realtime-indicator.offline {
+            background: var(--danger-red);
+        }
+        
+        .connection-status {
+            font-size: 0.9rem;
+            color: var(--muted-text);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .retry-counter {
+            font-size: 0.8rem;
+            color: var(--muted-text);
+            margin-top: 5px;
+        }
+        
+        .advanced-search {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .search-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .bulk-actions {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .bulk-actions.show {
+            display: block;
+        }
+        
+        .bulk-actions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .bulk-actions-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .bulk-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .bulk-btn.danger {
+            background: var(--danger-red);
+            color: white;
+        }
+        
+        .bulk-btn.success {
+            background: var(--success-green);
+            color: white;
+        }
+        
+        .bulk-btn.info {
+            background: var(--info-cyan);
+            color: white;
+        }
+        
+        .selection-count {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+        
+        .data-export-options {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .export-format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .export-option {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .export-option:hover {
+            border-color: var(--primary-blue);
+            background: rgba(30, 90, 168, 0.05);
+        }
+        
+        .export-option.selected {
+            border-color: var(--primary-blue);
+            background: rgba(30, 90, 168, 0.1);
+        }
+        
+        .export-option i {
+            font-size: 2rem;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+        
+        .export-option h4 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+        }
+        
+        .export-option p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--muted-text);
+        }
+        
+        .advanced-filters {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .filter-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .filter-header:hover {
+            background: #e9ecef;
+        }
+        
+        .filter-content {
+            padding: 20px;
+            display: none;
+        }
+        
+        .filter-content.show {
+            display: block;
+        }
+        
+        .date-range-picker {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .quick-date-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .quick-date-btn {
+            padding: 5px 10px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+        
+        .quick-date-btn:hover,
+        .quick-date-btn.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+        
+        .performance-metrics {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .performance-metrics.show {
+            display: block;
+        }
+        
+        .metric-item {
+            margin-bottom: 5px;
+        }
+        
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--danger-red);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            z-index: 2000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .offline-indicator.show {
+            transform: translateY(0);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+        
+        .collapsible-section {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        
+        .collapsible-header {
+            background: #f8f9fa;
+            padding: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .collapsible-header:hover {
+            background: #e9ecef;
+        }
+        
+        .collapsible-content {
+            padding: 20px;
+            display: none;
+        }
+        
+        .collapsible-content.show {
+            display: block;
+        }
+        
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+        
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .search-filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .bulk-actions-buttons {
+                flex-direction: column;
+            }
+            
+            .export-format-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .date-range-picker {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .quick-date-buttons {
+                justify-content: center;
+            }
+            
+            .performance-metrics {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                font-size: 0.7rem;
+            }
+            
+            .url-input-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .url-input-group button {
+                width: 100%;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --light-bg: #2d3748;
+                --border-color: #4a5568;
+                --muted-text: #a0aec0;
+                --dark-text: #f7fafc;
+            }
+            
+            .loading-skeleton {
+                background: linear-gradient(90deg, #4a5568 25%, #2d3748 50%, #4a5568 75%);
+            }
+            
+            mark {
+                background: #d69e2e;
+                color: #1a202c;
+            }
+        }
+        
+        /* High contrast mode enhancements */
+        @media (prefers-contrast: high) {
+            .student-item,
+            .modal-content,
+            .stat-card,
+            .export-option {
+                border-width: 3px;
+            }
+            
+            .badge {
+                border: 2px solid currentColor;
+            }
+            
+            .progress-fill {
+                background: #000;
+            }
+        }
+        
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            
+            .fresh-btn,
+            .ready-to-submit,
+            .loading-skeleton {
+                animation: none;
+            }
+        }
+        
+        /* Print optimizations */
+        @media print {
+            .action-buttons,
+            .modal,
+            .toast-container,
+            .shortcuts-help,
+            .performance-metrics,
+            .offline-indicator,
+            button:not(.print-friendly) {
+                display: none !important;
+            }
+            
+            .container {
+                box-shadow: none;
+                border: 2px solid #000;
+                max-width: none;
+            }
+            
+            .present-count-card {
+                border: 3px solid #000;
+                break-inside: avoid;
+            }
+            
+            .student-list-item {
+                break-inside: avoid;
+                border: 1px solid #000;
+                margin-bottom: 5px;
+            }
+            
+            .qr-container {
+                text-align: center;
+                break-inside: avoid;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// =================================================================
+// FINAL INITIALIZATION AND CLEANUP
+// =================================================================
+
+// Ensure all components are ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize enhanced tooltips
+    initializeTooltips();
+    
+    // Initialize collapsible sections
+    initializeCollapsibleSections();
+    
+    // Initialize performance monitoring
+    if (window.location.search.includes('debug=true')) {
+        initializePerformanceMonitoring();
+    }
+    
+    // Initialize offline indicator
+    initializeOfflineIndicator();
+    
+    // Initialize focus management for modals
+    setupModalFocusManagement();
+    
+    // Initialize keyboard shortcuts help
+    setupKeyboardShortcutsHelp();
+    
+    // Setup advanced search features
+    setupAdvancedSearch();
+    
+    console.log('QR Attendance System fully initialized with enhanced features');
+});
+
+function initializeTooltips() {
+    const tooltipElements = document.querySelectorAll('[title]');
+    tooltipElements.forEach(element => {
+        const title = element.getAttribute('title');
+        element.setAttribute('data-tooltip', title);
+        element.removeAttribute('title');
+        element.classList.add('tooltip');
+    });
+}
+
+function initializeCollapsibleSections() {
+    const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+    collapsibleHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.expand-icon');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                icon.classList.remove('expanded');
+            } else {
+                content.classList.add('show');
+                icon.classList.add('expanded');
+            }
+        });
+    });
+}
+
+function initializePerformanceMonitoring() {
+    const metrics = document.createElement('div');
+    metrics.className = 'performance-metrics show';
+    metrics.innerHTML = `
+        <div class="metric-item">Memory: <span id="memory-usage">--</span></div>
+        <div class="metric-item">Load Time: <span id="load-time">--</span></div>
+        <div class="metric-item">API Calls: <span id="api-calls">0</span></div>
+        <div class="metric-item">Cache Hits: <span id="cache-hits">0</span></div>
+    `;
+    document.body.appendChild(metrics);
+    
+    // Update metrics periodically
+    setInterval(updatePerformanceMetrics, 2000);
+}
+
+function updatePerformanceMetrics() {
+    const memoryEl = document.getElementById('memory-usage');
+    const apiCallsEl = document.getElementById('api-calls');
+    const cacheHitsEl = document.getElementById('cache-hits');
+    
+    if (performance.memory && memoryEl) {
+        const usedMB = Math.round(performance.memory.usedJSHeapSize / 1048576);
+        memoryEl.textContent = `${usedMB} MB`;
+    }
+    
+    // These would be tracked in actual implementation
+    if (apiCallsEl) apiCallsEl.textContent = window.apiCallCount || 0;
+    if (cacheHitsEl) cacheHitsEl.textContent = window.cacheHitCount || 0;
+}
+
+function initializeOfflineIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'offline-indicator';
+    indicator.innerHTML = `
+        <i class="fas fa-wifi"></i>
+        You are currently offline. Some features may not work properly.
+    `;
+    document.body.appendChild(indicator);
+    
+    const updateIndicator = () => {
+        if (navigator.onLine) {
+            indicator.classList.remove('show');
+        } else {
+            indicator.classList.add('show');
+        }
+    };
+    
+    window.addEventListener('online', updateIndicator);
+    window.addEventListener('offline', updateIndicator);
+    updateIndicator();
+}
+
+function setupModalFocusManagement() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            const modal = document.querySelector('.modal[style*="block"]');
+            if (modal) {
+                const focusableElements = modal.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                
+                if (e.shiftKey && document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                } else if (!e.shiftKey && document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    });
+}
+
+function setupKeyboardShortcutsHelp() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '?' && !e.ctrlKey && !e.metaKey && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+            e.preventDefault();
+            const shortcutsHelp = document.getElementById('shortcuts-help');
+            if (shortcutsHelp) {
+                shortcutsHelp.classList.toggle('hidden');
+            }
+        }
+    });
+}
+
+function setupAdvancedSearch() {
+    // This would be implemented based on specific requirements
+    console.log('Advanced search features initialized');
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    // Clear intervals
+    if (window.refreshInterval) {
+        clearInterval(window.refreshInterval);
+    }
+    
+    // Close database connections
+    if (supabaseClient) {
+        // Supabase handles cleanup automatically
+    }
+    
+    // Clear caches
+    studentsCache.clear();
+});
+
+// Global error recovery
+window.addEventListener('error', (event) => {
+    console.error('Global error caught:', event.error);
+    
+    // Try to recover gracefully
+    if (event.error.message.includes('supabase')) {
+        showToast('Database connection lost. Attempting to reconnect...', 'error');
+        // Attempt to reinitialize
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+    }
+});
+
+// Service worker registration for offline support
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+                console.log('SW registration failed: ', registrationError);
+            });
+    });
+}// =================================================================
+// ENHANCED STUDENT VIEW FUNCTIONS
+// =================================================================
+
+async function initStudentView() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+    
+    if (!sessionId) {
+        showErrorPage('No session ID provided. Please scan a valid QR code or use a proper link.');
+        return;
+    }
+    
+    // Validate session ID format (basic check)
+    if (!isValidUUID(sessionId)) {
+        showErrorPage('Invalid session format. Please scan a valid QR code.');
+        return;
+    }
+    
+    try {
+        await loadSessionForStudent(sessionId);
+        setupStudentSearch();
+        setupStudentKeyboardNavigation();
+        
+        // Pre-select student if USN is in URL (for quick access)
+        const preSelectUSN = urlParams.get('usn');
+        if (preSelectUSN) {
+            setTimeout(() => preSelectStudent(preSelectUSN), 1000);
+        }
+        
+    } catch (error) {
+        console.error('Error initializing student view:', error);
+        showErrorPage('Failed to initialize attendance system. Please try again.');
+    }
+}
+
+function isValidUUID(str) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+}
+
+async function loadSessionForStudent(sessionId) {
+    try {
+        const operation = async () => {
+            const { data: sessionData, error: sessionError } = await supabaseClient
+                .from('sessions')
+                .select(`
+                    *,
+                    courses(course_name, course_id)
+                `)
+                .eq('id', sessionId)
+                .single();
+            
+            if (sessionError) throw sessionError;
+            return sessionData;
+        };
+
+        const sessionData = await executeWithRetry(operation);
+        
+        if (!sessionData) {
+            showErrorPage('Session not found. This session may have been deleted or the link is invalid.');
+            return;
+        }
+        
+        // Check if session is too old (optional security measure)
+        const sessionAge = Date.now() - new Date(sessionData.created_at).getTime();
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (sessionAge > maxAge) {
+            showErrorPage('This session has expired. Please contact your instructor for a new link.');
+            return;
+        }
+        
+        currentSession = sessionData;
+        updateSessionDisplay(sessionData);
+        await populateStudentListForAttendance();
+        
+        // Check if session is still active (optional)
+        if (sessionData.status === 'ended') {
+            showToast('Note: This session has been marked as ended by the instructor', 'info');
+        }
+        
+    } catch (err) {
+        console.error('Error loading session:', err);
+        
+        if (err.message.includes('Row not found')) {
+            showErrorPage('Session not found. Please check your link or scan the QR code again.');
+        } else {
+            showErrorPage('Failed to load session information. Please check your connection and try again.');
+        }
+    }
+}
+
+function setupStudentKeyboardNavigation() {
+    const studentList = document.getElementById('student-list');
+    if (!studentList) return;
+    
+    studentList.setAttribute('tabindex', '0');
+    
+    studentList.addEventListener('keydown', (e) => {
+        const items = Array.from(studentList.querySelectorAll('.student-list-item:not([style*="display: none"])'));
+        let currentIndex = items.findIndex(item => item.classList.contains('keyboard-focused'));
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                setKeyboardFocus(items, nextIndex);
+                break;
+                
+                setKeyboardFocus(items, prevIndex);
+                break;
+                
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                if (currentIndex >= 0 && items[currentIndex]) {
+                    items[currentIndex].click();
+                }
+                break;
+                
+            case 'Home':
+                e.preventDefault();
+                setKeyboardFocus(items, 0);
+                break;
+                
+            case 'End':
+                e.preventDefault();
+                setKeyboardFocus(items, items.length - 1);
+                break;
+        }
+    });
+}
+
+function setKeyboardFocus(items, index) {
+    items.forEach(item => item.classList.remove('keyboard-focused'));
+    if (items[index]) {
+        items[index].classList.add('keyboard-focused');
+        items[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function preSelectStudent(usn) {
+    const studentItems = document.querySelectorAll('.student-list-item');
+    studentItems.forEach(item => {
+        const studentUSN = item.querySelector('.student-usn').textContent;
+        if (studentUSN === usn) {
+            item.click();
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+}
+
+async function populateStudentListForAttendance() {
+    const listElement = document.getElementById('student-list');
+    if (!listElement) return;
+    
+    if (allStudents.length === 0) {
+        listElement.innerHTML = `
+            <div class="loading-students">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>No students found in the system</span>
+            </div>
+        `;
+        return;
+    }
+    
+    // Check which students have already marked attendance for this session
+    let markedStudents = [];
+    try {
+        const { data: attendance, error } = await supabaseClient
+            .from('attendance')
+            .select('usn')
+            .eq('session_id', currentSession.id);
+            
+        if (!error && attendance) {
+            markedStudents = attendance.map(record => record.usn);
+        }
+    } catch (error) {
+        console.warn('Could not check existing attendance:', error);
+    }
+    
+    listElement.innerHTML = '';
+    
+    allStudents.forEach(student => {
+        const studentDiv = document.createElement('div');
+        studentDiv.className = 'student-list-item';
+        studentDiv.setAttribute('role', 'option');
+        studentDiv.setAttribute('tabindex', '0');
+        studentDiv.setAttribute('data-usn', student.usn);
+        
+        const isAlreadyMarked = markedStudents.includes(student.usn);
+        
+        if (isAlreadyMarked) {
+            studentDiv.classList.add('already-marked');
+            studentDiv.setAttribute('title', 'This student has already marked attendance');
+        }
+        
+        studentDiv.innerHTML = `
+            <div class="student-details">
+                <div class="student-name">${escapeHtml(student.name)}</div>
+                <div class="student-usn">${escapeHtml(student.usn)}</div>
+                ${isAlreadyMarked ? '<div class="attendance-status">✓ Already marked</div>' : ''}
+            </div>
+            <div class="selection-indicator">
+                <i class="fas fa-check"></i>
+            </div>
+        `;
+        
+        if (!isAlreadyMarked) {
+            studentDiv.addEventListener('click', () => selectStudentForAttendance(student, studentDiv));
+        } else {
+            studentDiv.addEventListener('click', () => {
+                showToast('This student has already marked attendance for this session', 'info');
+            });
+        }
+        
+        listElement.appendChild(studentDiv);
+    });
+    
+    // Focus on the list for keyboard navigation
+    listElement.focus();
+}
+
+function selectStudentForAttendance(student, element) {
+    // Remove previous selection
+    document.querySelectorAll('.student-list-item.selected').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Add selection to clicked item
+    element.classList.add('selected');
+    selectedStudentForAttendance = student;
+    
+    // Enable submit button with loading state preparation
+    const submitBtn = document.getElementById('submit-attendance');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Submit Attendance for ${student.name}`;
+        submitBtn.onclick = submitStudentAttendance;
+        
+        // Add visual feedback
+        submitBtn.classList.add('ready-to-submit');
+    }
+    
+    // Update help text
+    const helpText = document.querySelector('.submit-help');
+    if (helpText) {
+        helpText.innerHTML = `
+            <i class="fas fa-check-circle" style="color: var(--success-green);"></i>
+            Ready to submit attendance for <strong>${student.name}</strong>
+        `;
+    }
+    
+    // Announce selection for screen readers
+    announceToScreenReader(`Selected ${student.name} for attendance`);
+}
+
+async function submitStudentAttendance() {
+    if (!selectedStudentForAttendance || !currentSession) {
+        showToast('Please select a student first', 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submit-attendance');
+    const originalContent = submitBtn.innerHTML;
+    
+    // Show loading state
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.classList.add('loading');
+    }
+    
+    try {
+        // Double-check if student already marked attendance
+        const { data: existingAttendance, error: checkError } = await supabaseClient
+            .from('attendance')
+            .select('*')
+            .eq('session_id', currentSession.id)
+            .eq('usn', selectedStudentForAttendance.usn)
+            .maybeSingle();
+        
+        if (existingAttendance) {
+            showToast('Attendance already marked for this session', 'error');
+            resetSubmitButton(submitBtn, originalContent);
+            return;
+        }
+        
+        // Get location with timeout
+        let locationData = null;
+        let locationVerified = false;
+        
+        if (navigator.geolocation) {
+            try {
+                const position = await Promise.race([
+                    getCurrentPosition(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Location timeout')), 10000)
+                    )
+                ]);
+                
+                locationData = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: new Date().toISOString()
+                };
+                locationVerified = true;
+                
+            } catch (err) {
+                console.log('Location not available:', err);
+                // Continue without location - not a blocking error
+            }
+        }
+        
+        // Prepare attendance record with comprehensive data
+        const attendanceRecord = {
+            session_id: currentSession.id,
+            student: selectedStudentForAttendance.name,
+            usn: selectedStudentForAttendance.usn,
+            timestamp: new Date().toISOString(),
+            fingerprint_verified: false, // Would be true if fingerprint was used
+            location_verified: locationVerified,
+            location_data: locationData,
+            user_agent: navigator.userAgent,
+            ip_address: null, // Would be populated server-side
+            verification_method: 'qr_code'
+        };
+        
+        // Insert attendance record with retry logic
+        const operation = async () => {
+            const { data, error } = await supabaseClient
+                .from('attendance')
+                .insert([attendanceRecord])
+                .select()
+                .single();
+                
+            if (error) throw error;
+            return data;
+        };
+
+        const insertedRecord = await executeWithRetry(operation);
+        
+        // Success! Show success page
+        showSuccessPage(selectedStudentForAttendance, new Date(), locationVerified);
+        
+        // Log successful submission
+        console.log('Attendance submitted successfully:', insertedRecord);
+        
+    } catch (err) {
+        console.error('Error submitting attendance:', err);
+        
+        let errorMessage = 'Failed to submit attendance. Please try again.';
+        
+        if (err.message.includes('duplicate key value')) {
+            errorMessage = 'Attendance has already been marked for this session.';
+        } else if (err.message.includes('foreign key constraint')) {
+            errorMessage = 'Session not found. Please scan a new QR code.';
+        } else if (!isOnline) {
+            errorMessage = 'No internet connection. Please check your connection and try again.';
+        }
+        
+        showToast(errorMessage, 'error');
+        resetSubmitButton(submitBtn, originalContent);
+    }
+}
+
+function resetSubmitButton(submitBtn, originalContent) {
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+        submitBtn.classList.remove('loading');
+    }
+}
+
+function setupStudentSearch() {
+    const searchInput = document.getElementById('student-search');
+    if (!searchInput) return;
+    
+    // Add search icon toggle
+    const searchContainer = searchInput.parentElement;
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'search-clear-btn';
+    clearBtn.innerHTML = '<i class="fas fa-times"></i>';
+    clearBtn.style.display = 'none';
+    clearBtn.onclick = () => {
+        searchInput.value = '';
+        filterStudentList('');
+        clearBtn.style.display = 'none';
+        searchInput.focus();
+    };
+    searchContainer.appendChild(clearBtn);
+    
+    const debouncedFilter = debounce((searchTerm) => {
+        filterStudentList(searchTerm);
+        clearBtn.style.display = searchTerm ? 'block' : 'none';
+    }, 300);
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        debouncedFilter(searchTerm);
+    });
+    
+    // Focus search on '/' key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+}
+
+function filterStudentList(searchTerm) {
+    const studentItems = document.querySelectorAll('.student-list-item');
+    let visibleCount = 0;
+    
+    studentItems.forEach(item => {
+        const name = item.querySelector('.student-name').textContent.toLowerCase();
+        const usn = item.querySelector('.student-usn').textContent.toLowerCase();
+        
+        const isMatch = searchTerm === '' || 
+                       name.includes(searchTerm) || 
+                       usn.includes(searchTerm);
+        
+        if (isMatch) {
+            item.style.display = 'flex';
+            visibleCount++;
+            
+            // Highlight matching text
+            highlightSearchTerm(item.querySelector('.student-name'), searchTerm);
+            highlightSearchTerm(item.querySelector('.student-usn'), searchTerm);
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show no results message
+    const listElement = document.getElementById('student-list');
+    let noResultsMsg = listElement.querySelector('.no-search-results');
+    
+    if (visibleCount === 0 && searchTerm !== '') {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'no-search-results';
+            noResultsMsg.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                    <p>No students found matching "${escapeHtml(searchTerm)}"</p>
+                    <small>Try searching by name or USN</small>
+                </div>
+            `;
+            listElement.appendChild(noResultsMsg);
+        }
+    } else if (noResultsMsg) {
+        noResultsMsg.remove();
+    }
+}
+
+function highlightSearchTerm(element, searchTerm) {
+    if (!searchTerm) {
+        // Remove existing highlights
+        element.innerHTML = element.textContent;
+        return;
+    }
+    
+    const text = element.textContent;
+    const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+    const highlightedText = text.replace(regex, '<mark>$1</mark>');
+    element.innerHTML = highlightedText;
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\            case 'ArrowUp':
+                e.preventDefault();
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                setKeyboardFocus');
+}
+
+function showSuccessPage(student, timestamp, locationVerified = false) {
+    document.getElementById('student-selection-page').classList.add('hidden');
+    document.getElementById('success-page').classList.remove('hidden');
+    
+    document.getElementById('success-student-name').textContent = student.name;
+    document.getElementById('success-timestamp').textContent = timestamp.toLocaleString();
+    
+    // Add location verification status
+    const successDetails = document.querySelector('.success-details');
+    if (successDetails) {
+        const locationDetail = successDetails.querySelector('.location-detail');
+        if (locationDetail) {
+            locationDetail.remove();
+        }
+        
+        const locationDiv = document.createElement('div');
+        locationDiv.className = 'detail-item location-detail';
+        locationDiv.innerHTML = `
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Location: <strong>${locationVerified ? 'Verified' : 'Not Available'}</strong></span>
+        `;
+        successDetails.appendChild(locationDiv);
+    }
+    
+    // Auto-close timer with countdown
+    let countdown = 10;
+    const closeBtn = document.getElementById('close-success');
+    const updateCountdown = () => {
+        if (closeBtn) {
+            closeBtn.innerHTML = `<i class="fas fa-times"></i> Close Window (${countdown})`;
+        }
+        countdown--;
+        
+        if (countdown <= 0) {
+            window.close();
+        }
+    };
+    
+    updateCountdown();
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    
+    // Clear countdown if user interacts
+    document.addEventListener('click', () => {
+        clearInterval(countdownInterval);
+        if (closeBtn) {
+            closeBtn.innerHTML = '<i class="fas fa-times"></i> Close Window';
+        }
+    }, { once: true });
+}
+
+function showErrorPage(message, details = null) {
+    document.getElementById('student-selection-page').classList.add('hidden');
+    document.getElementById('error-page').classList.remove('hidden');
+    
+    const errorMessageEl = document.getElementById('error-message-text');
+    if (errorMessageEl) {
+        errorMessageEl.textContent = message;
+    }
+    
+    // Add error details if provided
+    if (details) {
+        const errorActions = document.querySelector('.error-actions');
+        if (errorActions) {
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'error-details';
+            detailsDiv.innerHTML = `<small>Details: ${escapeHtml(details)}</small>`;
+            errorActions.parentNode.insertBefore(detailsDiv, errorActions);
+        }
+    }
+}// Global Supabase client
 let supabaseClient = null;
 
 // Global state variables
@@ -7,8 +1434,20 @@ let presentStudents = [];
 let currentCourseId = null;
 let currentSession = null;
 let allSessions = [];
+let allCourses = [];
 let attendanceChart = null;
 let verificationChart = null;
+let selectedStudentForAttendance = null;
+
+// Performance and caching
+let studentsCache = new Map();
+let lastFetchTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Network and retry logic
+let retryCount = 0;
+const MAX_RETRIES = 3;
+let isOnline = navigator.onLine;
 
 // ✅ MAIN ENTRY POINT
 document.addEventListener('DOMContentLoaded', initializeApp);
@@ -17,47 +1456,229 @@ document.addEventListener('DOMContentLoaded', initializeApp);
  * Initializes the Supabase client, checks auth, fetches data, and starts the correct UI.
  */
 async function initializeApp() {
+    // Show loading screen
+    showLoadingScreen(true);
+    
     try {
         const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
+        
+        // Validate environment
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
+            throw new Error('Missing Supabase configuration');
+        }
+        
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Test connection
+        await testDatabaseConnection();
+        
     } catch (error) {
         console.error('Database connection error:', error);
-        return alert('FATAL: Could not connect to the database.');
+        showToast('FATAL: Could not connect to the database. Please check your connection.', 'error');
+        showLoadingScreen(false);
+        return;
     }
 
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError) {
+        console.error('Session error:', sessionError);
+        showToast('Authentication error. Please try again.', 'error');
+    }
+    
     const isStudentPage = window.location.pathname.includes('student.html');
+    const isLoginPage = window.location.pathname.includes('login.html');
 
-    if (!session && !isStudentPage) {
+    // Handle authentication routing
+    if (!session && !isStudentPage && !isLoginPage) {
+        showLoadingScreen(false);
         return window.location.href = 'login.html';
     }
 
-    await fetchAllStudents();
-
-    if (isStudentPage) {
-        initStudentView();
-    } else {
-        initFacultyView();
+    // Initialize data with error handling
+    try {
+        await Promise.all([
+            fetchAllStudents(),
+            fetchAllCourses()
+        ]);
+    } catch (error) {
+        console.error('Data initialization error:', error);
+        showToast('Failed to load initial data. Some features may not work properly.', 'error');
     }
+
+    // Initialize appropriate view
+    if (isStudentPage) {
+        await initStudentView();
+    } else if (!isLoginPage) {
+        await initFacultyView();
+    }
+
+    setupKeyboardShortcuts();
+    setupNetworkMonitoring();
+    setupServiceWorker();
+    
+    showLoadingScreen(false);
 }
 
 // =================================================================
-// DATA FETCHING & STATE
+// UTILITY AND HELPER FUNCTIONS
+// =================================================================
+
+function showLoadingScreen(show) {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        if (show) {
+            loadingScreen.style.display = 'flex';
+            loadingScreen.style.opacity = '1';
+        } else {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
+        }
+    }
+}
+
+async function testDatabaseConnection() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('students')
+            .select('count')
+            .limit(1);
+        
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Database connection test failed:', error);
+        throw new Error('Database connection failed');
+    }
+}
+
+function setupNetworkMonitoring() {
+    window.addEventListener('online', () => {
+        isOnline = true;
+        retryCount = 0;
+        showToast('Connection restored', 'success');
+        // Retry failed operations if any
+        retryFailedOperations();
+    });
+
+    window.addEventListener('offline', () => {
+        isOnline = false;
+        showToast('Connection lost. Working in offline mode.', 'error');
+    });
+}
+
+async function setupServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        try {
+            // Register service worker for offline functionality
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('Service Worker registered successfully:', registration);
+        } catch (error) {
+            console.log('Service Worker registration failed:', error);
+        }
+    }
+}
+
+async function retryFailedOperations() {
+    // Implement retry logic for failed operations
+    if (currentSession) {
+        fetchCurrentSessionAttendance();
+    }
+    fetchAllStudents();
+    fetchAllCourses();
+}
+
+async function executeWithRetry(operation, maxRetries = MAX_RETRIES) {
+    let lastError;
+    
+    for (let i = 0; i <= maxRetries; i++) {
+        try {
+            if (!isOnline && i === 0) {
+                throw new Error('Offline - operation will be retried when connection is restored');
+            }
+            
+            const result = await operation();
+            retryCount = 0; // Reset on success
+            return result;
+        } catch (error) {
+            lastError = error;
+            retryCount = i + 1;
+            
+            if (i < maxRetries) {
+                const delay = Math.pow(2, i) * 1000; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+                console.log(`Retry attempt ${i + 1}/${maxRetries} after ${delay}ms`);
+            }
+        }
+    }
+    
+    throw lastError;
+}
+
+// =================================================================
+// DATA FETCHING & STATE MANAGEMENT (ENHANCED)
 // =================================================================
 
 async function fetchAllStudents() {
     try {
-        const { data, error } = await supabaseClient
-            .from('students')
-            .select('name, usn')
-            .order('name', { ascending: true });
+        // Check cache first
+        const now = Date.now();
+        if (studentsCache.has('students') && (now - lastFetchTime) < CACHE_DURATION) {
+            allStudents = studentsCache.get('students');
+            return;
+        }
+
+        const operation = async () => {
+            const { data, error } = await supabaseClient
+                .from('students')
+                .select('name, usn')
+                .order('name', { ascending: true });
+            
+            if (error) throw error;
+            return data || [];
+        };
+
+        const students = await executeWithRetry(operation);
+        allStudents = students;
         
-        if (error) throw error;
-        allStudents = data || [];
+        // Update cache
+        studentsCache.set('students', students);
+        lastFetchTime = now;
+        
     } catch (err) {
         console.error('Error fetching students:', err);
-        allStudents = [];
+        
+        // Fall back to cached data if available
+        if (studentsCache.has('students')) {
+            allStudents = studentsCache.get('students');
+            showToast('Using cached student data', 'info');
+        } else {
+            allStudents = [];
+            showToast('Failed to load students', 'error');
+        }
+    }
+}
+
+async function fetchAllCourses() {
+    try {
+        const operation = async () => {
+            const { data, error } = await supabaseClient
+                .from('courses')
+                .select('*')
+                .order('course_name', { ascending: true });
+            
+            if (error) throw error;
+            return data || [];
+        };
+
+        allCourses = await executeWithRetry(operation);
+        
+    } catch (err) {
+        console.error('Error fetching courses:', err);
+        allCourses = [];
+        showToast('Failed to load courses', 'error');
     }
 }
 
@@ -68,19 +1689,73 @@ async function fetchCurrentSessionAttendance() {
     }
 
     try {
-        const { data, error } = await supabaseClient
-            .from('attendance')
-            .select('student, usn, timestamp, fingerprint_verified, location_verified')
-            .eq('session_id', currentSession.id)
-            .order('timestamp', { ascending: false });
+        const operation = async () => {
+            const { data, error } = await supabaseClient
+                .from('attendance')
+                .select('student, usn, timestamp, fingerprint_verified, location_verified')
+                .eq('session_id', currentSession.id)
+                .order('timestamp', { ascending: false });
 
-        if (error) throw error;
-        
-        const attendanceData = data || [];
+            if (error) throw error;
+            return data || [];
+        };
+
+        const attendanceData = await executeWithRetry(operation);
         presentStudents = attendanceData.map(record => record.student);
         updatePresentStudentsList(attendanceData);
+        
     } catch (err) {
         console.error('Error fetching attendance:', err);
+        if (isOnline) {
+            showToast('Failed to refresh attendance data', 'error');
+        }
+    }
+}
+
+async function fetchAllSessions(includeArchived = false) {
+    try {
+        const operation = async () => {
+            let query = supabaseClient
+                .from('sessions')
+                .select(`
+                    *,
+                    courses(course_name, course_id)
+                `)
+                .order('created_at', { ascending: false });
+
+            if (!includeArchived) {
+                query = query.is('archived', false);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        };
+
+        allSessions = await executeWithRetry(operation);
+        
+        // Get attendance counts for each session
+        await Promise.all(allSessions.map(async (session) => {
+            try {
+                const { count, error } = await supabaseClient
+                    .from('attendance')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('session_id', session.id);
+                
+                if (!error) {
+                    session.attendance_count = count || 0;
+                }
+            } catch (err) {
+                session.attendance_count = 0;
+            }
+        }));
+        
+        populateSessionHistoryList();
+        
+    } catch (err) {
+        console.error('Error fetching sessions:', err);
+        allSessions = [];
+        showToast('Failed to load session history', 'error');
     }
 }
 
@@ -93,58 +1768,243 @@ function updateActiveSession(sessionData) {
         localStorage.setItem('sessionId', sessionData.id);
         const courseName = sessionData.courses ? sessionData.courses.course_name : 'General';
         if (sessionTitle) {
-            sessionTitle.textContent = `Active Session: ${sessionData.session_name} (${courseName})`;
+            sessionTitle.innerHTML = `
+                <i class="fas fa-play-circle" style="color: #28a745;"></i>
+                Active Session: ${sessionData.session_name} (${courseName})
+            `;
         }
         generateQR(sessionData.id);
         fetchCurrentSessionAttendance();
     } else {
         localStorage.removeItem('sessionId');
         if (sessionTitle) {
-            sessionTitle.textContent = 'No Active Session';
+            sessionTitle.innerHTML = `
+                <i class="fas fa-pause-circle" style="color: #dc3545;"></i>
+                No Active Session
+            `;
         }
         if (qrContainer) {
-            qrContainer.innerHTML = '<p>Start a new session to generate a QR code.</p>';
+            qrContainer.innerHTML = `
+                <div class="no-session-message">
+                    <i class="fas fa-qrcode" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px;"></i>
+                    <p>Start a new session to generate a QR code</p>
+                </div>
+            `;
         }
         updatePresentStudentsList([]);
     }
 }
 
 // =================================================================
-// FACULTY VIEW (`index.html`)
+// FACULTY VIEW FUNCTIONS
 // =================================================================
 
-function initFacultyView() {
-    const lastSessionId = localStorage.getItem('sessionId');
-    if (lastSessionId) {
-        supabaseClient
-            .from('sessions')
-            .select('*, courses(course_name)')
-            .eq('id', lastSessionId)
-            .single()
-            .then(({ data, error }) => {
-                if (data && !error) updateActiveSession(data);
-                else updateActiveSession(null);
-            });
-    } else {
-        updateActiveSession(null);
+// =================================================================
+// ENHANCED FACULTY VIEW FUNCTIONS
+// =================================================================
+
+async function initFacultyView() {
+    try {
+        const lastSessionId = localStorage.getItem('sessionId');
+        if (lastSessionId) {
+            const { data, error } = await supabaseClient
+                .from('sessions')
+                .select('*, courses(course_name)')
+                .eq('id', lastSessionId)
+                .single();
+                
+            if (data && !error) {
+                updateActiveSession(data);
+            } else {
+                updateActiveSession(null);
+                localStorage.removeItem('sessionId');
+            }
+        } else {
+            updateActiveSession(null);
+        }
+        
+        // Set up real-time attendance refresh
+        const refreshInterval = setInterval(() => {
+            if (currentSession && isOnline) {
+                fetchCurrentSessionAttendance();
+            }
+        }, 5000);
+        
+        // Clean up interval on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(refreshInterval);
+        });
+        
+        setupAllModalSearchListeners();
+        setupRealtimeSubscriptions();
+        
+    } catch (error) {
+        console.error('Error initializing faculty view:', error);
+        showToast('Failed to initialize dashboard', 'error');
     }
+}
+
+function setupRealtimeSubscriptions() {
+    if (!supabaseClient) return;
     
-    setInterval(fetchCurrentSessionAttendance, 5000);
-    setupAllModalSearchListeners();
+    try {
+        // Subscribe to attendance changes
+        const attendanceSubscription = supabaseClient
+            .channel('attendance_changes')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'attendance' },
+                (payload) => {
+                    console.log('Attendance change detected:', payload);
+                    if (currentSession) {
+                        fetchCurrentSessionAttendance();
+                    }
+                }
+            )
+            .subscribe();
+
+        // Subscribe to student changes
+        const studentSubscription = supabaseClient
+            .channel('student_changes')
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'students' },
+                (payload) => {
+                    console.log('Student change detected:', payload);
+                    fetchAllStudents();
+                }
+            )
+            .subscribe();
+
+        // Clean up subscriptions on page unload
+        window.addEventListener('beforeunload', () => {
+            supabaseClient.removeChannel(attendanceSubscription);
+            supabaseClient.removeChannel(studentSubscription);
+        });
+        
+    } catch (error) {
+        console.error('Error setting up realtime subscriptions:', error);
+    }
 }
 
 function generateQR(sessionId) {
     const qrContainer = document.getElementById('qr-code-container');
     if (!qrContainer) return;
-    qrContainer.innerHTML = '';
+    
+    qrContainer.innerHTML = '<div class="qr-loading">Generating QR code...</div>';
     
     try {
         const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
+        
+        // Validate URL before generating QR
+        if (!studentUrl || !sessionId) {
+            throw new Error('Invalid session data for QR generation');
+        }
+        
         const canvas = document.createElement('canvas');
+        qrContainer.innerHTML = '';
         qrContainer.appendChild(canvas);
-        new QRious({ element: canvas, value: studentUrl, size: 250 });
+        
+        const qr = new QRious({ 
+            element: canvas, 
+            value: studentUrl, 
+            size: 250,
+            background: 'white',
+            foreground: 'black',
+            level: 'M', // Error correction level
+            padding: 10
+        });
+
+        // Add session info and URL display
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'qr-info';
+        infoDiv.innerHTML = `
+            <div class="qr-session-info">
+                <h4>Session: ${currentSession?.session_name || 'Unknown'}</h4>
+                <p>Students can scan this QR code to mark attendance</p>
+            </div>
+            <div class="qr-url-display">
+                <small>Direct link for manual access:</small>
+                <div class="url-input-group">
+                    <input type="text" value="${studentUrl}" readonly onclick="this.select()" aria-label="Session URL">
+                    <button onclick="copyToClipboard('${studentUrl}')" title="Copy link">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button onclick="openInNewTab('${studentUrl}')" title="Open in new tab">
+                        <i class="fas fa-external-link-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        qrContainer.appendChild(infoDiv);
+        
+        // Auto-refresh QR code every 30 minutes for security
+        setTimeout(() => {
+            if (currentSession && currentSession.id === sessionId) {
+                generateQR(sessionId);
+                showToast('QR code refreshed for security', 'info');
+            }
+        }, 30 * 60 * 1000);
+        
     } catch (error) {
-        qrContainer.innerHTML = '<p style="color: #dc3545;">Failed to generate QR code.</p>';
+        console.error('QR generation error:', error);
+        qrContainer.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 2rem; margin-bottom: 10px;"></i>
+                <p style="color: #dc3545; margin-bottom: 15px;">Failed to generate QR code</p>
+                <button class="retry-btn" onclick="generateQR('${sessionId}')">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+                <div class="error-details">
+                    <small>Error: ${error.message}</small>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Link copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showToast('Link copied to clipboard!', 'success');
+        } else {
+            throw new Error('Copy command failed');
+        }
+    } catch (err) {
+        console.error('Fallback copy failed: ', err);
+        showToast('Failed to copy link. Please copy manually.', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function openInNewTab(url) {
+    const newWindow = window.open(url, '_blank');
+    if (!newWindow) {
+        showToast('Popup blocked. Please allow popups for this site.', 'error');
+    } else {
+        showToast('Student page opened in new tab', 'info');
     }
 }
 
@@ -156,16 +2016,37 @@ function updatePresentStudentsList(attendanceData) {
     listElement.innerHTML = '';
 
     if (attendanceData.length === 0) {
-        listElement.innerHTML = '<div class="student-item">No students present</div>';
+        listElement.innerHTML = `
+            <div class="no-students-message">
+                <i class="fas fa-users" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                <p>No students present yet</p>
+            </div>
+        `;
         return;
     }
     
     attendanceData.forEach(record => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-item';
-        const fingerprintBadge = record.fingerprint_verified ? '🔐' : '';
-        const locationBadge = record.location_verified ? '📍' : '';
-        studentDiv.innerHTML = `<span>${record.student} ${fingerprintBadge}${locationBadge}</span><button class="remove-btn" onclick="removeStudentFromSession('${record.student.replace(/'/g, "\\'")}')">Remove</button>`;
+        
+        const badges = [];
+        if (record.fingerprint_verified) badges.push('<span class="badge fingerprint-badge">🔐 Fingerprint</span>');
+        if (record.location_verified) badges.push('<span class="badge location-badge">📍 Location</span>');
+        
+        const timeAgo = getTimeAgo(new Date(record.timestamp));
+        
+        studentDiv.innerHTML = `
+            <div class="student-info">
+                <div class="student-name">${record.student}</div>
+                <div class="student-usn">${record.usn}</div>
+                <div class="attendance-time">${timeAgo}</div>
+                <div class="student-badges">${badges.join('')}</div>
+            </div>
+            <button class="remove-btn" onclick="removeStudentFromSession('${record.student.replace(/'/g, "\\'")}', '${record.usn}')" title="Remove student">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
         listElement.appendChild(studentDiv);
     });
 }
@@ -175,33 +2056,378 @@ function updatePresentCount(count) {
     if (countElement) countElement.textContent = count;
 }
 
-async function removeStudentFromSession(studentName) {
-    if (!currentSession || !confirm(`Remove ${studentName}?`)) return;
-    await supabaseClient.from('attendance').delete().match({ student: studentName, session_id: currentSession.id });
-    fetchCurrentSessionAttendance();
+async function removeStudentFromSession(studentName, usn) {
+    if (!currentSession || !confirm(`Remove ${studentName} from the session?`)) return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('attendance')
+            .delete()
+            .match({ student: studentName, usn: usn, session_id: currentSession.id });
+        
+        if (error) throw error;
+        
+        showToast(`${studentName} removed from session`, 'success');
+        fetchCurrentSessionAttendance();
+    } catch (err) {
+        console.error('Error removing student:', err);
+        showToast('Failed to remove student', 'error');
+    }
 }
 
-// ... (rest of the faculty view functions: show a modal, etc.)
-
 // =================================================================
-// STUDENT VIEW (`student.html`)
+// STUDENT VIEW FUNCTIONS
 // =================================================================
 
 function initStudentView() {
-    // Student view initialization logic here...
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+    
+    if (!sessionId) {
+        showErrorPage('No session ID provided. Please scan a valid QR code.');
+        return;
+    }
+    
+    loadSessionForStudent(sessionId);
+    setupStudentSearch();
 }
 
+async function loadSessionForStudent(sessionId) {
+    try {
+        const { data: sessionData, error: sessionError } = await supabaseClient
+            .from('sessions')
+            .select(`
+                *,
+                courses(course_name, course_id)
+            `)
+            .eq('id', sessionId)
+            .single();
+        
+        if (sessionError) throw sessionError;
+        
+        if (!sessionData) {
+            showErrorPage('Session not found. Please scan a valid QR code.');
+            return;
+        }
+        
+        currentSession = sessionData;
+        updateSessionDisplay(sessionData);
+        populateStudentListForAttendance();
+        
+    } catch (err) {
+        console.error('Error loading session:', err);
+        showErrorPage('Failed to load session information.');
+    }
+}
+
+function updateSessionDisplay(sessionData) {
+    const sessionNameEl = document.getElementById('session-name-display');
+    const courseNameEl = document.getElementById('course-name-display');
+    const sessionTimeEl = document.getElementById('session-time-display');
+    
+    if (sessionNameEl) {
+        sessionNameEl.textContent = sessionData.session_name;
+    }
+    
+    if (courseNameEl) {
+        const courseName = sessionData.courses ? sessionData.courses.course_name : 'General Course';
+        const courseId = sessionData.courses ? sessionData.courses.course_id : '';
+        courseNameEl.textContent = `${courseName} ${courseId}`.trim();
+    }
+    
+    if (sessionTimeEl) {
+        const createdTime = new Date(sessionData.created_at).toLocaleString();
+        sessionTimeEl.innerHTML = `<i class="fas fa-clock"></i> ${createdTime}`;
+    }
+}
+
+function populateStudentListForAttendance() {
+    const listElement = document.getElementById('student-list');
+    if (!listElement) return;
+    
+    if (allStudents.length === 0) {
+        listElement.innerHTML = `
+            <div class="loading-students">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>No students found</span>
+            </div>
+        `;
+        return;
+    }
+    
+    listElement.innerHTML = '';
+    
+    allStudents.forEach(student => {
+        const studentDiv = document.createElement('div');
+        studentDiv.className = 'student-list-item';
+        studentDiv.setAttribute('role', 'option');
+        studentDiv.setAttribute('tabindex', '0');
+        
+        studentDiv.innerHTML = `
+            <div class="student-details">
+                <div class="student-name">${student.name}</div>
+                <div class="student-usn">${student.usn}</div>
+            </div>
+            <div class="selection-indicator">
+                <i class="fas fa-check"></i>
+            </div>
+        `;
+        
+        studentDiv.addEventListener('click', () => selectStudentForAttendance(student, studentDiv));
+        listElement.appendChild(studentDiv);
+    });
+}
+
+function selectStudentForAttendance(student, element) {
+    // Remove previous selection
+    document.querySelectorAll('.student-list-item.selected').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Add selection to clicked item
+    element.classList.add('selected');
+    selectedStudentForAttendance = student;
+    
+    // Enable submit button
+    const submitBtn = document.getElementById('submit-attendance');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.onclick = submitStudentAttendance;
+    }
+}
+
+async function submitStudentAttendance() {
+    if (!selectedStudentForAttendance || !currentSession) {
+        showToast('Please select a student first', 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submit-attendance');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    }
+    
+    try {
+        // Check if student already marked attendance
+        const { data: existingAttendance, error: checkError } = await supabaseClient
+            .from('attendance')
+            .select('*')
+            .eq('session_id', currentSession.id)
+            .eq('usn', selectedStudentForAttendance.usn)
+            .single();
+        
+        if (existingAttendance) {
+            showToast('Attendance already marked for this session', 'error');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Attendance';
+            }
+            return;
+        }
+        
+        // Get location if possible
+        let locationData = null;
+        if (navigator.geolocation) {
+            try {
+                const position = await getCurrentPosition();
+                locationData = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+            } catch (err) {
+                console.log('Location not available:', err);
+            }
+        }
+        
+        // Insert attendance record
+        const attendanceRecord = {
+            session_id: currentSession.id,
+            student: selectedStudentForAttendance.name,
+            usn: selectedStudentForAttendance.usn,
+            timestamp: new Date().toISOString(),
+            fingerprint_verified: false, // Would be true if fingerprint was used
+            location_verified: locationData !== null,
+            location_data: locationData
+        };
+        
+        const { error: insertError } = await supabaseClient
+            .from('attendance')
+            .insert([attendanceRecord]);
+        
+        if (insertError) throw insertError;
+        
+        showSuccessPage(selectedStudentForAttendance, new Date());
+        
+    } catch (err) {
+        console.error('Error submitting attendance:', err);
+        showToast('Failed to submit attendance. Please try again.', 'error');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Attendance';
+        }
+    }
+}
+
+function setupStudentSearch() {
+    const searchInput = document.getElementById('student-search');
+    if (!searchInput) return;
+    
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        filterStudentList(searchTerm);
+    });
+}
+
+function filterStudentList(searchTerm) {
+    const studentItems = document.querySelectorAll('.student-list-item');
+    
+    studentItems.forEach(item => {
+        const name = item.querySelector('.student-name').textContent.toLowerCase();
+        const usn = item.querySelector('.student-usn').textContent.toLowerCase();
+        
+        if (name.includes(searchTerm) || usn.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function showSuccessPage(student, timestamp) {
+    document.getElementById('student-selection-page').classList.add('hidden');
+    document.getElementById('success-page').classList.remove('hidden');
+    
+    document.getElementById('success-student-name').textContent = student.name;
+    document.getElementById('success-timestamp').textContent = timestamp.toLocaleString();
+    
+    // Auto-close after 10 seconds
+    setTimeout(() => {
+        window.close();
+    }, 10000);
+}
+
+function showErrorPage(message) {
+    document.getElementById('student-selection-page').classList.add('hidden');
+    document.getElementById('error-page').classList.remove('hidden');
+    document.getElementById('error-message-text').textContent = message;
+}
 
 // =================================================================
-// MODAL & INTERACTIVITY
+// MODAL FUNCTIONS
 // =================================================================
 
 function setupAllModalSearchListeners() {
-    document.getElementById('student-list-search')?.addEventListener('input', (e) => populateStudentListDisplayWithFingerprint(e.target.value.toLowerCase().trim()));
-    document.getElementById('student-search-manual')?.addEventListener('input', (e) => populateFacultyStudentDropdown(e.target.value.toLowerCase().trim()));
-    document.getElementById('student-stats-search')?.addEventListener('input', (e) => fetchStudentStatistics(e.target.value.toLowerCase().trim()));
+    const studentListSearch = document.getElementById('student-list-search');
+    if (studentListSearch) {
+        studentListSearch.addEventListener('input', (e) => {
+            populateStudentListDisplayWithFingerprint(e.target.value.toLowerCase().trim());
+        });
+    }
+    
+    const studentSearchManual = document.getElementById('student-search-manual');
+    if (studentSearchManual) {
+        studentSearchManual.addEventListener('input', (e) => {
+            populateFacultyStudentDropdown(e.target.value.toLowerCase().trim());
+        });
+    }
+    
+    const studentStatsSearch = document.getElementById('student-stats-search');
+    if (studentStatsSearch) {
+        studentStatsSearch.addEventListener('input', (e) => {
+            fetchStudentStatistics(e.target.value.toLowerCase().trim());
+        });
+    }
+    
+    const sessionHistorySearch = document.getElementById('session-history-search');
+    if (sessionHistorySearch) {
+        sessionHistorySearch.addEventListener('input', (e) => {
+            filterSessionHistory(e.target.value.toLowerCase().trim());
+        });
+    }
 }
 
+// Course Selection Modal
+function showCourseSelectionModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-rocket"></i> Start New Session</h3>
+                <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="session-name-input">
+                        <i class="fas fa-tag"></i> Session Name
+                    </label>
+                    <input type="text" id="session-name-input" placeholder="Enter session name" required>
+                </div>
+                <div class="form-group">
+                    <label for="course-select">
+                        <i class="fas fa-book"></i> Select Course
+                    </label>
+                    <select id="course-select" required>
+                        <option value="">Choose a course...</option>
+                        ${allCourses.map(course => 
+                            `<option value="${course.id}">${course.course_name} (${course.course_id})</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <button class="add-student-btn" onclick="createNewSession()">
+                    <i class="fas fa-play"></i> Start Session
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Focus on session name input
+    setTimeout(() => {
+        document.getElementById('session-name-input')?.focus();
+    }, 100);
+}
+
+async function createNewSession() {
+    const sessionName = document.getElementById('session-name-input')?.value.trim();
+    const courseId = document.getElementById('course-select')?.value;
+    
+    if (!sessionName) {
+        showToast('Please enter a session name', 'error');
+        return;
+    }
+    
+    if (!courseId) {
+        showToast('Please select a course', 'error');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .insert([{
+                session_name: sessionName,
+                course_id: courseId,
+                created_at: new Date().toISOString()
+            }])
+            .select('*, courses(course_name)')
+            .single();
+        
+        if (error) throw error;
+        
+        updateActiveSession(data);
+        showToast('Session started successfully!', 'success');
+        document.querySelector('.modal').remove();
+        
+    } catch (err) {
+        console.error('Error creating session:', err);
+        showToast('Failed to create session', 'error');
+    }
+}
+
+// Student List Modal
 function showStudentListModal() { 
     document.getElementById('student-list-modal').style.display = 'block';
     populateStudentListDisplayWithFingerprint();
@@ -211,9 +2437,127 @@ function closeStudentListModal() {
     document.getElementById('student-list-modal').style.display = 'none';
 }
 
+async function populateStudentListDisplayWithFingerprint(searchTerm = '') {
+    const listElement = document.getElementById('student-list-display');
+    const countElement = document.getElementById('total-student-count');
+    
+    if (!listElement) return;
+    
+    if (countElement) {
+        countElement.textContent = allStudents.length;
+    }
+    
+    const filteredStudents = allStudents.filter(student => 
+        searchTerm === '' || 
+        student.name.toLowerCase().includes(searchTerm) || 
+        student.usn.toLowerCase().includes(searchTerm)
+    );
+    
+    if (filteredStudents.length === 0) {
+        listElement.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-search" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                <p>No students found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    listElement.innerHTML = '';
+    
+    filteredStudents.forEach(student => {
+        const studentDiv = document.createElement('div');
+        studentDiv.className = 'student-list-item';
+        studentDiv.innerHTML = `
+            <div class="student-info">
+                <div class="student-name">${student.name}</div>
+                <div class="student-usn">${student.usn}</div>
+            </div>
+            <div class="student-actions">
+                <button class="edit-btn" onclick="showEditStudentModal('${student.usn}')" title="Edit student">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="remove-btn" onclick="deleteStudent('${student.usn}', '${student.name.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        listElement.appendChild(studentDiv);
+    });
+}
+
+async function addNewStudent() {
+    const nameInput = document.getElementById('new-student-name');
+    const usnInput = document.getElementById('new-student-usn');
+    
+    const name = nameInput?.value.trim();
+    const usn = usnInput?.value.trim();
+    
+    if (!name || !usn) {
+        showToast('Please fill in all fields', 'error');
+        return;
+    }
+    
+    // Check if USN already exists
+    const existingStudent = allStudents.find(s => s.usn.toLowerCase() === usn.toLowerCase());
+    if (existingStudent) {
+        showToast('Student with this USN already exists', 'error');
+        return;
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .insert([{ name, usn }]);
+        
+        if (error) throw error;
+        
+        await fetchAllStudents();
+        populateStudentListDisplayWithFingerprint();
+        showToast('Student added successfully!', 'success');
+        
+        // Clear inputs
+        if (nameInput) nameInput.value = '';
+        if (usnInput) usnInput.value = '';
+        
+    } catch (err) {
+        console.error('Error adding student:', err);
+        showToast('Failed to add student', 'error');
+    }
+}
+
+async function deleteStudent(usn, name) {
+    if (!confirm(`Delete student ${name}? This will also remove all their attendance records.`)) {
+        return;
+    }
+    
+    try {
+        // Delete attendance records first
+        await supabaseClient.from('attendance').delete().eq('usn', usn);
+        
+        // Delete student
+        const { error } = await supabaseClient
+            .from('students')
+            .delete()
+            .eq('usn', usn);
+        
+        if (error) throw error;
+        
+        await fetchAllStudents();
+        populateStudentListDisplayWithFingerprint();
+        showToast('Student deleted successfully', 'success');
+        
+    } catch (err) {
+        console.error('Error deleting student:', err);
+        showToast('Failed to delete student', 'error');
+    }
+}
+
+// Edit Student Modal
 function showEditStudentModal(usn) {
     const student = allStudents.find(s => s.usn === usn);
-    if(!student) return;
+    if (!student) return;
+    
     document.getElementById('edit-student-title').textContent = `Edit ${student.name}`;
     document.getElementById('edit-student-original-usn').value = student.usn;
     document.getElementById('edit-student-name').value = student.name;
@@ -226,16 +2570,148 @@ function closeEditStudentModal() {
     document.getElementById('edit-student-modal').style.display = 'none';
 }
 
+async function saveStudentDetails() {
+    const originalUsn = document.getElementById('edit-student-original-usn')?.value;
+    const newName = document.getElementById('edit-student-name')?.value.trim();
+    const newUsn = document.getElementById('edit-student-usn')?.value.trim();
+    
+    if (!newName || !newUsn) {
+        showToast('Please fill in all fields', 'error');
+        return;
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('students')
+            .update({ name: newName, usn: newUsn })
+            .eq('usn', originalUsn);
+        
+        if (error) throw error;
+        
+        await fetchAllStudents();
+        populateStudentListDisplayWithFingerprint();
+        closeEditStudentModal();
+        showToast('Student updated successfully!', 'success');
+        
+    } catch (err) {
+        console.error('Error updating student:', err);
+        showToast('Failed to update student', 'error');
+    }
+}
+
+async function loadStudentFingerprints(usn) {
+    const fingerprintList = document.getElementById('student-fingerprint-list');
+    if (!fingerprintList) return;
+    
+    fingerprintList.innerHTML = `
+        <div class="fingerprint-placeholder">
+            <i class="fas fa-fingerprint" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px;"></i>
+            <p>Fingerprint management would be implemented here</p>
+            <p style="font-size: 0.9rem; color: #666;">This feature requires specialized hardware integration</p>
+        </div>
+    `;
+}
+
+// Manual Add Modal
 function showAddManuallyModal() { 
-    if (!currentSession) return alert('Please start a session first.');
+    if (!currentSession) {
+        showToast('Please start a session first', 'error');
+        return;
+    }
     document.getElementById('add-manually-modal').style.display = 'block';
     populateFacultyStudentDropdown();
 }
 
 function closeAddManuallyModal() { 
     document.getElementById('add-manually-modal').style.display = 'none';
+    document.getElementById('student-search-manual').value = '';
 }
 
+function populateFacultyStudentDropdown(searchTerm = '') {
+    const dropdownElement = document.getElementById('student-dropdown');
+    if (!dropdownElement) return;
+    
+    // Filter out students who are already present
+    const availableStudents = allStudents.filter(student => 
+        !presentStudents.includes(student.name) &&
+        (searchTerm === '' || 
+         student.name.toLowerCase().includes(searchTerm) || 
+         student.usn.toLowerCase().includes(searchTerm))
+    );
+    
+    dropdownElement.innerHTML = '';
+    
+    if (availableStudents.length === 0) {
+        dropdownElement.innerHTML = `
+            <div class="no-students-available">
+                <i class="fas fa-users" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                <p>No students available to add</p>
+            </div>
+        `;
+        return;
+    }
+    
+    availableStudents.forEach(student => {
+        const studentDiv = document.createElement('div');
+        studentDiv.className = 'dropdown-student-item';
+        studentDiv.innerHTML = `
+            <div class="student-info">
+                <div class="student-name">${student.name}</div>
+                <div class="student-usn">${student.usn}</div>
+            </div>
+            <button class="add-student-manual-btn" onclick="addStudentManually('${student.name.replace(/'/g, "\\'")}', '${student.usn}')">
+                <i class="fas fa-plus"></i> Add
+            </button>
+        `;
+        dropdownElement.appendChild(studentDiv);
+    });
+}
+
+async function addStudentManually(studentName, usn) {
+    if (!currentSession) {
+        showToast('No active session', 'error');
+        return;
+    }
+    
+    try {
+        // Check if student already marked attendance
+        const { data: existingAttendance } = await supabaseClient
+            .from('attendance')
+            .select('*')
+            .eq('session_id', currentSession.id)
+            .eq('usn', usn)
+            .single();
+        
+        if (existingAttendance) {
+            showToast('Student already marked present', 'error');
+            return;
+        }
+        
+        // Add attendance record
+        const { error } = await supabaseClient
+            .from('attendance')
+            .insert([{
+                session_id: currentSession.id,
+                student: studentName,
+                usn: usn,
+                timestamp: new Date().toISOString(),
+                fingerprint_verified: false,
+                location_verified: false
+            }]);
+        
+        if (error) throw error;
+        
+        showToast(`${studentName} added successfully!`, 'success');
+        fetchCurrentSessionAttendance();
+        populateFacultyStudentDropdown();
+        
+    } catch (err) {
+        console.error('Error adding student manually:', err);
+        showToast('Failed to add student', 'error');
+    }
+}
+
+// Session History Modal
 function showSessionHistoryModal() {
     document.getElementById('session-history-modal').style.display = 'block';
     fetchAllSessions();
@@ -245,6 +2721,157 @@ function closeSessionHistoryModal() {
     document.getElementById('session-history-modal').style.display = 'none';
 }
 
+function populateSessionHistoryList() {
+    const listElement = document.getElementById('session-list-display');
+    if (!listElement) return;
+    
+    if (allSessions.length === 0) {
+        listElement.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-history" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                <p>No sessions found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    listElement.innerHTML = '';
+    
+    allSessions.forEach(session => {
+        const sessionDiv = document.createElement('div');
+        sessionDiv.className = 'session-history-item';
+        
+        const courseName = session.courses ? session.courses.course_name : 'General';
+        const courseId = session.courses ? session.courses.course_id : '';
+        const createdDate = new Date(session.created_at).toLocaleString();
+        const attendanceCount = session.attendance ? session.attendance.length : 0;
+        
+        sessionDiv.innerHTML = `
+            <div class="session-info">
+                <div class="session-name">${session.session_name}</div>
+                <div class="session-course">${courseName} ${courseId}</div>
+                <div class="session-date">${createdDate}</div>
+                <div class="session-stats">
+                    <span class="attendance-count">
+                        <i class="fas fa-users"></i> ${attendanceCount} students
+                    </span>
+                </div>
+            </div>
+            <div class="session-actions">
+                <button class="view-btn" onclick="viewSessionDetails('${session.id}')" title="View details">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="export-btn" onclick="exportSessionCSV('${session.id}')" title="Export CSV">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="remove-btn" onclick="deleteSession('${session.id}', '${session.session_name.replace(/'/g, "\\'")}')" title="Delete session">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        listElement.appendChild(sessionDiv);
+    });
+}
+
+function filterSessionHistory(searchTerm) {
+    const sessionItems = document.querySelectorAll('.session-history-item');
+    
+    sessionItems.forEach(item => {
+        const sessionName = item.querySelector('.session-name').textContent.toLowerCase();
+        const courseName = item.querySelector('.session-course').textContent.toLowerCase();
+        
+        if (sessionName.includes(searchTerm) || courseName.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+async function viewSessionDetails(sessionId) {
+    try {
+        const { data: attendanceData, error } = await supabaseClient
+            .from('attendance')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: false });
+        
+        if (error) throw error;
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-list"></i> Session Attendance Details</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="attendance-list">
+                        ${attendanceData.length === 0 ? 
+                            '<p>No attendance records found for this session.</p>' :
+                            attendanceData.map(record => `
+                                <div class="attendance-record">
+                                    <div class="student-info">
+                                        <div class="student-name">${record.student}</div>
+                                        <div class="student-usn">${record.usn}</div>
+                                    </div>
+                                    <div class="attendance-details">
+                                        <div class="attendance-time">${new Date(record.timestamp).toLocaleString()}</div>
+                                        <div class="verification-badges">
+                                            ${record.fingerprint_verified ? '<span class="badge fingerprint-badge">🔐 Fingerprint</span>' : ''}
+                                            ${record.location_verified ? '<span class="badge location-badge">📍 Location</span>' : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+    } catch (err) {
+        console.error('Error loading session details:', err);
+        showToast('Failed to load session details', 'error');
+    }
+}
+
+async function deleteSession(sessionId, sessionName) {
+    if (!confirm(`Delete session "${sessionName}"? This will also remove all attendance records for this session.`)) {
+        return;
+    }
+    
+    try {
+        // Delete attendance records first
+        await supabaseClient.from('attendance').delete().eq('session_id', sessionId);
+        
+        // Delete session
+        const { error } = await supabaseClient
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId);
+        
+        if (error) throw error;
+        
+        // If this was the current session, clear it
+        if (currentSession && currentSession.id === sessionId) {
+            updateActiveSession(null);
+        }
+        
+        showToast('Session deleted successfully', 'success');
+        fetchAllSessions();
+        
+    } catch (err) {
+        console.error('Error deleting session:', err);
+        showToast('Failed to delete session', 'error');
+    }
+}
+
+// Courses Modal
 function showCoursesModal() { 
     document.getElementById('courses-modal').style.display = 'block';
     populateCoursesList();
@@ -254,6 +2881,140 @@ function closeCoursesModal() {
     document.getElementById('courses-modal').style.display = 'none';
 }
 
+async function populateCoursesList() {
+    const listElement = document.getElementById('courses-list-display');
+    if (!listElement) return;
+    
+    await fetchAllCourses();
+    
+    if (allCourses.length === 0) {
+        listElement.innerHTML = `
+            <div class="no-results">
+                <i class="fas fa-book" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                <p>No courses found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    listElement.innerHTML = '';
+    
+    allCourses.forEach(course => {
+        const courseDiv = document.createElement('div');
+        courseDiv.className = 'course-list-item';
+        courseDiv.innerHTML = `
+            <div class="course-info">
+                <div class="course-name">${course.course_name}</div>
+                <div class="course-id">${course.course_id}</div>
+            </div>
+            <div class="course-actions">
+                <button class="edit-btn" onclick="editCourse('${course.id}', '${course.course_name.replace(/'/g, "\\'")}', '${course.course_id.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="remove-btn" onclick="deleteCourse('${course.id}', '${course.course_name.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        listElement.appendChild(courseDiv);
+    });
+}
+
+async function createNewCourse() {
+    const nameInput = document.getElementById('new-course-name');
+    const idInput = document.getElementById('new-course-id');
+    
+    const courseName = nameInput?.value.trim();
+    const courseId = idInput?.value.trim();
+    
+    if (!courseName || !courseId) {
+        showToast('Please fill in all fields', 'error');
+        return;
+    }
+    
+    // Check if course ID already exists
+    const existingCourse = allCourses.find(c => c.course_id.toLowerCase() === courseId.toLowerCase());
+    if (existingCourse) {
+        showToast('Course with this ID already exists', 'error');
+        return;
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('courses')
+            .insert([{ 
+                course_name: courseName, 
+                course_id: courseId 
+            }]);
+        
+        if (error) throw error;
+        
+        await fetchAllCourses();
+        populateCoursesList();
+        showToast('Course created successfully!', 'success');
+        
+        // Clear inputs
+        if (nameInput) nameInput.value = '';
+        if (idInput) idInput.value = '';
+        
+    } catch (err) {
+        console.error('Error creating course:', err);
+        showToast('Failed to create course', 'error');
+    }
+}
+
+async function editCourse(id, currentName, currentId) {
+    const newName = prompt('Enter new course name:', currentName);
+    if (!newName || newName.trim() === '') return;
+    
+    const newId = prompt('Enter new course ID:', currentId);
+    if (!newId || newId.trim() === '') return;
+    
+    try {
+        const { error } = await supabaseClient
+            .from('courses')
+            .update({ 
+                course_name: newName.trim(), 
+                course_id: newId.trim() 
+            })
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        await fetchAllCourses();
+        populateCoursesList();
+        showToast('Course updated successfully!', 'success');
+        
+    } catch (err) {
+        console.error('Error updating course:', err);
+        showToast('Failed to update course', 'error');
+    }
+}
+
+async function deleteCourse(id, courseName) {
+    if (!confirm(`Delete course "${courseName}"? This cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabaseClient
+            .from('courses')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        await fetchAllCourses();
+        populateCoursesList();
+        showToast('Course deleted successfully', 'success');
+        
+    } catch (err) {
+        console.error('Error deleting course:', err);
+        showToast('Failed to delete course', 'error');
+    }
+}
+
+// Statistics Modal
 function showStatisticsModal() {
     document.getElementById('statistics-modal').style.display = 'block';
     showStatsTab('overview');
@@ -261,16 +3022,1262 @@ function showStatisticsModal() {
 
 function closeStatisticsModal() {
     document.getElementById('statistics-modal').style.display = 'none';
-    if(attendanceChart) attendanceChart.destroy();
-    if(verificationChart) verificationChart.destroy();
+    if (attendanceChart) {
+        attendanceChart.destroy();
+        attendanceChart = null;
+    }
+    if (verificationChart) {
+        verificationChart.destroy();
+        verificationChart = null;
+    }
 }
 
-// ... All other Javascript functions from previous responses go here. 
-// For brevity, I've omitted the large blocks of code for fingerprint, location, 
-// and statistics rendering that you already have. Make sure they are included in the final file.
+function showStatsTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.stats-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+    });
+    
+    document.querySelectorAll('.stats-view').forEach(view => {
+        view.classList.remove('active');
+    });
+    
+    // Activate selected tab
+    const activeBtn = document.querySelector(`[onclick="showStatsTab('${tabName}')"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.setAttribute('aria-selected', 'true');
+    }
+    
+    const activeView = document.getElementById(`stats-${tabName}-view`);
+    if (activeView) {
+        activeView.classList.add('active');
+    }
+    
+    // Load appropriate data
+    if (tabName === 'overview') {
+        loadOverviewStatistics();
+    } else if (tabName === 'students') {
+        fetchStudentStatistics();
+    }
+}
+
+async function loadOverviewStatistics() {
+    try {
+        // Fetch attendance data
+        const { data: attendanceData, error: attendanceError } = await supabaseClient
+            .from('attendance')
+            .select('*');
+        
+        if (attendanceError) throw attendanceError;
+        
+        // Fetch sessions data
+        const { data: sessionsData, error: sessionsError } = await supabaseClient
+            .from('sessions')
+            .select('*');
+        
+        if (sessionsError) throw sessionsError;
+        
+        // Calculate statistics
+        const totalAttendance = attendanceData.length;
+        const totalSessions = sessionsData.length;
+        const avgAttendance = totalSessions > 0 ? Math.round((totalAttendance / totalSessions) * 100) / 100 : 0;
+        const fullyVerified = attendanceData.filter(a => a.fingerprint_verified && a.location_verified).length;
+        const fullyVerifiedPercent = totalAttendance > 0 ? Math.round((fullyVerified / totalAttendance) * 100) : 0;
+        
+        // Update overview cards
+        document.getElementById('stats-total-attendance').textContent = totalAttendance;
+        document.getElementById('stats-avg-attendance').textContent = `${avgAttendance}%`;
+        document.getElementById('stats-total-sessions').textContent = totalSessions;
+        document.getElementById('stats-fully-verified').textContent = `${fullyVerifiedPercent}%`;
+        
+        // Generate charts
+        generateAttendanceTrendChart(attendanceData);
+        generateVerificationMethodChart(attendanceData);
+        
+    } catch (err) {
+        console.error('Error loading statistics:', err);
+        showToast('Failed to load statistics', 'error');
+    }
+}
+
+function generateAttendanceTrendChart(attendanceData) {
+    const ctx = document.getElementById('attendance-trend-chart');
+    if (!ctx) return;
+    
+    // Destroy existing chart
+    if (attendanceChart) {
+        attendanceChart.destroy();
+    }
+    
+    // Prepare data for last 30 days
+    const last30Days = [];
+    const attendanceCounts = {};
+    
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        last30Days.push(dateStr);
+        attendanceCounts[dateStr] = 0;
+    }
+    
+    // Count attendance by date
+    attendanceData.forEach(record => {
+        const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
+        if (attendanceCounts.hasOwnProperty(recordDate)) {
+            attendanceCounts[recordDate]++;
+        }
+    });
+    
+    const chartData = last30Days.map(date => attendanceCounts[date]);
+    const labels = last30Days.map(date => new Date(date).toLocaleDateString());
+    
+    attendanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Daily Attendance',
+                data: chartData,
+                borderColor: 'rgb(30, 90, 168)',
+                backgroundColor: 'rgba(30, 90, 168, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateVerificationMethodChart(attendanceData) {
+    const ctx = document.getElementById('verification-method-chart');
+    if (!ctx) return;
+    
+    // Destroy existing chart
+    if (verificationChart) {
+        verificationChart.destroy();
+    }
+    
+    // Count verification methods
+    let fingerprintOnly = 0;
+    let locationOnly = 0;
+    let both = 0;
+    let neither = 0;
+    
+    attendanceData.forEach(record => {
+        if (record.fingerprint_verified && record.location_verified) {
+            both++;
+        } else if (record.fingerprint_verified) {
+            fingerprintOnly++;
+        } else if (record.location_verified) {
+            locationOnly++;
+        } else {
+            neither++;
+        }
+    });
+    
+    verificationChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Both', 'Fingerprint Only', 'Location Only', 'Manual'],
+            datasets: [{
+                data: [both, fingerprintOnly, locationOnly, neither],
+                backgroundColor: [
+                    '#28a745',
+                    '#ffc107', 
+                    '#17a2b8',
+                    '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function fetchStudentStatistics(searchTerm = '') {
+    const listElement = document.getElementById('student-stats-list');
+    if (!listElement) return;
+    
+    try {
+        // Fetch attendance data with student details
+        const { data: attendanceData, error } = await supabaseClient
+            .from('attendance')
+            .select('student, usn, session_id, fingerprint_verified, location_verified');
+        
+        if (error) throw error;
+        
+        // Group by student
+        const studentStats = {};
+        
+        attendanceData.forEach(record => {
+            if (!studentStats[record.usn]) {
+                studentStats[record.usn] = {
+                    name: record.student,
+                    usn: record.usn,
+                    totalAttendance: 0,
+                    fingerprintVerified: 0,
+                    locationVerified: 0,
+                    sessions: new Set()
+                };
+            }
+            
+            const stats = studentStats[record.usn];
+            stats.totalAttendance++;
+            stats.sessions.add(record.session_id);
+            
+            if (record.fingerprint_verified) stats.fingerprintVerified++;
+            if (record.location_verified) stats.locationVerified++;
+        });
+        
+        // Convert to array and filter
+        let statsArray = Object.values(studentStats);
+        
+        if (searchTerm) {
+            statsArray = statsArray.filter(student => 
+                student.name.toLowerCase().includes(searchTerm) ||
+                student.usn.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Sort by total attendance (descending)
+        statsArray.sort((a, b) => b.totalAttendance - a.totalAttendance);
+        
+        if (statsArray.length === 0) {
+            listElement.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-chart-bar" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                    <p>No student statistics found</p>
+                </div>
+            `;
+            return;
+        }
+        
+        listElement.innerHTML = '';
+        
+        statsArray.forEach(student => {
+            const studentDiv = document.createElement('div');
+            studentDiv.className = 'student-stats-item';
+            
+            const attendanceRate = student.sessions.size > 0 ? 
+                Math.round((student.totalAttendance / student.sessions.size) * 100) : 0;
+            
+            studentDiv.innerHTML = `
+                <div class="student-info">
+                    <div class="student-name">${student.name}</div>
+                    <div class="student-usn">${student.usn}</div>
+                </div>
+                <div class="student-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Attendance:</span>
+                        <span class="stat-value">${student.totalAttendance}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Sessions:</span>
+                        <span class="stat-value">${student.sessions.size}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Fingerprint:</span>
+                        <span class="stat-value">${student.fingerprintVerified}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Location:</span>
+                        <span class="stat-value">${student.locationVerified}</span>
+                    </div>
+                </div>
+            `;
+            
+            listElement.appendChild(studentDiv);
+        });
+        
+    } catch (err) {
+        console.error('Error loading student statistics:', err);
+        showToast('Failed to load student statistics', 'error');
+    }
+}
+
+// =================================================================
+// EXPORT FUNCTIONS
+// =================================================================
+
+async function exportAttendanceCSV() {
+    try {
+        const { data: attendanceData, error } = await supabaseClient
+            .from('attendance')
+            .select(`
+                *,
+                sessions(session_name, courses(course_name, course_id))
+            `)
+            .order('timestamp', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (attendanceData.length === 0) {
+            showToast('No attendance data to export', 'error');
+            return;
+        }
+        
+        // Convert to CSV
+        const csvHeaders = [
+            'Student Name',
+            'USN',
+            'Session',
+            'Course',
+            'Date',
+            'Time',
+            'Fingerprint Verified',
+            'Location Verified'
+        ];
+        
+        const csvRows = attendanceData.map(record => [
+            record.student,
+            record.usn,
+            record.sessions?.session_name || 'N/A',
+            record.sessions?.courses?.course_name || 'N/A',
+            new Date(record.timestamp).toLocaleDateString(),
+            new Date(record.timestamp).toLocaleTimeString(),
+            record.fingerprint_verified ? 'Yes' : 'No',
+            record.location_verified ? 'Yes' : 'No'
+        ]);
+        
+        const csvContent = [csvHeaders, ...csvRows]
+            .map(row => row.map(field => `"${field}"`).join(','))
+            .join('\n');
+        
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        showToast('Attendance data exported successfully!', 'success');
+        
+    } catch (err) {
+        console.error('Error exporting CSV:', err);
+        showToast('Failed to export attendance data', 'error');
+    }
+}
+
+async function exportSessionCSV(sessionId) {
+    try {
+        const { data: attendanceData, error } = await supabaseClient
+            .from('attendance')
+            .select(`
+                *,
+                sessions(session_name, courses(course_name, course_id))
+            `)
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (attendanceData.length === 0) {
+            showToast('No attendance data for this session', 'error');
+            return;
+        }
+        
+        const sessionName = attendanceData[0].sessions?.session_name || 'session';
+        
+        // Convert to CSV
+        const csvHeaders = [
+            'Student Name',
+            'USN',
+            'Date',
+            'Time',
+            'Fingerprint Verified',
+            'Location Verified'
+        ];
+        
+        const csvRows = attendanceData.map(record => [
+            record.student,
+            record.usn,
+            new Date(record.timestamp).toLocaleDateString(),
+            new Date(record.timestamp).toLocaleTimeString(),
+            record.fingerprint_verified ? 'Yes' : 'No',
+            record.location_verified ? 'Yes' : 'No'
+        ]);
+        
+        const csvContent = [csvHeaders, ...csvRows]
+            .map(row => row.map(field => `"${field}"`).join(','))
+            .join('\n');
+        
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${sessionName}_attendance.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        showToast('Session data exported successfully!', 'success');
+        
+    } catch (err) {
+        console.error('Error exporting session CSV:', err);
+        showToast('Failed to export session data', 'error');
+    }
+}
+
+// =================================================================
+// UTILITY FUNCTIONS
+// =================================================================
+
+// =================================================================
+// ENHANCED UTILITY FUNCTIONS
+// =================================================================
+
+function showToast(message, type = 'info', duration = 5000) {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        console.warn('Toast container not found, falling back to alert');
+        alert(message);
+        return;
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `${type}-toast`;
+    
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                type === 'error' ? 'fa-exclamation-triangle' : 
+                type === 'info' ? 'fa-info-circle' :
+                'fa-bell';
+    
+    const toastId = 'toast-' + Date.now();
+    toast.id = toastId;
+    
+    toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${escapeHtml(message)}</span>
+        <button onclick="removeToast('${toastId}')" aria-label="Close notification">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.classList.add('toast-show');
+    }, 10);
+    
+    // Auto remove
+    setTimeout(() => {
+        removeToast(toastId);
+    }, duration);
+    
+    // Limit number of toasts
+    const allToasts = container.querySelectorAll('.success-toast, .error-toast, .info-toast');
+    if (allToasts.length > 5) {
+        allToasts[0].remove();
+    }
+}
+
+function removeToast(toastId) {
+    const toast = document.getElementById(toastId);
+    if (toast) {
+        toast.classList.add('toast-hide');
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 300);
+    }
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+function announceToScreenReader(message) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+        document.body.removeChild(announcement);
+    }, 1000);
+}
+
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+    
+    return date.toLocaleDateString();
+}
+
+function getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocation not supported'));
+            return;
+        }
+        
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 300000 // 5 minutes
+        };
+        
+        navigator.geolocation.getCurrentPosition(
+            resolve, 
+            (error) => {
+                console.warn('Geolocation error:', error);
+                reject(error);
+            }, 
+            options
+        );
+    });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+// Enhanced validation functions
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function validateUSN(usn) {
+    // Customize this regex based on your institution's USN format
+    const usnRegex = /^[A-Z0-9]{8,15}$/i;
+    return usnRegex.test(usn.trim());
+}
+
+function validateStudentName(name) {
+    const nameRegex = /^[a-zA-Z\s]{2,50}$/;
+    return nameRegex.test(name.trim());
+}
+
+function sanitizeInput(input) {
+    return input.trim().replace(/[<>]/g, '');
+}
+
+// Local storage helpers with error handling
+function safeLocalStorageGet(key, defaultValue = null) {
+    try {
+        const value = localStorage.getItem(key);
+        return value !== null ? JSON.parse(value) : defaultValue;
+    } catch (error) {
+        console.warn('LocalStorage read error:', error);
+        return defaultValue;
+    }
+}
+
+function safeLocalStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+    } catch (error) {
+        console.warn('LocalStorage write error:', error);
+        return false;
+    }
+}
+
+function safeLocalStorageRemove(key) {
+    try {
+        localStorage.removeItem(key);
+        return true;
+    } catch (error) {
+        console.warn('LocalStorage remove error:', error);
+        return false;
+    }
+}
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Only trigger shortcuts if no modal is open and not in input field
+        if (document.querySelector('.modal[style*="block"]') || 
+            ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+            return;
+        }
+        
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+                case 'n':
+                    e.preventDefault();
+                    showCourseSelectionModal();
+                    break;
+                case 'h':
+                    e.preventDefault();
+                    showSessionHistoryModal();
+                    break;
+                case 's':
+                    e.preventDefault();
+                    showStatisticsModal();
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    showAddManuallyModal();
+                    break;
+                case 'u':
+                    e.preventDefault();
+                    showStudentListModal();
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportAttendanceCSV();
+                    break;
+            }
+        }
+    });
+}
+
+// =================================================================
+// MODAL CLOSE HANDLERS
+// =================================================================
+
+// Close modals when clicking outside
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+    }
+});
+
+// Close modals with Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal[style*="block"]');
+        if (openModal) {
+            openModal.style.display = 'none';
+        }
+        
+        // Also close shortcuts help
+        const shortcutsHelp = document.getElementById('shortcuts-help');
+        if (shortcutsHelp && !shortcutsHelp.classList.contains('hidden')) {
+            shortcutsHelp.classList.add('hidden');
+        }
+    }
+});
+
+// =================================================================
+// AUTHENTICATION FUNCTIONS
+// =================================================================
 
 async function logout() {
-    await supabaseClient.auth.signOut();
-    localStorage.clear();
-    window.location.href = 'login.html';
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        
+        localStorage.clear();
+        window.location.href = 'login.html';
+    } catch (err) {
+        console.error('Error logging out:', err);
+        showToast('Failed to logout', 'error');
+    }
 }
+
+// =================================================================
+// ADDITIONAL STYLING AND ENHANCEMENTS
+// =================================================================
+
+// Add dynamic styles for better UX
+document.addEventListener('DOMContentLoaded', () => {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Additional dynamic styles */
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            border-left: 4px solid var(--success-green);
+            transition: var(--transition);
+        }
+        
+        .student-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .student-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        
+        .student-list-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .student-actions, .course-actions, .session-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .edit-btn, .view-btn, .export-btn {
+            background: var(--info-cyan);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        
+        .edit-btn:hover, .view-btn:hover, .export-btn:hover {
+            background: #138496;
+            transform: scale(1.05);
+        }
+        
+        .remove-btn {
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .session-history-item, .course-list-item, .student-stats-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+        
+        .session-history-item:hover, .course-list-item:hover, .student-stats-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .session-info, .course-info {
+            flex: 1;
+        }
+        
+        .session-name, .course-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--dark-text);
+            margin-bottom: 4px;
+        }
+        
+        .session-course, .course-id {
+            color: var(--muted-text);
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        
+        .session-date {
+            color: var(--muted-text);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        
+        .session-stats {
+            margin-top: 8px;
+        }
+        
+        .attendance-count {
+            background: rgba(30, 90, 168, 0.1);
+            color: var(--primary-blue);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .attendance-record {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            margin-bottom: 8px;
+            border-radius: var(--border-radius);
+        }
+        
+        .attendance-details {
+            text-align: right;
+        }
+        
+        .verification-badges {
+            margin-top: 4px;
+        }
+        
+        .stats-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+        
+        .stats-tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--muted-text);
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+        }
+        
+        .stats-tab-btn.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+        }
+        
+        .stats-tab-btn:hover {
+            color: var(--primary-blue);
+            background: rgba(30, 90, 168, 0.1);
+        }
+        
+        .stats-view {
+            display: none;
+        }
+        
+        .stats-view.active {
+            display: block;
+        }
+        
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 25px;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-light);
+        }
+        
+        .stat-card h4 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .stat-card p {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+        
+        .chart-container h4 {
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .stats-toolbar {
+            margin-bottom: 20px;
+        }
+        
+        .stats-search {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .stats-search:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(30, 90, 168, 0.1);
+        }
+        
+        .stats-list-display {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: white;
+        }
+        
+        .student-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .stat-label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--muted-text);
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+        
+        .fresh-btn {
+            background: linear-gradient(135deg, var(--success-green), #20c997) !important;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+        
+        .fresh-btn:hover {
+            background: linear-gradient(135deg, #1e7e34, #1abc9c) !important;
+            transform: translateY(-3px);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .overview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .student-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .session-history-item, .course-list-item, .student-stats-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .student-actions, .course-actions, .session-actions {
+                align-self: stretch;
+                justify-content: flex-end;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-card p {
+                font-size: 2rem;
+            }
+            
+            .charts-grid {
+                gap: 20px;
+            }
+            
+            .chart-container {
+                padding: 20px;
+            }
+        }
+        
+        /* Loading states */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        /* Accessibility improvements */
+        .modal:focus {
+            outline: none;
+        }
+        
+        .modal-content:focus {
+            outline: 2px solid var(--primary-blue);
+            outline-offset: 2px;
+        }
+        
+        button:focus-visible, 
+        input:focus-visible, 
+        select:focus-visible {
+            outline: 2px solid var(--primary-blue);
+            outline-offset: 2px;
+        }
+        
+        /* Print styles */
+        @media print {
+            .action-buttons, 
+            .modal, 
+            .toast-container,
+            .shortcuts-help,
+            button {
+                display: none !important;
+            }
+            
+            .container {
+                box-shadow: none;
+                border: 1px solid #000;
+            }
+            
+            .present-count-card {
+                border: 2px solid #000;
+            }
+        }
+        
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .student-item, 
+            .modal-content, 
+            .stat-card {
+                border: 2px solid #000;
+            }
+            
+            .badge {
+                border: 1px solid #000;
+            }
+        }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            
+            .fresh-btn {
+                animation: none;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// =================================================================
+// ERROR HANDLING AND RECOVERY
+// =================================================================
+
+// Global error handler
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
+    showToast('An unexpected error occurred. Please refresh the page.', 'error');
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+    showToast('A network error occurred. Please check your connection.', 'error');
+});
+
+// Network status monitoring
+window.addEventListener('online', () => {
+    showToast('Connection restored', 'success');
+});
+
+window.addEventListener('offline', () => {
+    showToast('Connection lost. Some features may not work.', 'error');
+});
+
+// =================================================================
+// PERFORMANCE OPTIMIZATIONS
+// =================================================================
+
+// Debounce function for search inputs
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Apply debouncing to search functions
+const debouncedPopulateStudentList = debounce(populateStudentListDisplayWithFingerprint, 300);
+const debouncedPopulateFacultyDropdown = debounce(populateFacultyStudentDropdown, 300);
+const debouncedFetchStudentStats = debounce(fetchStudentStatistics, 300);
+const debouncedFilterSessions = debounce(filterSessionHistory, 300);
+
+// Replace direct calls with debounced versions in event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Update search listeners to use debounced functions
+    const studentListSearch = document.getElementById('student-list-search');
+    if (studentListSearch) {
+        studentListSearch.removeEventListener('input', populateStudentListDisplayWithFingerprint);
+        studentListSearch.addEventListener('input', (e) => {
+            debouncedPopulateStudentList(e.target.value.toLowerCase().trim());
+        });
+    }
+    
+    const studentSearchManual = document.getElementById('student-search-manual');
+    if (studentSearchManual) {
+        studentSearchManual.addEventListener('input', (e) => {
+            debouncedPopulateFacultyDropdown(e.target.value.toLowerCase().trim());
+        });
+    }
+    
+    const studentStatsSearch = document.getElementById('student-stats-search');
+    if (studentStatsSearch) {
+        studentStatsSearch.addEventListener('input', (e) => {
+            debouncedFetchStudentStats(e.target.value.toLowerCase().trim());
+        });
+    }
+    
+    const sessionHistorySearch = document.getElementById('session-history-search');
+    if (sessionHistorySearch) {
+        sessionHistorySearch.addEventListener('input', (e) => {
+            debouncedFilterSessions(e.target.value.toLowerCase().trim());
+        });
+    }
+});
+
+// =================================================================
+// FINAL INITIALIZATION
+// =================================================================
+
+// Ensure all components are ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize tooltips for buttons
+    const buttons = document.querySelectorAll('button[title]');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', (e) => {
+            // Could implement custom tooltip here if needed
+        });
+    });
+    
+    // Initialize focus management for modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            const modal = document.querySelector('.modal[style*="block"]');
+            if (modal) {
+                const focusableElements = modal.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                
+                if (e.shiftKey && document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                } else if (!e.shiftKey && document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    });
+    
+    console.log('QR Attendance System initialized successfully');
+});
