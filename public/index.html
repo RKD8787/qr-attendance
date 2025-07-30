@@ -412,37 +412,5 @@
     <!-- Scripts -->
     <script src="script.js"></script>
     
-    <!-- Additional Inline Scripts -->
-    <script>
-        // Hide loading screen once page is loaded
-        window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                }, 300);
-            }
-        });
-
-        // Show/hide keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                const shortcutsHelp = document.getElementById('shortcuts-help');
-                if (shortcutsHelp) {
-                    shortcutsHelp.classList.toggle('hidden');
-                }
-            }
-        });
-
-        // Close shortcuts when clicking outside
-        document.addEventListener('click', (e) => {
-            const shortcutsHelp = document.getElementById('shortcuts-help');
-            if (shortcutsHelp && !shortcutsHelp.contains(e.target) && !shortcutsHelp.classList.contains('hidden')) {
-                shortcutsHelp.classList.add('hidden');
-            }
-        });
-    </script>
 </body>
 </html>
