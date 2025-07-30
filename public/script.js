@@ -2330,39 +2330,6 @@ const debouncedPopulateFacultyDropdown = debounce(populateFacultyStudentDropdown
 const debouncedFetchStudentStats = debounce(fetchStudentStatistics, 300);
 const debouncedFilterSessions = debounce(filterSessionHistory, 300);
 
-// Replace direct calls with debounced versions in event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Update search listeners to use debounced functions
-    const studentListSearch = document.getElementById('student-list-search');
-    if (studentListSearch) {
-        studentListSearch.removeEventListener('input', populateStudentListDisplayWithFingerprint);
-        studentListSearch.addEventListener('input', (e) => {
-            debouncedPopulateStudentList(e.target.value.toLowerCase().trim());
-        });
-    }
-    
-    const studentSearchManual = document.getElementById('student-search-manual');
-    if (studentSearchManual) {
-        studentSearchManual.addEventListener('input', (e) => {
-            debouncedPopulateFacultyDropdown(e.target.value.toLowerCase().trim());
-        });
-    }
-    
-    const studentStatsSearch = document.getElementById('student-stats-search');
-    if (studentStatsSearch) {
-        studentStatsSearch.addEventListener('input', (e) => {
-            debouncedFetchStudentStats(e.target.value.toLowerCase().trim());
-        });
-    }
-    
-    const sessionHistorySearch = document.getElementById('session-history-search');
-    if (sessionHistorySearch) {
-        sessionHistorySearch.addEventListener('input', (e) => {
-            debouncedFilterSessions(e.target.value.toLowerCase().trim());
-        });
-    }
-});
-
 // =================================================================
 // FINAL INITIALIZATION
 // =================================================================
