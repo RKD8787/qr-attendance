@@ -2265,34 +2265,6 @@ function setupKeyboardShortcuts() {
         }
     });
 }
-
-// =================================================================
-// MODAL CLOSE HANDLERS
-// =================================================================
-
-// Close modals when clicking outside
-document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal')) {
-        e.target.style.display = 'none';
-    }
-});
-
-// Close modals with Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const openModal = document.querySelector('.modal[style*="block"]');
-        if (openModal) {
-            openModal.style.display = 'none';
-        }
-        
-        // Also close shortcuts help
-        const shortcutsHelp = document.getElementById('shortcuts-help');
-        if (shortcutsHelp && !shortcutsHelp.classList.contains('hidden')) {
-            shortcutsHelp.classList.add('hidden');
-        }
-    }
-});
-
 // =================================================================
 // AUTHENTICATION FUNCTIONS
 // =================================================================
