@@ -8,7 +8,6 @@
     <meta name="keywords" content="attendance, QR code, faculty, education, management">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Scripts -->
@@ -24,6 +23,598 @@
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://unpkg.com">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: #1e5aa8;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header h2 {
+            color: #666;
+            font-size: 1.2rem;
+            font-weight: 400;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .admin-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .present-count-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .present-count {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #current-session-title {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(248, 249, 250, 0.8);
+        }
+
+        .present-students h3 {
+            color: #1e5aa8;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .student-list-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+
+        .student-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .student-usn {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 2px;
+        }
+
+        .attendance-time {
+            color: #28a745;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .student-badges {
+            margin-top: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-right: 5px;
+        }
+
+        .fingerprint-badge {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .location-badge {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        .no-students-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .qr-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .qr-section h3 {
+            color: #1e5aa8;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .qr-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .no-session-message {
+            color: #666;
+            padding: 40px 20px;
+        }
+
+        .qr-instruction {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .qr-info {
+            margin-top: 20px;
+        }
+
+        .qr-session-info h4 {
+            color: #1e5aa8;
+            margin-bottom: 10px;
+        }
+
+        .qr-url-display {
+            margin-top: 15px;
+        }
+
+        .url-input-group {
+            display: flex;
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .url-input-group input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-right: none;
+            font-size: 0.9rem;
+        }
+
+        .url-input-group button {
+            background: #1e5aa8;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .url-input-group button:hover {
+            background: #164d93;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .add-manually-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 25px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .add-manually-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .add-manually-btn:hover::before {
+            left: 100%;
+        }
+
+        .add-manually-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .fresh-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+
+        .fresh-btn:hover {
+            box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4);
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #000;
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+        }
+
+        .export-btn:hover {
+            box-shadow: 0 12px 35px rgba(255, 193, 7, 0.4);
+        }
+
+        .student-list-btn {
+            background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+            box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+        }
+
+        .student-list-btn:hover {
+            box-shadow: 0 12px 35px rgba(23, 162, 184, 0.4);
+        }
+
+        .add-manually-btn i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .add-student-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .add-student-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+        }
+
+        .success-toast,
+        .error-toast,
+        .info-toast {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .success-toast {
+            border-left: 4px solid #28a745;
+        }
+
+        .error-toast {
+            border-left: 4px solid #dc3545;
+        }
+
+        .info-toast {
+            border-left: 4px solid #17a2b8;
+        }
+
+        .toast-show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-hide {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        .success-toast i {
+            color: #28a745;
+        }
+
+        .error-toast i {
+            color: #dc3545;
+        }
+
+        .info-toast i {
+            color: #17a2b8;
+        }
+
+        .success-toast button,
+        .error-toast button,
+        .info-toast button {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #666;
+            margin-left: auto;
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .admin-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.4rem;
+            }
+
+            .logout-btn {
+                position: static;
+                margin-top: 15px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Active states */
+        .active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
    
@@ -124,293 +715,762 @@
         </div>
     </div>
 
-    <!-- Enhanced Manual Add Modal -->
-    <div id="add-manually-modal" class="modal" role="dialog" aria-labelledby="manual-add-title" aria-hidden="true">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="manual-add-title"><i class="fas fa-user-plus"></i> Add Student Manually</h3>
-                <button class="close-btn" onclick="closeAddManuallyModal()" aria-label="Close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="search-container">
-                    <input type="text" 
-                           id="student-search-manual" 
-                           placeholder="Search for students not yet present..." 
-                           autocomplete="off"
-                           aria-label="Search students">
-                    <div class="search-icon" aria-hidden="true">🔍</div>
-                </div>
-                
-                <div class="student-dropdown" id="student-dropdown" role="listbox">
-                    <!-- Students will be populated here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Enhanced Student List Modal -->
-    <div id="student-list-modal" class="modal" role="dialog" aria-labelledby="student-list-title" aria-hidden="true">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3 id="student-list-title"><i class="fas fa-users"></i> Manage Student Roster</h3>
-                <button class="close-btn" onclick="closeStudentListModal()" aria-label="Close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <!-- Add New Student Section -->
-                <div class="add-student-section">
-                    <h4><i class="fas fa-plus-circle"></i> Add New Student</h4>
-                    <div class="add-student-form">
-                        <input type="text" 
-                               id="new-student-name" 
-                               placeholder="Student Name" 
-                               maxlength="50"
-                               aria-label="Student Name"
-                               required>
-                        <input type="text" 
-                               id="new-student-usn" 
-                               placeholder="Unique Student Number (USN)" 
-                               maxlength="20"
-                               aria-label="Student USN"
-                               required>
-                        <button class="add-student-btn" onclick="addNewStudent()">
-                            <i class="fas fa-plus"></i> Add Student
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Search Section -->
-                <div class="search-container">
-                    <input type="text" 
-                           id="student-list-search" 
-                           placeholder="Search all students..."
-                           autocomplete="off"
-                           aria-label="Search students">
-                    <div class="search-icon" aria-hidden="true">🔍</div>
-                </div>
-                
-                <!-- Student List Container -->
-                <div class="student-list-container">
-                    <div class="student-count-header">
-                        <i class="fas fa-users"></i>
-                        Total Students: <span id="total-student-count">0</span>
-                    </div>
-                    <div class="student-list-display" id="student-list-display" role="list">
-                        <!-- Students will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Enhanced Edit Student Modal -->
-    <div id="edit-student-modal" class="modal" role="dialog" aria-labelledby="edit-student-title" aria-hidden="true">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3 id="edit-student-title"><i class="fas fa-user-edit"></i> Edit Student</h3>
-                <button class="close-btn" onclick="closeEditStudentModal()" aria-label="Close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="edit-student-form">
-                    <input type="hidden" id="edit-student-original-usn">
-                    
-                    <div class="form-group">
-                        <label for="edit-student-name">
-                            <i class="fas fa-user"></i> Student Name
-                        </label>
-                        <input type="text" 
-                               id="edit-student-name" 
-                               placeholder="Student Name"
-                               required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="edit-student-usn">
-                            <i class="fas fa-id-card"></i> Student USN
-                        </label>
-                        <input type="text" 
-                               id="edit-student-usn" 
-                               placeholder="Unique Student Number"
-                               required>
-                    </div>
-                    
-                    <button class="add-student-btn" onclick="saveStudentDetails()">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </div>
-                
-                <hr class="divider">
-                
-                <div class="fingerprint-section">
-                    <h4><i class="fas fa-fingerprint"></i> Registered Fingerprints</h4>
-                    <div id="student-fingerprint-list">
-                        <!-- Fingerprint data will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Session History Modal -->
-    <div id="session-history-modal" class="modal" role="dialog" aria-labelledby="session-history-title" aria-hidden="true">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3 id="session-history-title">
-                    <i class="fas fa-calendar-alt"></i> Session History
-                </h3>
-                <button class="close-btn" onclick="closeSessionHistoryModal()" aria-label="Close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <div id="session-list-container">
-                    <div class="session-toolbar">
-                        <div class="search-container">
-                            <input type="text" 
-                                   id="session-history-search" 
-                                   placeholder="Search sessions..."
-                                   autocomplete="off">
-                            <div class="search-icon">🔍</div>
-                        </div>
-                        <div class="toolbar-controls">
-                            <label for="show-archived" class="checkbox-label">
-                                <input type="checkbox" id="show-archived" onchange="fetchAllSessions()">
-                                <span class="checkmark"></span>
-                                Show Archived
-                            </label>
-                        </div>
-                    </div>
-                    <div class="student-list-display" id="session-list-display" role="list">
-                        <!-- Session history will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Courses Management Modal -->
-    <div id="courses-modal" class="modal" role="dialog" aria-labelledby="courses-title" aria-hidden="true">
-        <div class="modal-content student-list-modal-content">
-            <div class="modal-header">
-                <h3 id="courses-title"><i class="fas fa-book"></i> Manage Courses</h3>
-                <button class="close-btn" onclick="closeCoursesModal()" aria-label="Close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <div id="course-list-view">
-                    <div class="add-student-section">
-                        <h4><i class="fas fa-plus-circle"></i> Create New Course</h4>
-                        <div class="add-student-form">
-                            <input type="text" 
-                                   id="new-course-name" 
-                                   placeholder="Course Name"
-                                   aria-label="Course Name"
-                                   required>
-                            <input type="text" 
-                                   id="new-course-id" 
-                                   placeholder="Course ID (e.g., CS-101)"
-                                   aria-label="Course ID"
-                                   required>
-                            <button class="add-student-btn" onclick="createNewCourse()">
-                                <i class="fas fa-plus"></i> Create
-                            </button>
-                        </div>
-                    </div>
-                    <div class="student-list-display" id="courses-list-display" role="list">
-                        <!-- Courses will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Enhanced Statistics Modal -->
-    <div id="statistics-modal" class="modal" role="dialog" aria-labelledby="statistics-title" aria-hidden="true">
-        <div class="modal-content" style="max-width: 1200px; max-height: 95vh;">
-            <div class="modal-header">
-                <h3 id="statistics-title">
-                    <i class="fas fa-chart-line"></i> Attendance Statistics
-                </h3>
-                <button class="close-btn" onclick="closeStatisticsModal()" aria-label="Close">&times;</button>
-            </div>
-            
-            <div class="modal-body">
-                <!-- Tab Navigation -->
-                <div class="stats-tabs" role="tablist">
-                    <button class="stats-tab-btn active" 
-                            onclick="showStatsTab('overview')" 
-                            role="tab" 
-                            aria-selected="true"
-                            aria-controls="stats-overview-view">
-                        📊 Overview
-                    </button>
-                    <button class="stats-tab-btn" 
-                            onclick="showStatsTab('students')" 
-                            role="tab" 
-                            aria-selected="false"
-                            aria-controls="stats-students-view">
-                        🧑‍🎓 Students
-                    </button>
-                </div>
-                
-                <!-- Overview Tab -->
-                <div id="stats-overview-view" class="stats-view active" role="tabpanel">
-                    <div class="overview-grid">
-                        <div class="stat-card">
-                            <h4>Total Attendance</h4>
-                            <p id="stats-total-attendance">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Average Attendance</h4>
-                            <p id="stats-avg-attendance">0%</p>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Total Sessions</h4>
-                            <p id="stats-total-sessions">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Fully Verified</h4>
-                            <p id="stats-fully-verified">0%</p>
-                        </div>
-                    </div>
-                    
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <h4>Attendance Trend (Last 30 Days)</h4>
-                            <canvas id="attendance-trend-chart" aria-label="Attendance trend chart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h4>Verification Methods</h4>
-                            <canvas id="verification-method-chart" aria-label="Verification methods chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Students Tab -->
-                <div id="stats-students-view" class="stats-view" role="tabpanel">
-                    <div class="stats-toolbar">
-                        <input type="text" 
-                               id="student-stats-search" 
-                               class="stats-search" 
-                               placeholder="Search students by name or USN..."
-                               autocomplete="off">
-                    </div>
-                    <div class="stats-list-display" id="student-stats-list" role="list">
-                        <!-- Student statistics will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true">
         <!-- Toast notifications will be inserted here -->
     </div>
 
-    <!-- Scripts -->
-    <script src="script.js"></script>
+    <script>
+        // Global Supabase client
+        let supabaseClient = null;
+
+        // Global state variables
+        let allStudents = [];
+        let presentStudents = [];
+        let currentCourseId = null;
+        let currentSession = null;
+        let allSessions = [];
+        let allCourses = [];
+        let attendanceChart = null;
+        let verificationChart = null;
+        let selectedStudentForAttendance = null;
+
+        // Performance and caching
+        let studentsCache = new Map();
+        let lastFetchTime = 0;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Network and retry logic
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        let isOnline = navigator.onLine;
+
+        // ✅ MAIN ENTRY POINT
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        /**
+         * Initializes the Supabase client, checks auth, fetches data, and starts the correct UI.
+         */
+        async function initializeApp() {
+            console.log('Initializing QR Attendance System...');
+            
+            try {
+                const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
+                const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
+                
+                // Initialize Supabase client
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('Supabase client initialized');
+                
+                // Test connection
+                await testDatabaseConnection();
+                console.log('Database connection successful');
+                
+                // Initialize data
+                await Promise.all([
+                    fetchAllStudents(),
+                    fetchAllCourses()
+                ]);
+                
+                console.log('Initial data loaded successfully');
+                console.log('Students:', allStudents.length);
+                console.log('Courses:', allCourses.length);
+                
+                await initFacultyView();
+                setupKeyboardShortcuts();
+                setupNetworkMonitoring();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showToast('Failed to initialize application. Please refresh the page.', 'error');
+            }
+        }
+
+        async function testDatabaseConnection() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('students')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) throw error;
+                return true;
+            } catch (error) {
+                console.error('Database connection test failed:', error);
+                throw new Error('Database connection failed');
+            }
+        }
+
+        async function fetchAllStudents() {
+            try {
+                console.log('Fetching all students...');
+                
+                const { data, error } = await supabaseClient
+                    .from('students')
+                    .select('name, usn')
+                    .order('name', { ascending: true });
+                
+                if (error) throw error;
+                
+                allStudents = data || [];
+                console.log('Students fetched successfully:', allStudents.length);
+                
+            } catch (err) {
+                console.error('Error fetching students:', err);
+                allStudents = [];
+                showToast('Failed to load students', 'error');
+            }
+        }
+
+        async function fetchAllCourses() {
+            try {
+                console.log('Fetching all courses...');
+                
+                const { data, error } = await supabaseClient
+                    .from('courses')
+                    .select('*')
+                    .order('course_name', { ascending: true });
+                
+                if (error) throw error;
+                
+                allCourses = data || [];
+                console.log('Courses fetched successfully:', allCourses.length);
+                
+            } catch (err) {
+                console.error('Error fetching courses:', err);
+                allCourses = [];
+                showToast('Failed to load courses', 'error');
+            }
+        }
+
+        async function initFacultyView() {
+            try {
+                console.log('Initializing faculty view...');
+                
+                // Check for existing session
+                const lastSessionId = localStorage.getItem('sessionId');
+                if (lastSessionId) {
+                    console.log('Found existing session ID:', lastSessionId);
+                    
+                    const { data, error } = await supabaseClient
+                        .from('sessions')
+                        .select('*, courses(course_name)')
+                        .eq('id', lastSessionId)
+                        .single();
+                        
+                    if (data && !error) {
+                        console.log('Restored session:', data);
+                        updateActiveSession(data);
+                    } else {
+                        console.log('Session not found or expired');
+                        updateActiveSession(null);
+                        localStorage.removeItem('sessionId');
+                    }
+                } else {
+                    updateActiveSession(null);
+                }
+                
+                console.log('Faculty view initialized successfully');
+                
+            } catch (error) {
+                console.error('Error initializing faculty view:', error);
+                showToast('Failed to initialize dashboard', 'error');
+            }
+        }
+
+        function setupNetworkMonitoring() {
+            window.addEventListener('online', () => {
+                isOnline = true;
+                retryCount = 0;
+                showToast('Connection restored', 'success');
+            });
+
+            window.addEventListener('offline', () => {
+                isOnline = false;
+                showToast('Connection lost. Working in offline mode.', 'error');
+            });
+        }
+
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Only trigger shortcuts if no modal is open and not in input field
+                if (document.querySelector('.modal[style*="block"]') || 
+                    ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                    return;
+                }
+                
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key.toLowerCase()) {
+                        case 'n':
+                            e.preventDefault();
+                            showCourseSelectionModal();
+                            break;
+                        case 'h':
+                            e.preventDefault();
+                            showSessionHistoryModal();
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            showStatisticsModal();
+                            break;
+                        case 'm':
+                            e.preventDefault();
+                            showAddManuallyModal();
+                            break;
+                        case 'u':
+                            e.preventDefault();
+                            showStudentListModal();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            exportAttendanceCSV();
+                            break;
+                    }
+                }
+            });
+        }
+
+        function updateActiveSession(sessionData) {
+            console.log('Updating active session:', sessionData);
+            
+            currentSession = sessionData;
+            const qrContainer = document.getElementById('qr-code-container');
+            const sessionTitle = document.getElementById('current-session-title');
+
+            if (sessionData) {
+                localStorage.setItem('sessionId', sessionData.id);
+                const courseName = sessionData.courses ? sessionData.courses.course_name : 'General';
+                if (sessionTitle) {
+                    sessionTitle.innerHTML = `
+                        <i class="fas fa-play-circle" style="color: #28a745;"></i>
+                        Active Session: ${sessionData.session_name} (${courseName})
+                    `;
+                }
+                generateQR(sessionData.id);
+                fetchCurrentSessionAttendance();
+            } else {
+                localStorage.removeItem('sessionId');
+                if (sessionTitle) {
+                    sessionTitle.innerHTML = `
+                        <i class="fas fa-pause-circle" style="color: #dc3545;"></i>
+                        No Active Session
+                    `;
+                }
+                if (qrContainer) {
+                    qrContainer.innerHTML = `
+                        <div class="no-session-message">
+                            <i class="fas fa-qrcode" style="font-size: 3rem; color: #dee2e6; margin-bottom: 15px;"></i>
+                            <p>Start a new session to generate a QR code</p>
+                        </div>
+                    `;
+                }
+                updatePresentStudentsList([]);
+            }
+        }
+
+        function generateQR(sessionId) {
+            const qrContainer = document.getElementById('qr-code-container');
+            if (!qrContainer) {
+                console.error('QR container not found');
+                return;
+            }
+            
+            qrContainer.innerHTML = '<div class="qr-loading">Generating QR code...</div>';
+            
+            try {
+                const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
+                console.log('Generating QR for URL:', studentUrl);
+                
+                const canvas = document.createElement('canvas');
+                qrContainer.innerHTML = '';
+                qrContainer.appendChild(canvas);
+                
+                const qr = new QRious({ 
+                    element: canvas, 
+                    value: studentUrl, 
+                    size: 250,
+                    background: 'white',
+                    foreground: 'black',
+                    level: 'M',
+                    padding: 10
+                });
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'qr-info';
+                infoDiv.innerHTML = `
+                    <div class="qr-session-info">
+                        <h4>Session: ${currentSession?.session_name || 'Unknown'}</h4>
+                        <p>Students can scan this QR code to mark attendance</p>
+                    </div>
+                    <div class="qr-url-display">
+                        <small>Direct link for manual access:</small>
+                        <div class="url-input-group">
+                            <input type="text" value="${studentUrl}" readonly onclick="this.select()" aria-label="Session URL">
+                            <button onclick="copyToClipboard('${studentUrl}')" title="Copy link">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button onclick="openInNewTab('${studentUrl}')" title="Open in new tab">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                qrContainer.appendChild(infoDiv);
+                
+                console.log('QR code generated successfully');
+                
+            } catch (error) {
+                console.error('QR generation error:', error);
+                qrContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p style="color: #dc3545; margin-bottom: 15px;">Failed to generate QR code</p>
+                        <button class="retry-btn" onclick="generateQR('${sessionId}')">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function fetchCurrentSessionAttendance() {
+            if (!currentSession) {
+                updatePresentStudentsList([]);
+                return;
+            }
+
+            try {
+                console.log('Fetching attendance for session:', currentSession.id);
+                
+                const { data, error } = await supabaseClient
+                    .from('attendance')
+                    .select('student, usn, timestamp, fingerprint_verified, location_verified')
+                    .eq('session_id', currentSession.id)
+                    .order('timestamp', { ascending: false });
+
+                if (error) throw error;
+                
+                const attendanceData = data || [];
+                presentStudents = attendanceData.map(record => record.student);
+                updatePresentStudentsList(attendanceData);
+                
+                console.log('Attendance data fetched:', attendanceData.length, 'records');
+                
+            } catch (err) {
+                console.error('Error fetching attendance:', err);
+                if (isOnline) {
+                    showToast('Failed to refresh attendance data', 'error');
+                }
+            }
+        }
+
+        function updatePresentStudentsList(attendanceData) {
+            const listElement = document.getElementById('present-students-list');
+            updatePresentCount(attendanceData.length);
+
+            if (!listElement) {
+                console.error('Present students list element not found');
+                return;
+            }
+            
+            listElement.innerHTML = '';
+
+            if (attendanceData.length === 0) {
+                listElement.innerHTML = `
+                    <div class="no-students-message">
+                        <i class="fas fa-users" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+                        <p>No students present yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            attendanceData.forEach(record => {
+                const studentDiv = document.createElement('div');
+                studentDiv.className = 'student-item';
+                
+                const badges = [];
+                if (record.fingerprint_verified) badges.push('<span class="badge fingerprint-badge">🔐 Fingerprint</span>');
+                if (record.location_verified) badges.push('<span class="badge location-badge">📍 Location</span>');
+                
+                const timeAgo = getTimeAgo(new Date(record.timestamp));
+                
+                studentDiv.innerHTML = `
+                    <div class="student-info">
+                        <div class="student-name">${record.student}</div>
+                        <div class="student-usn">${record.usn}</div>
+                        <div class="attendance-time">${timeAgo}</div>
+                        <div class="student-badges">${badges.join('')}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeStudentFromSession('${record.student.replace(/'/g, "\\'")}', '${record.usn}')" title="Remove student">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                listElement.appendChild(studentDiv);
+            });
+            
+            console.log('Present students list updated:', attendanceData.length, 'students');
+        }
+
+        function updatePresentCount(count) {
+            const countElement = document.getElementById('present-count');
+            if (countElement) countElement.textContent = count;
+        }
+
+        async function removeStudentFromSession(studentName, usn) {
+            if (!currentSession || !confirm(`Remove ${studentName} from the session?`)) return;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('attendance')
+                    .delete()
+                    .match({ student: studentName, usn: usn, session_id: currentSession.id });
+                
+                if (error) throw error;
+                
+                showToast(`${studentName} removed from session`, 'success');
+                fetchCurrentSessionAttendance();
+            } catch (err) {
+                console.error('Error removing student:', err);
+                showToast('Failed to remove student', 'error');
+            }
+        }
+
+        // Modal Functions
+        function showCourseSelectionModal() {
+            console.log('Showing course selection modal...');
+            
+            if (allCourses.length === 0) {
+                showToast('No courses found. Please create a course first.', 'error');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-rocket"></i> Start New Session</h3>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="session-name-input">
+                                <i class="fas fa-tag"></i> Session Name
+                            </label>
+                            <input type="text" id="session-name-input" placeholder="Enter session name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="course-select">
+                                <i class="fas fa-book"></i> Select Course
+                            </label>
+                            <select id="course-select" required>
+                                <option value="">Choose a course...</option>
+                                ${allCourses.map(course => 
+                                    `<option value="${course.id}">${course.course_name} (${course.course_id})</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <button class="add-student-btn" onclick="createNewSession()">
+                            <i class="fas fa-play"></i> Start Session
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                document.getElementById('session-name-input')?.focus();
+            }, 100);
+        }
+
+        async function createNewSession() {
+            console.log('Creating new session...');
+            
+            const sessionName = document.getElementById('session-name-input')?.value.trim();
+            const courseId = document.getElementById('course-select')?.value;
+            
+            if (!sessionName) {
+                showToast('Please enter a session name', 'error');
+                return;
+            }
+            
+            if (!courseId) {
+                showToast('Please select a course', 'error');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('sessions')
+                    .insert([{
+                        session_name: sessionName,
+                        course_id: courseId,
+                        created_at: new Date().toISOString()
+                    }])
+                    .select('*, courses(course_name)')
+                    .single();
+                
+                if (error) throw error;
+                
+                console.log('Session created successfully:', data);
+                updateActiveSession(data);
+                showToast('Session started successfully!', 'success');
+                document.querySelector('.modal').remove();
+                
+            } catch (err) {
+                console.error('Error creating session:', err);
+                showToast('Failed to create session', 'error');
+            }
+        }
+
+        function showSessionHistoryModal() {
+            showToast('Session History feature coming soon!', 'info');
+        }
+
+        function showStatisticsModal() {
+            showToast('Statistics feature coming soon!', 'info');
+        }
+
+        function showAddManuallyModal() {
+            if (!currentSession) {
+                showToast('Please start a session first', 'error');
+                return;
+            }
+            showToast('Manual add feature coming soon!', 'info');
+        }
+
+        function showStudentListModal() {
+            showToast('Student management feature coming soon!', 'info');
+        }
+
+        function showCoursesModal() {
+            showToast('Course management feature coming soon!', 'info');
+        }
+
+        async function exportAttendanceCSV() {
+            try {
+                const { data: attendanceData, error } = await supabaseClient
+                    .from('attendance')
+                    .select(`
+                        *,
+                        sessions(session_name, courses(course_name, course_id))
+                    `)
+                    .order('timestamp', { ascending: false });
+                
+                if (error) throw error;
+                
+                if (attendanceData.length === 0) {
+                    showToast('No attendance data to export', 'error');
+                    return;
+                }
+                
+                // Convert to CSV
+                const csvHeaders = [
+                    'Student Name',
+                    'USN',
+                    'Session',
+                    'Course',
+                    'Date',
+                    'Time',
+                    'Fingerprint Verified',
+                    'Location Verified'
+                ];
+                
+                const csvRows = attendanceData.map(record => [
+                    record.student,
+                    record.usn,
+                    record.sessions?.session_name || 'N/A',
+                    record.sessions?.courses?.course_name || 'N/A',
+                    new Date(record.timestamp).toLocaleDateString(),
+                    new Date(record.timestamp).toLocaleTimeString(),
+                    record.fingerprint_verified ? 'Yes' : 'No',
+                    record.location_verified ? 'Yes' : 'No'
+                ]);
+                
+                const csvContent = [csvHeaders, ...csvRows]
+                    .map(row => row.map(field => `"${field}"`).join(','))
+                    .join('\n');
+                
+                // Download CSV
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                showToast('Attendance data exported successfully!', 'success');
+                
+            } catch (err) {
+                console.error('Error exporting CSV:', err);
+                showToast('Failed to export attendance data', 'error');
+            }
+        }
+
+        // Utility Functions
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Link copied to clipboard!', 'success');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('Link copied to clipboard!', 'success');
+                } else {
+                    throw new Error('Copy command failed');
+                }
+            } catch (err) {
+                console.error('Fallback copy failed: ', err);
+                showToast('Failed to copy link. Please copy manually.', 'error');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function openInNewTab(url) {
+            const newWindow = window.open(url, '_blank');
+            if (!newWindow) {
+                showToast('Popup blocked. Please allow popups for this site.', 'error');
+            } else {
+                showToast('Student page opened in new tab', 'info');
+            }
+        }
+
+        function showToast(message, type = 'info', duration = 5000) {
+            console.log('Toast:', type, message);
+            
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                console.warn('Toast container not found, falling back to alert');
+                alert(message);
+                return;
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `${type}-toast`;
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-triangle' : 
+                        type === 'info' ? 'fa-info-circle' :
+                        'fa-bell';
+            
+            const toastId = 'toast-' + Date.now();
+            toast.id = toastId;
+            
+            toast.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${escapeHtml(message)}</span>
+                <button onclick="removeToast('${toastId}')" aria-label="Close notification">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('toast-show');
+            }, 10);
+            
+            setTimeout(() => {
+                removeToast(toastId);
+            }, duration);
+            
+            const allToasts = container.querySelectorAll('.success-toast, .error-toast, .info-toast');
+            if (allToasts.length > 5) {
+                allToasts[0].remove();
+            }
+        }
+
+        function removeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.add('toast-hide');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInMs = now - date;
+            const diffInMinutes = Math.floor(diffInMs / 60000);
+            
+            if (diffInMinutes < 1) return 'Just now';
+            if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+            
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            if (diffInHours < 24) return `${diffInHours}h ago`;
+            
+            const diffInDays = Math.floor(diffInHours / 24);
+            if (diffInDays < 7) return `${diffInDays}d ago`;
+            
+            const diffInWeeks = Math.floor(diffInDays / 7);
+            if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+            
+            return date.toLocaleDateString();
+        }
+
+        async function logout() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) throw error;
+                
+                localStorage.clear();
+                window.location.href = 'login.html';
+            } catch (err) {
+                console.error('Error logging out:', err);
+                showToast('Failed to logout', 'error');
+            }
+        }
+
+        // Error handling
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            showToast('An unexpected error occurred. Please refresh the page.', 'error');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            showToast('A network error occurred. Please check your connection.', 'error');
+        });
+
+        console.log('QR Attendance System script loaded successfully');
+    </script>
     
 </body>
 </html>
