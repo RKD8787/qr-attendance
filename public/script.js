@@ -4,7 +4,7 @@
 const CONFIG = {
     // Supabase configuration (load from environment in production)
     SUPABASE_URL: 'https://zpesqzstorixfsmpntsx.supabase.co',
-    SUPABASE_KEY: 'YOUR_ANON_KEY_HERE', // Replace with your actual anon key
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ', // Replace with your actual anon key
     
     // Cache settings
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
@@ -2287,3 +2287,4 @@ window.addEventListener('beforeunload', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { utils, auth, data, sessions, pages, ui, webAuthn };
 }
+
