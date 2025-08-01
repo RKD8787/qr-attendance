@@ -1403,7 +1403,11 @@ async function deleteStudent(usn, name) {
         showToast('Failed to delete student', 'error');
     }
 }
-
+function editStudent(usn, name) {
+    // Implementation for editing student
+    console.log('Edit student:', name, usn);
+    showToast('Edit functionality not yet implemented', 'info');
+}
 function showCoursesModal() {
     console.log('📚 Showing courses modal...');
     
@@ -1579,6 +1583,46 @@ async function deleteCourse(id, courseName) {
     } catch (err) {
         console.error('❌ Error deleting course:', err);
         showToast('Failed to delete course', 'error');
+    }
+}
+function editCourse(id, courseName, courseCode) {
+    // Implementation for editing course
+    console.log('Edit course:', courseName, courseCode);
+    showToast('Edit functionality not yet implemented', 'info');
+}
+async function viewSessionDetails(sessionId) {
+    console.log('👁️ Viewing session details:', sessionId);
+    showToast('View session details not yet implemented', 'info');
+}
+async function deleteSession(sessionId, sessionName) {
+    if (!confirm(`Delete session "${sessionName}"? This will also remove all attendance records for this session.`)) {
+        return;
+    }
+    
+    try {
+        // Delete attendance records first
+        await supabaseClient.from('attendance').delete().eq('session_id', sessionId);
+        
+        // Delete session
+        const { error } = await supabaseClient
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId);
+        
+        if (error) throw error;
+        
+        await fetchAllSessions();
+        populateSessionHistoryList();
+        showToast('Session deleted successfully', 'success');
+        
+        // If the deleted session was the current session, clear it
+        if (currentSession && currentSession.id === sessionId) {
+            updateActiveSession(null);
+        }
+        
+    } catch (err) {
+        console.error('❌ Error deleting session:', err);
+        showToast('Failed to delete session', 'error');
     }
 }
 
