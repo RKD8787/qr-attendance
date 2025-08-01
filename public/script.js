@@ -35,14 +35,14 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 async function initializeApp() {
     console.log('🚀 Initializing QR Attendance System...');
-    
+
     try {
         // Initialize Supabase client
         await initializeSupabase();
-        
+
         // Determine which page we're on and initialize accordingly
         const currentPath = window.location.pathname;
-        
+
         if (currentPath.includes('student.html')) {
             await initStudentView();
         } else if (currentPath.includes('login.html')) {
@@ -51,13 +51,13 @@ async function initializeApp() {
             // Default to faculty view (index.html)
             await initFacultyView();
         }
-        
+
         console.log('✅ Application initialized successfully');
-        
+
     } catch (error) {
         console.error('❌ Fatal initialization error:', error);
         showToast('Failed to initialize application. Please refresh the page.', 'error');
-        
+
         // Show a user-friendly error message
         displayFatalError(error);
     }
@@ -67,17 +67,17 @@ async function initializeSupabase() {
     try {
         const SUPABASE_URL = 'https://zpesqzstorixfsmpntsx.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ';
-        
+
         if (!window.supabase) {
             throw new Error('Supabase library not loaded');
         }
-        
+
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
         // Test connection
         await testDatabaseConnection();
         console.log('✅ Supabase client initialized and tested');
-        
+
     } catch (error) {
         console.error('❌ Supabase initialization failed:', error);
         throw new Error(`Database connection failed: ${error.message}`);
@@ -90,11 +90,11 @@ async function testDatabaseConnection() {
             .from('students')
             .select('count')
             .limit(1);
-        
+
         if (error) {
             throw error;
         }
-        
+
         return true;
     } catch (error) {
         console.error('Database connection test failed:', error);
@@ -107,31 +107,31 @@ async function testDatabaseConnection() {
 async function initFacultyView() {
     try {
         console.log('📚 Initializing faculty view...');
-        
+
         // Load initial data
         await Promise.all([
             fetchAllStudents(),
             fetchAllCourses()
         ]);
-        
+
         console.log(`📊 Data loaded: ${allStudents.length} students, ${allCourses.length} courses`);
-        
+
         // Initialize UI components
         setupKeyboardShortcuts();
         setupNetworkMonitoring();
         setupModalEventListeners();
-        
+
         // Check for existing session
         await restoreActiveSession();
-        
+
         // Setup real-time subscriptions
         setupRealtimeSubscriptions();
-        
+
         // Start periodic refresh
         startPeriodicRefresh();
-        
+
         console.log('✅ Faculty view initialized successfully');
-        
+
     } catch (error) {
         console.error('❌ Faculty view initialization failed:', error);
         showToast('Failed to initialize dashboard', 'error');
@@ -141,10 +141,10 @@ async function initFacultyView() {
 async function restoreActiveSession() {
     try {
         const lastSessionId = localStorage.getItem('sessionId');
-        
+
         if (lastSessionId && lastSessionId !== 'null') {
             console.log('🔄 Restoring session:', lastSessionId);
-            
+
             const { data, error } = await supabaseClient
                 .from('sessions')
                 .select(`
@@ -153,7 +153,7 @@ async function restoreActiveSession() {
                 `)
                 .eq('id', lastSessionId)
                 .single();
-                
+
             if (data && !error) {
                 console.log('✅ Session restored:', data.session_name);
                 updateActiveSession(data);
@@ -178,21 +178,21 @@ async function restoreActiveSession() {
 async function initStudentView() {
     try {
         console.log('🎓 Initializing student view...');
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session');
-        
+
         if (!sessionId) {
             showErrorPage('No session ID provided. Please scan a valid QR code.');
             return;
         }
-        
+
         await fetchAllStudents();
         await loadSessionForStudent(sessionId);
         setupStudentSearch();
-        
+
         console.log('✅ Student view initialized successfully');
-        
+
     } catch (error) {
         console.error('❌ Student view initialization failed:', error);
         showErrorPage('Failed to initialize student view.');
@@ -209,18 +209,18 @@ async function loadSessionForStudent(sessionId) {
             `)
             .eq('id', sessionId)
             .single();
-        
+
         if (error) throw error;
-        
+
         if (!sessionData) {
             showErrorPage('Session not found. Please scan a valid QR code.');
             return;
         }
-        
+
         currentSession = sessionData;
         updateSessionDisplay(sessionData);
         populateStudentListForAttendance();
-        
+
     } catch (err) {
         console.error('Error loading session:', err);
         showErrorPage('Failed to load session information.');
@@ -231,8 +231,20 @@ async function loadSessionForStudent(sessionId) {
 
 async function initLoginView() {
     console.log('🔐 Initializing login view...');
-    // Login functionality would be implemented here
-    // For now, just log that we're on the login page
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            window.location.href = 'index.html';
+            return; // Exit if already logged in
+        }
+
+        setupLoginForm();
+        setupForgotPasswordForm();
+        addLoginStyles();
+    } catch (error) {
+        console.error('Login view initialization error:', error);
+        showToast('Failed to initialize login system', 'error');
+    }
 }
 
 // ===== DATA FETCHING FUNCTIONS =====
@@ -240,7 +252,7 @@ async function initLoginView() {
 async function fetchAllStudents() {
     try {
         console.log('👥 Fetching students...');
-        
+
         // Check cache first
         const now = Date.now();
         if (studentsCache.has('students') && (now - lastFetchTime) < CACHE_DURATION) {
@@ -254,24 +266,24 @@ async function fetchAllStudents() {
                 .from('students')
                 .select('name, usn')
                 .order('name', { ascending: true });
-            
+
             if (error) throw error;
             return data || [];
         };
 
         const students = await executeWithRetry(operation);
         allStudents = students;
-        
+
         // Update cache
         studentsCache.set('students', students);
         lastFetchTime = now;
-        
+
         console.log(`✅ Students fetched: ${students.length}`);
         return students;
-        
+
     } catch (err) {
         console.error('❌ Error fetching students:', err);
-        
+
         // Fall back to cached data if available
         if (studentsCache.has('students')) {
             allStudents = studentsCache.get('students');
@@ -287,32 +299,32 @@ async function fetchAllStudents() {
 async function fetchAllCourses() {
     try {
         console.log('📚 Fetching courses...');
-        
+
         // Check cache first
         if (coursesCache.has('courses')) {
             allCourses = coursesCache.get('courses');
             console.log(`📋 Using cached courses: ${allCourses.length}`);
             return allCourses;
         }
-        
+
         const operation = async () => {
             const { data, error } = await supabaseClient
                 .from('courses')
                 .select('*')
                 .order('course_name', { ascending: true });
-            
+
             if (error) throw error;
             return data || [];
         };
 
         allCourses = await executeWithRetry(operation);
-        
+
         // Update cache
         coursesCache.set('courses', allCourses);
-        
+
         console.log(`✅ Courses fetched: ${allCourses.length}`);
         return allCourses;
-        
+
     } catch (err) {
         console.error('❌ Error fetching courses:', err);
         allCourses = [];
@@ -329,7 +341,7 @@ async function fetchCurrentSessionAttendance() {
 
     try {
         console.log('📊 Fetching attendance for session:', currentSession.session_name);
-        
+
         const operation = async () => {
             const { data, error } = await supabaseClient
                 .from('attendance')
@@ -344,10 +356,10 @@ async function fetchCurrentSessionAttendance() {
         const attendanceData = await executeWithRetry(operation);
         presentStudents = attendanceData.map(record => record.student);
         updatePresentStudentsList(attendanceData);
-        
+
         console.log(`✅ Attendance data: ${attendanceData.length} records`);
         return attendanceData;
-        
+
     } catch (err) {
         console.error('❌ Error fetching attendance:', err);
         if (isOnline) {
@@ -360,7 +372,7 @@ async function fetchCurrentSessionAttendance() {
 async function fetchAllSessions(includeArchived = false) {
     try {
         console.log('📅 Fetching sessions...');
-        
+
         const operation = async () => {
             let query = supabaseClient
                 .from('sessions')
@@ -380,7 +392,7 @@ async function fetchAllSessions(includeArchived = false) {
         };
 
         allSessions = await executeWithRetry(operation);
-        
+
         // Get attendance counts for each session
         await Promise.all(allSessions.map(async (session) => {
             try {
@@ -388,7 +400,7 @@ async function fetchAllSessions(includeArchived = false) {
                     .from('attendance')
                     .select('*', { count: 'exact', head: true })
                     .eq('session_id', session.id);
-                
+
                 if (!error) {
                     session.attendance_count = count || 0;
                 }
@@ -397,10 +409,10 @@ async function fetchAllSessions(includeArchived = false) {
                 session.attendance_count = 0;
             }
         }));
-        
+
         console.log(`✅ Sessions fetched: ${allSessions.length}`);
         return allSessions;
-        
+
     } catch (err) {
         console.error('❌ Error fetching sessions:', err);
         allSessions = [];
@@ -413,7 +425,7 @@ async function fetchAllSessions(includeArchived = false) {
 
 function updateActiveSession(sessionData) {
     console.log('🔄 Updating active session:', sessionData?.session_name || 'None');
-    
+
     currentSession = sessionData;
     const qrContainer = document.getElementById('qr-code-container');
     const sessionTitle = document.getElementById('current-session-title');
@@ -421,35 +433,35 @@ function updateActiveSession(sessionData) {
     if (sessionData) {
         // Save session to localStorage
         localStorage.setItem('sessionId', sessionData.id);
-        
+
         // Update UI
         const courseName = sessionData.courses ? sessionData.courses.course_name : 'General';
         const courseId = sessionData.courses ? sessionData.courses.course_id : '';
-        
+
         if (sessionTitle) {
             sessionTitle.innerHTML = `
                 <i class="fas fa-play-circle" style="color: #28a745;"></i>
                 Active: ${sessionData.session_name} (${courseName} ${courseId})
             `.trim();
         }
-        
+
         // Generate QR code
         generateQR(sessionData.id);
-        
+
         // Fetch current attendance
         fetchCurrentSessionAttendance();
-        
+
     } else {
         // Clear session
         localStorage.removeItem('sessionId');
-        
+
         if (sessionTitle) {
             sessionTitle.innerHTML = `
                 <i class="fas fa-pause-circle" style="color: #dc3545;"></i>
                 No Active Session
             `;
         }
-        
+
         if (qrContainer) {
             qrContainer.innerHTML = `
                 <div class="no-session-message">
@@ -458,7 +470,7 @@ function updateActiveSession(sessionData) {
                 </div>
             `;
         }
-        
+
         updatePresentStudentsList([]);
     }
 }
@@ -469,25 +481,25 @@ function generateQR(sessionId) {
         console.error('❌ QR container not found');
         return;
     }
-    
+
     qrContainer.innerHTML = '<div class="qr-loading">Generating QR code...</div>';
-    
+
     try {
         const studentUrl = `${window.location.origin}/student.html?session=${sessionId}`;
         console.log('🔗 QR URL:', studentUrl);
-        
+
         // Validate required components
         if (!sessionId || !window.QRious) {
             throw new Error('Missing QR generation requirements');
         }
-        
+
         const canvas = document.createElement('canvas');
         qrContainer.innerHTML = '';
         qrContainer.appendChild(canvas);
-        
-        const qr = new window.QRious({ 
-            element: canvas, 
-            value: studentUrl, 
+
+        const qr = new window.QRious({
+            element: canvas,
+            value: studentUrl,
             size: 250,
             background: 'white',
             foreground: 'black',
@@ -517,9 +529,9 @@ function generateQR(sessionId) {
             </div>
         `;
         qrContainer.appendChild(infoDiv);
-        
+
         console.log('✅ QR code generated successfully');
-        
+
     } catch (error) {
         console.error('❌ QR generation error:', error);
         qrContainer.innerHTML = `
@@ -547,7 +559,7 @@ function updatePresentStudentsList(attendanceData) {
         console.error('❌ Present students list element not found');
         return;
     }
-    
+
     listElement.innerHTML = '';
 
     if (attendanceData.length === 0) {
@@ -559,11 +571,11 @@ function updatePresentStudentsList(attendanceData) {
         `;
         return;
     }
-    
+
     attendanceData.forEach(record => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-item';
-        
+
         const badges = [];
         if (record.fingerprint_verified) {
             badges.push('<span class="badge fingerprint-badge">🔐 Fingerprint</span>');
@@ -571,9 +583,9 @@ function updatePresentStudentsList(attendanceData) {
         if (record.location_verified) {
             badges.push('<span class="badge location-badge">📍 Location</span>');
         }
-        
+
         const timeAgo = getTimeAgo(new Date(record.timestamp));
-        
+
         studentDiv.innerHTML = `
             <div class="student-info">
                 <div class="student-name">${escapeHtml(record.student)}</div>
@@ -585,10 +597,10 @@ function updatePresentStudentsList(attendanceData) {
                 <i class="fas fa-times"></i>
             </button>
         `;
-        
+
         listElement.appendChild(studentDiv);
     });
-    
+
     console.log(`✅ Present students list updated: ${attendanceData.length} students`);
 }
 
@@ -603,13 +615,13 @@ function updatePresentCount(count) {
 
 function showCourseSelectionModal() {
     console.log('🚀 Showing course selection modal...');
-    
+
     if (allCourses.length === 0) {
         showToast('No courses found. Please create a course first.', 'error');
         showCoursesModal(); // Allow user to create a course
         return;
     }
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -632,7 +644,7 @@ function showCourseSelectionModal() {
                     </label>
                     <select id="course-select" required>
                         <option value="">Choose a course...</option>
-                        ${allCourses.map(course => 
+                        ${allCourses.map(course =>
                             `<option value="${course.id}">${escapeHtml(course.course_name)} (${escapeHtml(course.course_id)})</option>`
                         ).join('')}
                     </select>
@@ -643,9 +655,9 @@ function showCourseSelectionModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Focus on session name input
     setTimeout(() => {
         const sessionNameInput = document.getElementById('session-name-input');
@@ -653,14 +665,14 @@ function showCourseSelectionModal() {
             sessionNameInput.focus();
         }
     }, 100);
-    
+
     // Close modal on backdrop click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             modal.remove();
         }
     });
-    
+
     // Close modal on escape key
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
@@ -673,30 +685,30 @@ function showCourseSelectionModal() {
 
 async function createNewSession() {
     console.log('✨ Creating new session...');
-    
+
     const sessionName = document.getElementById('session-name-input')?.value.trim();
     const courseId = document.getElementById('course-select')?.value;
     const submitButton = document.querySelector('.add-student-btn');
-    
+
     // Validation
     if (!sessionName) {
         showToast('Please enter a session name', 'error');
         document.getElementById('session-name-input')?.focus();
         return;
     }
-    
+
     if (!courseId) {
         showToast('Please select a course', 'error');
         document.getElementById('course-select')?.focus();
         return;
     }
-    
+
     // Show loading state
     if (submitButton) {
         submitButton.disabled = true;
         submitButton.innerHTML = '<div class="loading"></div> Creating Session...';
     }
-    
+
     try {
         const { data, error } = await supabaseClient
             .from('sessions')
@@ -711,16 +723,16 @@ async function createNewSession() {
                 courses(course_name, course_id)
             `)
             .single();
-        
+
         if (error) throw error;
-        
+
         console.log('✅ Session created:', data.session_name);
         updateActiveSession(data);
         showToast(`Session "${sessionName}" started successfully!`, 'success');
-        
+
         // Close modal
         document.querySelector('.modal')?.remove();
-        
+
     } catch (err) {
         console.error('❌ Error creating session:', err);
         showToast(`Failed to create session: ${err.message}`, 'error');
@@ -735,7 +747,7 @@ async function createNewSession() {
 
 function showSessionHistoryModal() {
     console.log('📅 Showing session history modal...');
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -748,8 +760,8 @@ function showSessionHistoryModal() {
             <div class="modal-body">
                 <div class="session-toolbar">
                     <div class="search-container">
-                        <input type="text" 
-                               id="session-history-search" 
+                        <input type="text"
+                               id="session-history-search"
                                placeholder="Search sessions..."
                                autocomplete="off">
                         <div class="search-icon">🔍</div>
@@ -771,12 +783,12 @@ function showSessionHistoryModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Load sessions
     refreshSessionHistory();
-    
+
     // Setup search
     const searchInput = document.getElementById('session-history-search');
     if (searchInput) {
@@ -784,7 +796,7 @@ function showSessionHistoryModal() {
             filterSessionHistory(e.target.value.toLowerCase().trim());
         });
     }
-    
+
     // Close modal handlers
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -802,7 +814,7 @@ async function refreshSessionHistory() {
 function populateSessionHistoryList(sessions = allSessions) {
     const listElement = document.getElementById('session-list-display');
     if (!listElement) return;
-    
+
     if (sessions.length === 0) {
         listElement.innerHTML = `
             <div class="no-results">
@@ -815,18 +827,18 @@ function populateSessionHistoryList(sessions = allSessions) {
         `;
         return;
     }
-    
+
     listElement.innerHTML = '';
-    
+
     sessions.forEach(session => {
         const sessionDiv = document.createElement('div');
         sessionDiv.className = 'session-history-item';
-        
+
         const courseName = session.courses ? session.courses.course_name : 'General';
         const courseId = session.courses ? session.courses.course_id : '';
         const createdDate = new Date(session.created_at).toLocaleString();
         const attendanceCount = session.attendance_count || 0;
-        
+
         sessionDiv.innerHTML = `
             <div class="session-info">
                 <div class="session-name">${escapeHtml(session.session_name)}</div>
@@ -850,18 +862,18 @@ function populateSessionHistoryList(sessions = allSessions) {
                 </button>
             </div>
         `;
-        
+
         listElement.appendChild(sessionDiv);
     });
 }
 
 function filterSessionHistory(searchTerm) {
     const sessionItems = document.querySelectorAll('.session-history-item');
-    
+
     sessionItems.forEach(item => {
         const sessionName = item.querySelector('.session-name')?.textContent.toLowerCase() || '';
         const courseName = item.querySelector('.session-course')?.textContent.toLowerCase() || '';
-        
+
         if (sessionName.includes(searchTerm) || courseName.includes(searchTerm)) {
             item.style.display = 'flex';
         } else {
@@ -872,7 +884,7 @@ function filterSessionHistory(searchTerm) {
 
 function showStatisticsModal() {
     console.log('📊 Showing statistics modal...');
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -891,7 +903,7 @@ function showStatisticsModal() {
                         🧑‍🎓 Students
                     </button>
                 </div>
-                
+
                 <div id="stats-overview-view" class="stats-view active" role="tabpanel">
                     <div class="overview-grid">
                         <div class="stat-card">
@@ -911,7 +923,7 @@ function showStatisticsModal() {
                             <p id="stats-fully-verified">Loading...</p>
                         </div>
                     </div>
-                    
+
                     <div class="charts-grid">
                         <div class="chart-container">
                             <h4>Attendance Trend (Last 30 Days)</h4>
@@ -923,12 +935,12 @@ function showStatisticsModal() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="stats-students-view" class="stats-view" role="tabpanel">
                     <div class="stats-toolbar">
-                        <input type="text" 
-                               id="student-stats-search" 
-                               class="stats-search" 
+                        <input type="text"
+                               id="student-stats-search"
+                               class="stats-search"
                                placeholder="Search students by name or USN..."
                                autocomplete="off">
                     </div>
@@ -942,12 +954,12 @@ function showStatisticsModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Load initial statistics
     showStatsTab('overview');
-    
+
     // Close modal handlers
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -961,22 +973,22 @@ function showStatsTab(tabName) {
     document.querySelectorAll('.stats-tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     document.querySelectorAll('.stats-view').forEach(view => {
         view.classList.remove('active');
     });
-    
+
     // Activate selected tab
     const activeBtn = document.querySelector(`[onclick="showStatsTab('${tabName}')"]`);
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
-    
+
     const activeView = document.getElementById(`stats-${tabName}-view`);
     if (activeView) {
         activeView.classList.add('active');
     }
-    
+
     // Load appropriate data
     if (tabName === 'overview') {
         loadOverviewStatistics();
@@ -991,23 +1003,23 @@ async function loadOverviewStatistics() {
         const { data: attendanceData, error: attendanceError } = await supabaseClient
             .from('attendance')
             .select('*');
-        
+
         if (attendanceError) throw attendanceError;
-        
+
         // Fetch sessions data
         const { data: sessionsData, error: sessionsError } = await supabaseClient
             .from('sessions')
             .select('*');
-        
+
         if (sessionsError) throw sessionsError;
-        
+
         // Calculate statistics
         const totalAttendance = attendanceData.length;
         const totalSessions = sessionsData.length;
         const avgAttendance = totalSessions > 0 ? Math.round((totalAttendance / totalSessions) * 100) / 100 : 0;
         const fullyVerified = attendanceData.filter(a => a.fingerprint_verified && a.location_verified).length;
         const fullyVerifiedPercent = totalAttendance > 0 ? Math.round((fullyVerified / totalAttendance) * 100) : 0;
-        
+
         // Update overview cards
         const elements = {
             'stats-total-attendance': totalAttendance,
@@ -1015,16 +1027,16 @@ async function loadOverviewStatistics() {
             'stats-total-sessions': totalSessions,
             'stats-fully-verified': `${fullyVerifiedPercent}%`
         };
-        
+
         Object.entries(elements).forEach(([id, value]) => {
             const element = document.getElementById(id);
             if (element) element.textContent = value;
         });
-        
+
         // Generate charts
         generateAttendanceTrendChart(attendanceData);
         generateVerificationMethodChart(attendanceData);
-        
+
     } catch (err) {
         console.error('❌ Error loading statistics:', err);
         showToast('Failed to load statistics', 'error');
@@ -1036,9 +1048,9 @@ function showAddManuallyModal() {
         showToast('Please start a session first', 'error');
         return;
     }
-    
+
     console.log('➕ Showing add manually modal...');
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -1050,9 +1062,9 @@ function showAddManuallyModal() {
             </div>
             <div class="modal-body">
                 <div class="search-container">
-                    <input type="text" 
-                           id="student-search-manual" 
-                           placeholder="Search for students not yet present..." 
+                    <input type="text"
+                           id="student-search-manual"
+                           placeholder="Search for students not yet present..."
                            autocomplete="off"
                            aria-label="Search students">
                     <div class="search-icon">🔍</div>
@@ -1066,12 +1078,12 @@ function showAddManuallyModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Load available students
     populateFacultyStudentDropdown();
-    
+
     // Setup search
     const searchInput = document.getElementById('student-search-manual');
     if (searchInput) {
@@ -1080,7 +1092,7 @@ function showAddManuallyModal() {
         });
         searchInput.focus();
     }
-    
+
     // Close modal handlers
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -1092,17 +1104,17 @@ function showAddManuallyModal() {
 function populateFacultyStudentDropdown(searchTerm = '') {
     const dropdownElement = document.getElementById('student-dropdown');
     if (!dropdownElement) return;
-    
+
     // Filter out students who are already present
-    const availableStudents = allStudents.filter(student => 
+    const availableStudents = allStudents.filter(student =>
         !presentStudents.includes(student.name) &&
-        (searchTerm === '' || 
-         student.name.toLowerCase().includes(searchTerm) || 
+        (searchTerm === '' ||
+         student.name.toLowerCase().includes(searchTerm) ||
          student.usn.toLowerCase().includes(searchTerm))
     );
-    
+
     dropdownElement.innerHTML = '';
-    
+
     if (availableStudents.length === 0) {
         dropdownElement.innerHTML = `
             <div class="no-students-available">
@@ -1113,7 +1125,7 @@ function populateFacultyStudentDropdown(searchTerm = '') {
         `;
         return;
     }
-    
+
     availableStudents.forEach(student => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'dropdown-student-item';
@@ -1132,18 +1144,18 @@ function populateFacultyStudentDropdown(searchTerm = '') {
 
 async function addStudentManually(studentName, usn) {
     console.log('✋ Adding student manually:', studentName);
-    
+
     if (!currentSession) {
         showToast('No active session', 'error');
         return;
     }
-    
+
     const button = event.target.closest('.add-student-manual-btn');
     if (button) {
         button.disabled = true;
         button.innerHTML = '<div class="loading"></div> Adding...';
     }
-    
+
     try {
         // Check if student already marked attendance
         const { data: existingAttendance } = await supabaseClient
@@ -1152,12 +1164,12 @@ async function addStudentManually(studentName, usn) {
             .eq('session_id', currentSession.id)
             .eq('usn', usn)
             .single();
-        
+
         if (existingAttendance) {
             showToast('Student already marked present', 'error');
             return;
         }
-        
+
         // Add attendance record
         const { error } = await supabaseClient
             .from('attendance')
@@ -1169,13 +1181,13 @@ async function addStudentManually(studentName, usn) {
                 fingerprint_verified: false,
                 location_verified: false
             }]);
-        
+
         if (error) throw error;
-        
+
         showToast(`${studentName} added successfully!`, 'success');
         fetchCurrentSessionAttendance();
         populateFacultyStudentDropdown();
-        
+
     } catch (err) {
         console.error('❌ Error adding student manually:', err);
         showToast('Failed to add student', 'error');
@@ -1189,7 +1201,7 @@ async function addStudentManually(studentName, usn) {
 
 function showStudentListModal() {
     console.log('👥 Showing student list modal...');
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -1203,15 +1215,15 @@ function showStudentListModal() {
                 <div class="add-student-section">
                     <h4><i class="fas fa-plus-circle"></i> Add New Student</h4>
                     <div class="add-student-form">
-                        <input type="text" 
-                               id="new-student-name" 
-                               placeholder="Student Name" 
+                        <input type="text"
+                               id="new-student-name"
+                               placeholder="Student Name"
                                maxlength="50"
                                aria-label="Student Name"
                                required>
-                        <input type="text" 
-                               id="new-student-usn" 
-                               placeholder="Unique Student Number (USN)" 
+                        <input type="text"
+                               id="new-student-usn"
+                               placeholder="Unique Student Number (USN)"
                                maxlength="20"
                                aria-label="Student USN"
                                required>
@@ -1220,16 +1232,16 @@ function showStudentListModal() {
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="search-container">
-                    <input type="text" 
-                           id="student-list-search" 
+                    <input type="text"
+                           id="student-list-search"
                            placeholder="Search all students..."
                            autocomplete="off"
                            aria-label="Search students">
                     <div class="search-icon">🔍</div>
                 </div>
-                
+
                 <div class="student-list-container">
                     <div class="student-count-header">
                         <i class="fas fa-users"></i>
@@ -1245,12 +1257,12 @@ function showStudentListModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Load students
     populateStudentListDisplay();
-    
+
     // Setup search
     const searchInput = document.getElementById('student-list-search');
     if (searchInput) {
@@ -1258,7 +1270,7 @@ function showStudentListModal() {
             filterStudentList(e.target.value.toLowerCase().trim());
         });
     }
-    
+
     // Close modal handlers
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -1270,19 +1282,19 @@ function showStudentListModal() {
 function populateStudentListDisplay(searchTerm = '') {
     const listElement = document.getElementById('student-list-display');
     const countElement = document.getElementById('total-student-count');
-    
+
     if (!listElement) return;
-    
+
     if (countElement) {
         countElement.textContent = allStudents.length;
     }
-    
-    const filteredStudents = allStudents.filter(student => 
-        searchTerm === '' || 
-        student.name.toLowerCase().includes(searchTerm) || 
+
+    const filteredStudents = allStudents.filter(student =>
+        searchTerm === '' ||
+        student.name.toLowerCase().includes(searchTerm) ||
         student.usn.toLowerCase().includes(searchTerm)
     );
-    
+
     if (filteredStudents.length === 0) {
         listElement.innerHTML = `
             <div class="no-results">
@@ -1293,9 +1305,9 @@ function populateStudentListDisplay(searchTerm = '') {
         `;
         return;
     }
-    
+
     listElement.innerHTML = '';
-    
+
     filteredStudents.forEach(student => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-list-item';
@@ -1323,19 +1335,19 @@ function filterStudentList(searchTerm) {
 
 async function addNewStudent() {
     console.log('➕ Adding new student...');
-    
+
     const nameInput = document.getElementById('new-student-name');
     const usnInput = document.getElementById('new-student-usn');
     const submitButton = document.querySelector('.add-student-btn');
-    
+
     const name = nameInput?.value.trim();
     const usn = usnInput?.value.trim();
-    
+
     if (!name || !usn) {
         showToast('Please fill in all fields', 'error');
         return;
     }
-    
+
     // Check if USN already exists
     const existingStudent = allStudents.find(s => s.usn.toLowerCase() === usn.toLowerCase());
     if (existingStudent) {
@@ -1343,29 +1355,29 @@ async function addNewStudent() {
         usnInput?.focus();
         return;
     }
-    
+
     // Show loading state
     if (submitButton) {
         submitButton.disabled = true;
         submitButton.innerHTML = '<div class="loading"></div> Adding...';
     }
-    
+
     try {
         const { error } = await supabaseClient
             .from('students')
             .insert([{ name, usn }]);
-        
+
         if (error) throw error;
-        
+
         await fetchAllStudents();
         populateStudentListDisplay();
         showToast('Student added successfully!', 'success');
-        
+
         // Clear inputs
         if (nameInput) nameInput.value = '';
         if (usnInput) usnInput.value = '';
         nameInput?.focus();
-        
+
     } catch (err) {
         console.error('❌ Error adding student:', err);
         showToast(`Failed to add student: ${err.message}`, 'error');
@@ -1381,23 +1393,23 @@ async function deleteStudent(usn, name) {
     if (!confirm(`Delete student ${name}? This will also remove all their attendance records.`)) {
         return;
     }
-    
+
     try {
         // Delete attendance records first
         await supabaseClient.from('attendance').delete().eq('usn', usn);
-        
+
         // Delete student
         const { error } = await supabaseClient
             .from('students')
             .delete()
             .eq('usn', usn);
-        
+
         if (error) throw error;
-        
+
         await fetchAllStudents();
         populateStudentListDisplay();
         showToast('Student deleted successfully', 'success');
-        
+
     } catch (err) {
         console.error('❌ Error deleting student:', err);
         showToast('Failed to delete student', 'error');
@@ -1410,7 +1422,7 @@ function editStudent(usn, name) {
 }
 function showCoursesModal() {
     console.log('📚 Showing courses modal...');
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'block';
@@ -1424,13 +1436,13 @@ function showCoursesModal() {
                 <div class="add-student-section">
                     <h4><i class="fas fa-plus-circle"></i> Create New Course</h4>
                     <div class="add-student-form">
-                        <input type="text" 
-                               id="new-course-name" 
+                        <input type="text"
+                               id="new-course-name"
                                placeholder="Course Name (e.g., Computer Science)"
                                aria-label="Course Name"
                                required>
-                        <input type="text" 
-                               id="new-course-id" 
+                        <input type="text"
+                               id="new-course-id"
                                placeholder="Course ID (e.g., CS-101)"
                                aria-label="Course ID"
                                required>
@@ -1448,12 +1460,12 @@ function showCoursesModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Load courses
     populateCoursesList();
-    
+
     // Close modal handlers
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -1465,9 +1477,9 @@ function showCoursesModal() {
 async function populateCoursesList() {
     const listElement = document.getElementById('courses-list-display');
     if (!listElement) return;
-    
+
     await fetchAllCourses();
-    
+
     if (allCourses.length === 0) {
         listElement.innerHTML = `
             <div class="no-results">
@@ -1480,9 +1492,9 @@ async function populateCoursesList() {
         `;
         return;
     }
-    
+
     listElement.innerHTML = '';
-    
+
     allCourses.forEach(course => {
         const courseDiv = document.createElement('div');
         courseDiv.className = 'course-list-item';
@@ -1506,19 +1518,19 @@ async function populateCoursesList() {
 
 async function createNewCourse() {
     console.log('➕ Creating new course...');
-    
+
     const nameInput = document.getElementById('new-course-name');
     const idInput = document.getElementById('new-course-id');
     const submitButton = document.querySelector('.add-student-btn');
-    
+
     const courseName = nameInput?.value.trim();
     const courseId = idInput?.value.trim();
-    
+
     if (!courseName || !courseId) {
         showToast('Please fill in all fields', 'error');
         return;
     }
-    
+
     // Check if course ID already exists
     const existingCourse = allCourses.find(c => c.course_id.toLowerCase() === courseId.toLowerCase());
     if (existingCourse) {
@@ -1526,32 +1538,32 @@ async function createNewCourse() {
         idInput?.focus();
         return;
     }
-    
+
     // Show loading state
     if (submitButton) {
         submitButton.disabled = true;
         submitButton.innerHTML = '<div class="loading"></div> Creating...';
     }
-    
+
     try {
         const { error } = await supabaseClient
             .from('courses')
-            .insert([{ 
-                course_name: courseName, 
-                course_id: courseId 
+            .insert([{
+                course_name: courseName,
+                course_id: courseId
             }]);
-        
+
         if (error) throw error;
-        
+
         await fetchAllCourses();
         populateCoursesList();
         showToast('Course created successfully!', 'success');
-        
+
         // Clear inputs
         if (nameInput) nameInput.value = '';
         if (idInput) idInput.value = '';
         nameInput?.focus();
-        
+
     } catch (err) {
         console.error('❌ Error creating course:', err);
         showToast(`Failed to create course: ${err.message}`, 'error');
@@ -1567,19 +1579,19 @@ async function deleteCourse(id, courseName) {
     if (!confirm(`Delete course "${courseName}"? This cannot be undone.`)) {
         return;
     }
-    
+
     try {
         const { error } = await supabaseClient
             .from('courses')
             .delete()
             .eq('id', id);
-        
+
         if (error) throw error;
-        
+
         await fetchAllCourses();
         populateCoursesList();
         showToast('Course deleted successfully', 'success');
-        
+
     } catch (err) {
         console.error('❌ Error deleting course:', err);
         showToast('Failed to delete course', 'error');
@@ -1598,28 +1610,28 @@ async function deleteSession(sessionId, sessionName) {
     if (!confirm(`Delete session "${sessionName}"? This will also remove all attendance records for this session.`)) {
         return;
     }
-    
+
     try {
         // Delete attendance records first
         await supabaseClient.from('attendance').delete().eq('session_id', sessionId);
-        
+
         // Delete session
         const { error } = await supabaseClient
             .from('sessions')
             .delete()
             .eq('id', sessionId);
-        
+
         if (error) throw error;
-        
+
         await fetchAllSessions();
         populateSessionHistoryList();
         showToast('Session deleted successfully', 'success');
-        
+
         // If the deleted session was the current session, clear it
         if (currentSession && currentSession.id === sessionId) {
             updateActiveSession(null);
         }
-        
+
     } catch (err) {
         console.error('❌ Error deleting session:', err);
         showToast('Failed to delete session', 'error');
@@ -1630,10 +1642,10 @@ async function deleteSession(sessionId, sessionName) {
 
 async function exportAttendanceCSV() {
     console.log('📥 Exporting attendance CSV...');
-    
+
     try {
         showToast('Preparing export...', 'info');
-        
+
         const { data: attendanceData, error } = await supabaseClient
             .from('attendance')
             .select(`
@@ -1641,14 +1653,14 @@ async function exportAttendanceCSV() {
                 sessions(session_name, courses(course_name, course_id))
             `)
             .order('timestamp', { ascending: false });
-        
+
         if (error) throw error;
-        
+
         if (attendanceData.length === 0) {
             showToast('No attendance data to export', 'error');
             return;
         }
-        
+
         // Convert to CSV
         const csvHeaders = [
             'Student Name',
@@ -1660,7 +1672,7 @@ async function exportAttendanceCSV() {
             'Fingerprint Verified',
             'Location Verified'
         ];
-        
+
         const csvRows = attendanceData.map(record => [
             record.student,
             record.usn,
@@ -1671,15 +1683,15 @@ async function exportAttendanceCSV() {
             record.fingerprint_verified ? 'Yes' : 'No',
             record.location_verified ? 'Yes' : 'No'
         ]);
-        
+
         const csvContent = [csvHeaders, ...csvRows]
             .map(row => row.map(field => `"${field}"`).join(','))
             .join('\n');
-        
+
         // Download CSV
         downloadCSV(csvContent, `attendance_${new Date().toISOString().split('T')[0]}.csv`);
         showToast('Attendance data exported successfully!', 'success');
-        
+
     } catch (err) {
         console.error('❌ Error exporting CSV:', err);
         showToast('Failed to export attendance data', 'error');
@@ -1688,7 +1700,7 @@ async function exportAttendanceCSV() {
 
 async function exportSessionCSV(sessionId) {
     console.log('📥 Exporting session CSV for:', sessionId);
-    
+
     try {
         const { data: attendanceData, error } = await supabaseClient
             .from('attendance')
@@ -1698,16 +1710,16 @@ async function exportSessionCSV(sessionId) {
             `)
             .eq('session_id', sessionId)
             .order('timestamp', { ascending: false });
-        
+
         if (error) throw error;
-        
+
         if (attendanceData.length === 0) {
             showToast('No attendance data for this session', 'error');
             return;
         }
-        
+
         const sessionName = attendanceData[0].sessions?.session_name || 'session';
-        
+
         // Convert to CSV
         const csvHeaders = [
             'Student Name',
@@ -1717,7 +1729,7 @@ async function exportSessionCSV(sessionId) {
             'Fingerprint Verified',
             'Location Verified'
         ];
-        
+
         const csvRows = attendanceData.map(record => [
             record.student,
             record.usn,
@@ -1726,15 +1738,15 @@ async function exportSessionCSV(sessionId) {
             record.fingerprint_verified ? 'Yes' : 'No',
             record.location_verified ? 'Yes' : 'No'
         ]);
-        
+
         const csvContent = [csvHeaders, ...csvRows]
             .map(row => row.map(field => `"${field}"`).join(','))
             .join('\n');
-        
+
         // Download CSV
         downloadCSV(csvContent, `${sessionName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_attendance.csv`);
         showToast('Session data exported successfully!', 'success');
-        
+
     } catch (err) {
         console.error('❌ Error exporting session CSV:', err);
         showToast('Failed to export session data', 'error');
@@ -1758,20 +1770,20 @@ function downloadCSV(csvContent, filename) {
 
 async function executeWithRetry(operation, maxRetries = MAX_RETRIES) {
     let lastError;
-    
+
     for (let i = 0; i <= maxRetries; i++) {
         try {
             if (!isOnline && i === 0) {
                 throw new Error('Offline - operation will be retried when connection is restored');
             }
-            
+
             const result = await operation();
             retryCount = 0; // Reset on success
             return result;
         } catch (error) {
             lastError = error;
             retryCount = i + 1;
-            
+
             if (i < maxRetries) {
                 const delay = Math.pow(2, i) * 1000; // Exponential backoff
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -1779,7 +1791,7 @@ async function executeWithRetry(operation, maxRetries = MAX_RETRIES) {
             }
         }
     }
-    
+
     throw lastError;
 }
 
@@ -1809,11 +1821,11 @@ async function retryFailedOperations() {
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         // Only trigger shortcuts if no modal is open and not in input field
-        if (document.querySelector('.modal[style*="block"]') || 
+        if (document.querySelector('.modal[style*="block"]') ||
             ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
             return;
         }
-        
+
         if (e.ctrlKey || e.metaKey) {
             switch (e.key.toLowerCase()) {
                 case 'n':
@@ -1842,7 +1854,7 @@ function setupKeyboardShortcuts() {
                     break;
             }
         }
-        
+
         // ESC key to close modals
         if (e.key === 'Escape') {
             const modal = document.querySelector('.modal[style*="block"]');
@@ -1864,14 +1876,14 @@ function setupModalEventListeners() {
 
 function setupRealtimeSubscriptions() {
     if (!supabaseClient) return;
-    
+
     try {
         console.log('🔔 Setting up realtime subscriptions...');
-        
+
         // Subscribe to attendance changes
         attendanceSubscription = supabaseClient
             .channel('attendance_changes')
-            .on('postgres_changes', 
+            .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'attendance' },
                 (payload) => {
                     console.log('📊 Attendance change detected:', payload);
@@ -1903,7 +1915,7 @@ function setupRealtimeSubscriptions() {
                 supabaseClient.removeChannel(studentSubscription);
             }
         });
-        
+
     } catch (error) {
         console.error('❌ Error setting up realtime subscriptions:', error);
     }
@@ -1920,15 +1932,15 @@ function startPeriodicRefresh() {
 
 async function removeStudentFromSession(studentName, usn) {
     if (!currentSession || !confirm(`Remove ${studentName} from the session?`)) return;
-    
+
     try {
         const { error } = await supabaseClient
             .from('attendance')
             .delete()
             .match({ student: studentName, usn: usn, session_id: currentSession.id });
-        
+
         if (error) throw error;
-        
+
         showToast(`${studentName} removed from session`, 'success');
         fetchCurrentSessionAttendance();
     } catch (err) {
@@ -1959,7 +1971,7 @@ function fallbackCopyTextToClipboard(text) {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
         const successful = document.execCommand('copy');
         if (successful) {
@@ -1971,7 +1983,7 @@ function fallbackCopyTextToClipboard(text) {
         console.error('Fallback copy failed: ', err);
         showToast('Failed to copy link. Please copy manually.', 'error');
     }
-    
+
     document.body.removeChild(textArea);
 }
 
@@ -1986,43 +1998,43 @@ function openInNewTab(url) {
 
 function showToast(message, type = 'info', duration = 5000) {
     console.log(`🔔 Toast [${type}]:`, message);
-    
+
     const container = document.getElementById('toast-container');
     if (!container) {
         console.warn('Toast container not found, falling back to alert');
         alert(message);
         return;
     }
-    
+
     const toast = document.createElement('div');
     toast.className = `${type}-toast`;
-    
-    const icon = type === 'success' ? 'fa-check-circle' : 
-                type === 'error' ? 'fa-exclamation-triangle' : 
+
+    const icon = type === 'success' ? 'fa-check-circle' :
+                type === 'error' ? 'fa-exclamation-triangle' :
                 type === 'info' ? 'fa-info-circle' :
                 'fa-bell';
-    
+
     const toastId = 'toast-' + Date.now();
     toast.id = toastId;
-    
+
     toast.innerHTML = `
         <i class="fas ${icon}"></i>
         <span>${escapeHtml(message)}</span>
         <button onclick="removeToast('${toastId}')" aria-label="Close notification">×</button>
     `;
-    
+
     container.appendChild(toast);
-    
+
     // Animate in
     setTimeout(() => {
         toast.classList.add('toast-show');
     }, 10);
-    
+
     // Auto remove
     setTimeout(() => {
         removeToast(toastId);
     }, duration);
-    
+
     // Limit number of toasts
     const allToasts = container.querySelectorAll('.success-toast, .error-toast, .info-toast');
     if (allToasts.length > 5) {
@@ -2058,19 +2070,19 @@ function getTimeAgo(date) {
     const now = new Date();
     const diffInMs = now - date;
     const diffInMinutes = Math.floor(diffInMs / 60000);
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
-    
+
     const diffInWeeks = Math.floor(diffInDays / 7);
     if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
-    
+
     return date.toLocaleDateString();
 }
 
@@ -2080,19 +2092,19 @@ function getCurrentPosition() {
             reject(new Error('Geolocation not supported'));
             return;
         }
-        
+
         const options = {
             enableHighAccuracy: true,
             timeout: 15000,
             maximumAge: 300000 // 5 minutes
         };
-        
+
         navigator.geolocation.getCurrentPosition(
-            resolve, 
+            resolve,
             (error) => {
                 console.warn('Geolocation error:', error);
                 reject(error);
-            }, 
+            },
             options
         );
     });
@@ -2144,17 +2156,17 @@ function updateSessionDisplay(sessionData) {
     const sessionNameEl = document.getElementById('session-name-display');
     const courseNameEl = document.getElementById('course-name-display');
     const sessionTimeEl = document.getElementById('session-time-display');
-    
+
     if (sessionNameEl) {
         sessionNameEl.textContent = sessionData.session_name;
     }
-    
+
     if (courseNameEl) {
         const courseName = sessionData.courses ? sessionData.courses.course_name : 'General Course';
         const courseId = sessionData.courses ? sessionData.courses.course_id : '';
         courseNameEl.textContent = `${courseName} ${courseId}`.trim();
     }
-    
+
     if (sessionTimeEl) {
         const createdTime = new Date(sessionData.created_at).toLocaleString();
         sessionTimeEl.innerHTML = `<i class="fas fa-clock"></i> ${createdTime}`;
@@ -2164,7 +2176,7 @@ function updateSessionDisplay(sessionData) {
 function populateStudentListForAttendance() {
     const listElement = document.getElementById('student-list');
     if (!listElement) return;
-    
+
     if (allStudents.length === 0) {
         listElement.innerHTML = `
             <div class="loading-students">
@@ -2174,15 +2186,15 @@ function populateStudentListForAttendance() {
         `;
         return;
     }
-    
+
     listElement.innerHTML = '';
-    
+
     allStudents.forEach(student => {
         const studentDiv = document.createElement('div');
         studentDiv.className = 'student-list-item';
         studentDiv.setAttribute('role', 'option');
         studentDiv.setAttribute('tabindex', '0');
-        
+
         studentDiv.innerHTML = `
             <div class="student-details">
                 <div class="student-name">${escapeHtml(student.name)}</div>
@@ -2192,7 +2204,7 @@ function populateStudentListForAttendance() {
                 <i class="fas fa-check"></i>
             </div>
         `;
-        
+
         studentDiv.addEventListener('click', () => selectStudentForAttendance(student, studentDiv));
         listElement.appendChild(studentDiv);
     });
@@ -2203,11 +2215,11 @@ function selectStudentForAttendance(student, element) {
     document.querySelectorAll('.student-list-item.selected').forEach(item => {
         item.classList.remove('selected');
     });
-    
+
     // Add selection to clicked item
     element.classList.add('selected');
     selectedStudentForAttendance = student;
-    
+
     // Enable submit button
     const submitBtn = document.getElementById('submit-attendance');
     if (submitBtn) {
@@ -2221,13 +2233,13 @@ async function submitStudentAttendance() {
         showToast('Please select a student first', 'error');
         return;
     }
-    
+
     const submitBtn = document.getElementById('submit-attendance');
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<div class="loading"></div> Submitting...';
     }
-    
+
     try {
         // Check if student already marked attendance
         const { data: existingAttendance, error: checkError } = await supabaseClient
@@ -2236,12 +2248,12 @@ async function submitStudentAttendance() {
             .eq('session_id', currentSession.id)
             .eq('usn', selectedStudentForAttendance.usn)
             .single();
-        
+
         if (existingAttendance) {
             showToast('Attendance already marked for this session', 'error');
             return;
         }
-        
+
         // Get location if possible
         let locationData = null;
         try {
@@ -2253,7 +2265,7 @@ async function submitStudentAttendance() {
         } catch (err) {
             console.log('Location not available:', err);
         }
-        
+
         // Insert attendance record
         const attendanceRecord = {
             session_id: currentSession.id,
@@ -2264,15 +2276,15 @@ async function submitStudentAttendance() {
             location_verified: locationData !== null,
             location_data: locationData
         };
-        
+
         const { error: insertError } = await supabaseClient
             .from('attendance')
             .insert([attendanceRecord]);
-        
+
         if (insertError) throw insertError;
-        
+
         showSuccessPage(selectedStudentForAttendance, new Date());
-        
+
     } catch (err) {
         console.error('❌ Error submitting attendance:', err);
         showToast('Failed to submit attendance. Please try again.', 'error');
@@ -2287,7 +2299,7 @@ async function submitStudentAttendance() {
 function setupStudentSearch() {
     const searchInput = document.getElementById('student-search');
     if (!searchInput) return;
-    
+
     searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase().trim();
         filterStudentListForAttendance(searchTerm);
@@ -2296,11 +2308,11 @@ function setupStudentSearch() {
 
 function filterStudentListForAttendance(searchTerm) {
     const studentItems = document.querySelectorAll('.student-list-item');
-    
+
     studentItems.forEach(item => {
         const name = item.querySelector('.student-name')?.textContent.toLowerCase() || '';
         const usn = item.querySelector('.student-usn')?.textContent.toLowerCase() || '';
-        
+
         if (name.includes(searchTerm) || usn.includes(searchTerm)) {
             item.style.display = 'flex';
         } else {
@@ -2312,16 +2324,16 @@ function filterStudentListForAttendance(searchTerm) {
 function showSuccessPage(student, timestamp) {
     const selectionPage = document.getElementById('student-selection-page');
     const successPage = document.getElementById('success-page');
-    
+
     if (selectionPage) selectionPage.classList.add('hidden');
     if (successPage) successPage.classList.remove('hidden');
-    
+
     const nameEl = document.getElementById('success-student-name');
     const timestampEl = document.getElementById('success-timestamp');
-    
+
     if (nameEl) nameEl.textContent = student.name;
     if (timestampEl) timestampEl.textContent = timestamp.toLocaleString();
-    
+
     // Auto-close after 10 seconds
     setTimeout(() => {
         window.close();
@@ -2332,7 +2344,7 @@ function showErrorPage(message) {
     const selectionPage = document.getElementById('student-selection-page');
     const errorPage = document.getElementById('error-page');
     const messageEl = document.getElementById('error-message-text');
-    
+
     if (selectionPage) selectionPage.classList.add('hidden');
     if (errorPage) errorPage.classList.remove('hidden');
     if (messageEl) messageEl.textContent = message;
@@ -2344,10 +2356,10 @@ async function logout() {
     try {
         const { error } = await supabaseClient.auth.signOut();
         if (error) throw error;
-        
+
         localStorage.clear();
         sessionStorage.clear();
-        
+
         // Clear subscriptions
         if (attendanceSubscription) {
             supabaseClient.removeChannel(attendanceSubscription);
@@ -2355,14 +2367,14 @@ async function logout() {
         if (studentSubscription) {
             supabaseClient.removeChannel(studentSubscription);
         }
-        
+
         showToast('Logged out successfully', 'success');
-        
+
         // Redirect to login page after a short delay
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 1000);
-        
+
     } catch (err) {
         console.error('❌ Error logging out:', err);
         showToast('Failed to logout', 'error');
@@ -2374,16 +2386,16 @@ async function logout() {
 function generateAttendanceTrendChart(attendanceData) {
     const ctx = document.getElementById('attendance-trend-chart');
     if (!ctx || !window.Chart) return;
-    
+
     // Destroy existing chart
     if (attendanceChart) {
         attendanceChart.destroy();
     }
-    
+
     // Prepare data for last 30 days
     const last30Days = [];
     const attendanceCounts = {};
-    
+
     for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -2391,7 +2403,7 @@ function generateAttendanceTrendChart(attendanceData) {
         last30Days.push(dateStr);
         attendanceCounts[dateStr] = 0;
     }
-    
+
     // Count attendance by date
     attendanceData.forEach(record => {
         const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
@@ -2399,10 +2411,10 @@ function generateAttendanceTrendChart(attendanceData) {
             attendanceCounts[recordDate]++;
         }
     });
-    
+
     const chartData = last30Days.map(date => attendanceCounts[date]);
     const labels = last30Days.map(date => new Date(date).toLocaleDateString());
-    
+
     attendanceChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -2438,18 +2450,18 @@ function generateAttendanceTrendChart(attendanceData) {
 function generateVerificationMethodChart(attendanceData) {
     const ctx = document.getElementById('verification-method-chart');
     if (!ctx || !window.Chart) return;
-    
+
     // Destroy existing chart
     if (verificationChart) {
         verificationChart.destroy();
     }
-    
+
     // Count verification methods
     let fingerprintOnly = 0;
     let locationOnly = 0;
     let both = 0;
     let neither = 0;
-    
+
     attendanceData.forEach(record => {
         if (record.fingerprint_verified && record.location_verified) {
             both++;
@@ -2461,7 +2473,7 @@ function generateVerificationMethodChart(attendanceData) {
             neither++;
         }
     });
-    
+
     verificationChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -2470,7 +2482,7 @@ function generateVerificationMethodChart(attendanceData) {
                 data: [both, fingerprintOnly, locationOnly, neither],
                 backgroundColor: [
                     '#28a745',
-                    '#ffc107', 
+                    '#ffc107',
                     '#17a2b8',
                     '#6c757d'
                 ]
@@ -2490,18 +2502,18 @@ function generateVerificationMethodChart(attendanceData) {
 async function fetchStudentStatistics(searchTerm = '') {
     const listElement = document.getElementById('student-stats-list');
     if (!listElement) return;
-    
+
     try {
         // Fetch attendance data with student details
         const { data: attendanceData, error } = await supabaseClient
             .from('attendance')
             .select('student, usn, session_id, fingerprint_verified, location_verified');
-        
+
         if (error) throw error;
-        
+
         // Group by student
         const studentStats = {};
-        
+
         attendanceData.forEach(record => {
             if (!studentStats[record.usn]) {
                 studentStats[record.usn] = {
@@ -2513,28 +2525,28 @@ async function fetchStudentStatistics(searchTerm = '') {
                     sessions: new Set()
                 };
             }
-            
+
             const stats = studentStats[record.usn];
             stats.totalAttendance++;
             stats.sessions.add(record.session_id);
-            
+
             if (record.fingerprint_verified) stats.fingerprintVerified++;
             if (record.location_verified) stats.locationVerified++;
         });
-        
+
         // Convert to array and filter
         let statsArray = Object.values(studentStats);
-        
+
         if (searchTerm) {
-            statsArray = statsArray.filter(student => 
+            statsArray = statsArray.filter(student =>
                 student.name.toLowerCase().includes(searchTerm) ||
                 student.usn.toLowerCase().includes(searchTerm)
             );
         }
-        
+
         // Sort by total attendance (descending)
         statsArray.sort((a, b) => b.totalAttendance - a.totalAttendance);
-        
+
         if (statsArray.length === 0) {
             listElement.innerHTML = `
                 <div class="no-results">
@@ -2544,13 +2556,13 @@ async function fetchStudentStatistics(searchTerm = '') {
             `;
             return;
         }
-        
+
         listElement.innerHTML = '';
-        
+
         statsArray.forEach(student => {
             const studentDiv = document.createElement('div');
             studentDiv.className = 'student-stats-item';
-            
+
             studentDiv.innerHTML = `
                 <div class="student-info">
                     <div class="student-name">${escapeHtml(student.name)}</div>
@@ -2575,10 +2587,10 @@ async function fetchStudentStatistics(searchTerm = '') {
                     </div>
                 </div>
             `;
-            
+
             listElement.appendChild(studentDiv);
         });
-        
+
     } catch (err) {
         console.error('❌ Error loading student statistics:', err);
         showToast('Failed to load student statistics', 'error');
