@@ -6,54 +6,45 @@
     <title>QR Attendance System - Faculty Dashboard</title>
     <meta name="description" content="Faculty dashboard for QR-based attendance management system">
     <meta name="keywords" content="attendance, QR code, faculty, education, management">
-    
-    <!-- Stylesheets -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Scripts -->
+    <link rel="stylesheet" href="style.css">
+
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Favicon and PWA -->
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#1e5aa8">
-    
-    <!-- Preconnect for performance -->
+
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://unpkg.com">
 </head>
 <body>
-   
-    <!-- Main Header -->
+
     <header class="header">
         <h1><strong>Dayananda Sagar College Of Engineering</strong></h1>
         <h2><i class="fas fa-chalkboard-teacher"></i> Faculty Attendance Portal</h2>
-        
-        <!-- Logout Button -->
+
         <button class="logout-btn" onclick="logout()" title="Logout" aria-label="Logout">
             <i class="fas fa-sign-out-alt"></i>
             Logout
         </button>
     </header>
 
-    <!-- Main Container -->
     <div class="container">
-        <!-- Faculty Dashboard -->
         <div id="admin-page" class="page active">
-            
-            <!-- Dashboard Content -->
+
             <div class="admin-content">
-                
-                <!-- Present Students Card -->
+
                 <div class="present-count-card">
                     <div class="present-count" id="present-count">0</div>
                     <h3 id="current-session-title">
                         <i class="fas fa-pause-circle" style="color: #dc3545;"></i>
                         No Active Session
                     </h3>
-                    
+
                     <div class="present-students">
                         <h3><i class="fas fa-users"></i> Present Students</h3>
                         <div id="present-students-list" class="student-list-scroll">
@@ -65,7 +56,6 @@
                     </div>
                 </div>
 
-                <!-- QR Code Section -->
                 <div class="qr-section">
                     <h3><i class="fas fa-qrcode"></i> Scan to Mark Attendance</h3>
                     <div class="qr-container">
@@ -83,39 +73,38 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="action-buttons">
-                <button class="add-manually-btn fresh-btn" onclick="showCourseSelectionModal()" title="Start New Session (Ctrl+N)">
+                <button class="add-manually-btn fresh-btn" onclick="QRAttendanceSystem.showCourseSelectionModal()" title="Start New Session (Ctrl+N)">
                     <i class="fas fa-rocket"></i>
                     Start New Session
                 </button>
-                
-                <button class="add-manually-btn" onclick="showSessionHistoryModal()" title="View Session History (Ctrl+H)">
+
+                <button class="add-manually-btn" onclick="QRAttendanceSystem.showSessionHistoryModal()" title="View Session History (Ctrl+H)">
                     <i class="fas fa-history"></i>
                     Session History
                 </button>
-                
-                <button class="add-manually-btn" onclick="showStatisticsModal()" title="View Statistics (Ctrl+S)">
+
+                <button class="add-manually-btn" onclick="QRAttendanceSystem.showStatisticsModal()" title="View Statistics (Ctrl+S)">
                     <i class="fas fa-chart-bar"></i>
                     Statistics
                 </button>
-                
-                <button class="add-manually-btn" onclick="showAddManuallyModal()" title="Add Student Manually (Ctrl+M)">
+
+                <button class="add-manually-btn" onclick="QRAttendanceSystem.showAddManuallyModal()" title="Add Student Manually (Ctrl+M)">
                     <i class="fas fa-user-plus"></i>
                     Add Manually
                 </button>
-                
-                <button class="add-manually-btn student-list-btn" onclick="showStudentListModal()" title="Manage Students (Ctrl+U)">
+
+                <button class="add-manually-btn student-list-btn" onclick="QRAttendanceSystem.showStudentListModal()" title="Manage Students (Ctrl+U)">
                     <i class="fas fa-users"></i>
                     Manage Students
                 </button>
-                
-                <button class="add-manually-btn" onclick="showCoursesModal()" title="Manage Courses">
+
+                <button class="add-manually-btn" onclick="QRAttendanceSystem.showCoursesModal()" title="Manage Courses">
                     <i class="fas fa-book"></i>
                     Manage Courses
                 </button>
-                
-                <button class="add-manually-btn export-btn" onclick="exportAttendanceCSV()" title="Export to CSV (Ctrl+E)">
+
+                <button class="add-manually-btn export-btn" onclick="QRAttendanceSystem.exportAttendanceCSV()" title="Export to CSV (Ctrl+E)">
                     <i class="fas fa-file-csv"></i>
                     Export CSV
                 </button>
@@ -123,39 +112,10 @@
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true">
-        <!-- Toast notifications will be inserted here -->
-    </div>
+        </div>
 
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-rocket"></i> Start New Session</h3>
-                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="session-name-input">
-                                <i class="fas fa-tag"></i> Session Name
-                            </label>
-                            <input type="text" id="session-name-input" placeholder="Enter session name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="course-select">
-                                <i class="fas fa-book"></i> Select Course
-                            </label>
-                            <select id="course-select" required>
-                                <option value="">Choose a course...</option>
-                                ${allCourses.map(course => 
-                                    `<option value="${course.id}">${course.course_name} (${course.course_id})</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                        <button class="add-student-btn" onclick="createNewSession()">
-                            <i class="fas fa-play"></i> Start Session
-                        </button>
-                    </div>
-                </div>
     <script src="script.js"></script>
+
 </body>
 </html>
