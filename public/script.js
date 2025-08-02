@@ -2287,4 +2287,15 @@ window.addEventListener('beforeunload', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { utils, auth, data, sessions, pages, ui, webAuthn };
 }
+// Expose functions globally for HTML onclick handlers
+window.QRAttendanceSystem = {
+    logout: () => auth.logout(),
+    showCourseSelectionModal: () => pages.showStartSessionModal(),
+    showAddManuallyModal: () => pages.showAddManuallyModal(), 
+    showStudentListModal: () => pages.showStudentsModal(),
+    showSessionHistoryModal: () => pages.showSessionHistoryModal(),
+    exportAttendanceCSV: () => pages.exportAttendanceData(),
+    showStatisticsModal: () => pages.showStatisticsModal(),
+    showCoursesModal: () => pages.showCoursesModal()
+};
 
