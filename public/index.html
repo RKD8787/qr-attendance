@@ -4,27 +4,407 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Attendance System - Faculty Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-      <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://unpkg.com">
-    <meta name="description" content="QR-based attendance tracking system for educational institutions">
-    <meta name="robots" content="noindex, nofollow">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        h1 {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            text-align: center;
+            color: #1e5aa8;
+            font-size: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #1e5aa8;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .admin-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .present-count-card, .qr-section {
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .present-count {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #current-session-title {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #1e5aa8;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .present-students h3 {
+            color: #1e5aa8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #present-students-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .student-usn {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .attendance-time {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .qr-section h3 {
+            color: #1e5aa8;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            justify-content: center;
+        }
+
+        #qr-code-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .qr-placeholder {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .qr-instruction {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .add-manually-btn {
+            background: linear-gradient(135deg, #1e5aa8, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 1rem;
+            min-height: 60px;
+        }
+
+        .add-manually-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(30, 90, 168, 0.3);
+        }
+
+        .fresh-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .fresh-btn:hover {
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+        }
+
+        .export-btn:hover {
+            box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5vh auto;
+            padding: 35px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            position: relative;
+            transform: translateY(-50px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #1e5aa8;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s ease;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .close-btn:hover {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #1e5aa8;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            max-width: 400px;
+        }
+
+        .toast {
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-content {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .toast-success .toast-content { border-left-color: #28a745; }
+        .toast-error .toast-content { border-left-color: #dc3545; }
+        .toast-warning .toast-content { border-left-color: #ffc107; }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .admin-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                padding: 15px;
+            }
+            
+            .logout-btn {
+                position: relative;
+                margin: 10px auto;
+                display: flex;
+            }
+        }
+
+        .no-students-message {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+    </style>
 </head>
 <body>
-   
-
     <!-- Main Header -->
-    <h1><strong>Dayananda Sagar College Of Engineering</strong></h1>
+    <header>
+        <h1><strong>Dayananda Sagar College Of Engineering</strong></h1>
         <h2><i class="fas fa-chalkboard-teacher"></i> Faculty Attendance Portal</h2>
 
-        <button class="logout-btn" onclick="QRAttendanceSystem.logout()" title="Logout" aria-label="Logout">
+        <button class="logout-btn" id="logout-btn" title="Logout" aria-label="Logout">
             <i class="fas fa-sign-out-alt"></i>
-           <span> Logout</span>
+            <span>Logout</span>
         </button>
     </header>
 
@@ -35,7 +415,7 @@
             <!-- Present Count Card -->
             <div class="present-count-card" role="region" aria-labelledby="attendance-summary">
                 <h3 id="attendance-summary" class="sr-only">Attendance Summary</h3>
-                <div id="present-count" class="present-count" aria-label="Number of present students">--</div>
+                <div id="present-count" class="present-count" aria-label="Number of present students">0</div>
                 <div id="current-session-title" role="status" aria-live="polite">No Active Session</div>
                 <div class="present-students">
                     <h3><i class="fas fa-users" aria-hidden="true"></i> Present Students</h3>
@@ -59,159 +439,984 @@
                 <div id="qr-instruction" class="qr-instruction">
                     Students scan this QR code to mark their attendance
                 </div>
-                <div class="qr-url-display" id="qr-url-display" style="display: none;">
-                    <small>Direct URL for students:</small>
-                    <div class="url-copy-container">
-                        <input type="text" id="qr-url-input" readonly aria-label="Student attendance URL">
-                        <button id="copy-url-btn" 
-                                type="button" 
-                                title="Copy URL to clipboard"
-                                aria-label="Copy attendance URL">
-                            <i class="fas fa-copy" aria-hidden="true"></i> Copy
-                        </button>
-                    </div>
-                </div>
             </div>
         </section>
 
         <!-- Action Buttons -->
         <section class="action-buttons" aria-label="Main actions">
-            <button class="add-manually-btn fresh-btn" onclick="QRAttendanceSystem.showCourseSelectionModal()"
-                    id="start-session-btn" 
-                    type="button"
-                    aria-describedby="start-session-help">
+            <button class="add-manually-btn fresh-btn" id="start-session-btn" type="button">
                 <i class="fas fa-play" aria-hidden="true"></i>
                 <span>Start New Session</span>
             </button>
-           <button class="add-manually-btn" onclick="QRAttendanceSystem.showAddManuallyModal()" title="Add Student Manually (Ctrl+M)">
-                    <i class="fas fa-user-plus"></i>
-                    Add Manually
-                </button>  
+           
+            <button class="add-manually-btn" id="add-manually-btn" title="Add Student Manually">
+                <i class="fas fa-user-plus"></i>
+                Add Manually
+            </button>  
 
-            <button class="add-manually-btn onclick="QRAttendanceSystem.showStudentListModal()"  student-list-btn" 
-                    id="open-students-btn" 
-                    type="button"
-                    aria-describedby="manage-students-help">
+            <button class="add-manually-btn" id="manage-students-btn" type="button">
                 <i class="fas fa-users" aria-hidden="true"></i>
                 <span>Manage Students</span>
             </button>
-            <div id="manage-students-help" class="sr-only">Add, edit, or remove students</div>
-               <button class="add-manually-btn" onclick="QRAttendanceSystem.showSessionHistoryModal()" title="View Session History (Ctrl+H)">
-                    <i class="fas fa-history"></i>
-                    Session History
-                </button>
-            <button class="add-manually-btn export-btn" onclick="QRAttendanceSystem.exportAttendanceCSV()"
-                    id="export-attendance-btn" 
-                    type="button"
-                    aria-describedby="export-help">
+               
+            <button class="add-manually-btn" id="session-history-btn" title="View Session History">
+                <i class="fas fa-history"></i>
+                Session History
+            </button>
+            
+            <button class="add-manually-btn export-btn" id="export-attendance-btn" type="button">
                 <i class="fas fa-file-csv" aria-hidden="true"></i>
                 <span>Export Attendance</span>
             </button>
-            <div id="export-help" class="sr-only">Download attendance data as CSV</div>
 
-            <button class="add-manually-btn" onclick="QRAttendanceSystem.showStatisticsModal()"
-                    id="statistics-btn" 
-                    type="button"
-                    aria-describedby="statistics-help">
+            <button class="add-manually-btn" id="statistics-btn" type="button">
                 <i class="fas fa-chart-bar" aria-hidden="true"></i>
                 <span>View Statistics</span>
             </button>
-            <div id="statistics-help" class="sr-only">View attendance analytics and reports</div>
-        <button class="add-manually-btn" onclick="QRAttendanceSystem.showCoursesModal()" title="Manage Courses">
-                    <i class="fas fa-book"></i>
-                    Manage Courses
-                </button>
-            <button class="add-manually-btn" 
-                    id="refresh-data-btn" 
-                    type="button"
-                    aria-describedby="refresh-help">
+            
+            <button class="add-manually-btn" id="manage-courses-btn" title="Manage Courses">
+                <i class="fas fa-book"></i>
+                Manage Courses
+            </button>
+            
+            <button class="add-manually-btn" id="refresh-data-btn" type="button">
                 <i class="fas fa-sync-alt" aria-hidden="true"></i>
                 <span>Refresh Data</span>
             </button>
-            <div id="refresh-help" class="sr-only">Manually refresh all data from server</div>
         </section>
-
-        <!-- Network Status Indicator -->
-        <div id="network-status" class="network-status" role="status" aria-live="polite" style="display: none;">
-            <i class="fas fa-wifi-slash" aria-hidden="true"></i>
-            <span>Connection lost. Some features may not work.</span>
-        </div>
-
-        <!-- Keyboard Shortcuts Help -->
-        <div id="shortcuts-help" class="shortcuts-help hidden" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
-            <div class="shortcuts-content">
-                <h3 id="shortcuts-title">Keyboard Shortcuts</h3>
-                <div class="shortcut-list">
-                    <div class="shortcut-item">
-                        <span>Start New Session</span>
-                        <kbd>Ctrl + N</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Manage Students</span>
-                        <kbd>Ctrl + S</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Export Data</span>
-                        <kbd>Ctrl + E</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>View Statistics</span>
-                        <kbd>Ctrl + T</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Refresh Data</span>
-                        <kbd>F5</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Show Help</span>
-                        <kbd>F1</kbd>
-                    </div>
-                    <div class="shortcut-item">
-                        <span>Close Modal</span>
-                        <kbd>Esc</kbd>
-                    </div>
-                </div>
-                <button type="button" id="close-shortcuts" class="close-btn" aria-label="Close keyboard shortcuts help">
-                    <i class="fas fa-times" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
     </div>
-
-    <!-- Modal Container -->
-    <div id="modals-root" aria-hidden="true"></div>
 
     <!-- Toast Notifications Container -->
     <div id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Loading Overlay Container -->
-    <div id="loading-root"></div>
-
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.0/dist/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     
-    <!-- Main Application Script -->
-    <script src="script.js"></script>
-
-    <!-- Service Worker Registration -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch((registrationError) => {
-                        console.log('SW registration failed: ', registrationError);
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            // Demo configuration - replace with your actual Supabase credentials
+            SUPABASE_URL: 'https://zpesqzstorixfsmpntsx.supabase.co',
+            SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ',
+            TOAST_DURATION: 5000,
+            QR_SIZE: 300
+        };
+
+        // ===== GLOBAL VARIABLES =====
+        let supabaseClient = null;
+        let currentUser = { email: 'demo@college.edu' }; // Demo user
+        let allStudents = [
+            { name: 'John Doe', usn: '1AB21CS001' },
+            { name: 'Jane Smith', usn: '1AB21CS002' },
+            { name: 'Bob Johnson', usn: '1AB21CS003' },
+            { name: 'Alice Brown', usn: '1AB21CS004' },
+            { name: 'Charlie Wilson', usn: '1AB21CS005' }
+        ];
+        let presentStudents = [];
+        let currentSession = null;
+        let allCourses = [
+            { id: 1, course_name: 'Computer Science Engineering', course_id: 'CSE' },
+            { id: 2, course_name: 'Information Science Engineering', course_id: 'ISE' },
+            { id: 3, course_name: 'Electronics and Communication', course_id: 'ECE' }
+        ];
+
+        // ===== UTILITY FUNCTIONS =====
+        const utils = {
+            sanitizeText(input) {
+                if (!input) return '';
+                return String(input).replace(/[<>]/g, '').trim();
+            },
+
+            formatTimestamp(timestamp) {
+                return new Date(timestamp).toLocaleString();
+            },
+
+            generateStudentURL(sessionId) {
+                const baseURL = window.location.origin;
+                return `${baseURL}/student.html?session=${encodeURIComponent(sessionId)}`;
+            },
+
+            downloadCSV(data, filename) {
+                if (!window.Papa) {
+                    console.error('PapaParse library not loaded');
+                    return;
+                }
+
+                const csv = Papa.unparse(data);
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', filename);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+            }
+        };
+
+        // ===== UI MANAGEMENT =====
+        const ui = {
+            showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+                const container = this.getToastContainer();
+                const toast = this.createToast(message, type, duration);
+                
+                container.appendChild(toast);
+
+                // Animate in
+                requestAnimationFrame(() => {
+                    toast.classList.add('show');
+                });
+
+                // Auto remove
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.removeToast(toast);
+                    }, duration);
+                }
+
+                return toast;
+            },
+
+            getToastContainer() {
+                let container = document.getElementById('toast-root');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'toast-root';
+                    container.className = 'toast-container';
+                    document.body.appendChild(container);
+                }
+                return container;
+            },
+
+            createToast(message, type, duration) {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'polite');
+
+                const icon = this.getToastIcon(type);
+                
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <i class="${icon}" style="font-size: 1.2rem; color: ${this.getToastColor(type)};"></i>
+                        <span class="toast-message" style="flex: 1; color: #333;">${utils.sanitizeText(message)}</span>
+                        <button class="toast-close" aria-label="Close notification">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+
+                // Close button functionality
+                const closeBtn = toast.querySelector('.toast-close');
+                closeBtn.addEventListener('click', () => {
+                    this.removeToast(toast);
+                });
+
+                return toast;
+            },
+
+            getToastIcon(type) {
+                const icons = {
+                    success: 'fas fa-check-circle',
+                    error: 'fas fa-exclamation-circle',
+                    warning: 'fas fa-exclamation-triangle',
+                    info: 'fas fa-info-circle'
+                };
+                return icons[type] || icons.info;
+            },
+
+            getToastColor(type) {
+                const colors = {
+                    success: '#28a745',
+                    error: '#dc3545',
+                    warning: '#ffc107',
+                    info: '#17a2b8'
+                };
+                return colors[type] || colors.info;
+            },
+
+            removeToast(toast) {
+                if (toast && toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            },
+
+            showModal(content, options = {}) {
+                this.hideModal(); // Close any existing modal
+
+                const modal = this.createModal(content, options);
+                document.body.appendChild(modal);
+
+                // Show modal
+                requestAnimationFrame(() => {
+                    modal.style.display = 'flex';
+                    modal.style.opacity = '1';
+                });
+
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
+
+                return modal;
+            },
+
+            createModal(content, options) {
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.setAttribute('role', 'dialog');
+                modal.setAttribute('aria-modal', 'true');
+                
+                modal.style.cssText = `
+                    display: none;
+                    position: fixed;
+                    z-index: 1000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.7);
+                    backdrop-filter: blur(8px);
+                    overflow-y: auto;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    align-items: center;
+                    justify-content: center;
+                `;
+
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        ${options.title ? `
+                            <div class="modal-header">
+                                <h3>${utils.sanitizeText(options.title)}</h3>
+                                <button class="close-btn" aria-label="Close modal">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                        <div class="modal-body">
+                            ${content}
+                        </div>
+                    </div>
+                `;
+
+                // Animate modal content
+                setTimeout(() => {
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) {
+                        modalContent.style.transform = 'translateY(0)';
+                    }
+                }, 50);
+
+                // Close button functionality
+                const closeBtn = modal.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => this.hideModal());
+                }
+
+                // Click outside to close
+                if (options.closeOnBackdrop !== false) {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.hideModal();
+                        }
                     });
-            });
+                }
+
+                return modal;
+            },
+
+            hideModal() {
+                const existingModal = document.querySelector('.modal');
+                if (existingModal) {
+                    existingModal.style.opacity = '0';
+                    setTimeout(() => {
+                        if (existingModal.parentNode) {
+                            existingModal.parentNode.removeChild(existingModal);
+                        }
+                        // Restore body scroll
+                        document.body.style.overflow = '';
+                    }, 300);
+                }
+            }
+        };
+
+        // ===== SESSION MANAGEMENT =====
+        const sessions = {
+            updateActiveSession(sessionData) {
+                console.log('🔄 Updating active session:', sessionData?.session_name || 'None');
+                currentSession = sessionData;
+                
+                const qrContainer = document.getElementById('qr-code-container');
+                const sessionTitle = document.getElementById('current-session-title');
+                
+                if (sessionData) {
+                    // Update UI
+                    const courseName = sessionData.course_name || 'General';
+                    
+                    if (sessionTitle) {
+                        sessionTitle.textContent = `Active: ${sessionData.session_name} (${courseName})`;
+                    }
+                    
+                    // Generate QR code
+                    this.generateQR(sessionData.id);
+                    
+                } else {
+                    if (sessionTitle) {
+                        sessionTitle.textContent = 'No Active Session';
+                    }
+                    
+                    if (qrContainer) {
+                        qrContainer.innerHTML = '<p class="qr-placeholder">Start a session to generate QR code</p>';
+                    }
+                    
+                    this.updatePresentStudentsList([]);
+                }
+            },
+
+            generateQR(sessionId) {
+                const qrContainer = document.getElementById('qr-code-container');
+                if (!qrContainer) {
+                    console.error('❌ QR container not found');
+                    return;
+                }
+
+                try {
+                    // Clear container
+                    qrContainer.innerHTML = '';
+                    
+                    // Generate student URL
+                    const studentURL = utils.generateStudentURL(sessionId);
+                    
+                    // Create QR code
+                    if (window.QRCode) {
+                        new QRCode(qrContainer, {
+                            text: studentURL,
+                            width: CONFIG.QR_SIZE,
+                            height: CONFIG.QR_SIZE,
+                            colorDark: '#1e5aa8',
+                            colorLight: '#ffffff',
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                        
+                        console.log('✅ QR code generated successfully');
+                        ui.showToast('QR code generated successfully', 'success');
+                        
+                    } else {
+                        console.error('❌ QRCode library not loaded');
+                        qrContainer.innerHTML = '<p style="color: #dc3545;">QR Code library not loaded</p>';
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ QR generation failed:', error);
+                    qrContainer.innerHTML = '<p style="color: #dc3545;">Failed to generate QR code</p>';
+                }
+            },
+
+            updatePresentStudentsList(attendanceData) {
+                const listElement = document.getElementById('present-students-list');
+                const countElement = document.getElementById('present-count');
+                
+                if (!listElement || !countElement) return;
+
+                // Update count
+                countElement.textContent = attendanceData.length.toString();
+
+                // Clear and populate list
+                listElement.innerHTML = '';
+                
+                if (attendanceData.length === 0) {
+                    listElement.innerHTML = '<li class="no-students-message">No students present yet</li>';
+                    return;
+                }
+
+                attendanceData.forEach(record => {
+                    const li = document.createElement('li');
+                    li.className = 'student-item';
+                    
+                    li.innerHTML = `
+                        <div class="student-info">
+                            <div class="student-name">${utils.sanitizeText(record.student)}</div>
+                            <div class="student-usn">${utils.sanitizeText(record.usn)}</div>
+                            <div class="attendance-time">${utils.formatTimestamp(record.timestamp)}</div>
+                        </div>
+                        <button class="remove-btn" onclick="removeStudentFromSession('${record.usn}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    
+                    listElement.appendChild(li);
+                });
+            }
+        };
+
+        // ===== EVENT HANDLERS =====
+        const handlers = {
+            logout() {
+                if (confirm('Are you sure you want to logout?')) {
+                    ui.showToast('Logged out successfully', 'info');
+                    // In a real app, you would redirect to login page
+                    console.log('Logout functionality would redirect to login page');
+                }
+            },
+
+            startNewSession() {
+                const modalContent = `
+                    <form id="start-session-form">
+                        <div class="form-group">
+                            <label for="session-name">Session Name</label>
+                            <input type="text" id="session-name" required maxlength="100" 
+                                   placeholder="e.g., Morning Lecture, Lab Session 1">
+                        </div>
+                        <div class="form-group">
+                            <label for="course-select">Course (Optional)</label>
+                            <select id="course-select">
+                                <option value="">Select a course</option>
+                                ${allCourses.map(course => 
+                                    `<option value="${course.id}">${utils.sanitizeText(course.course_name)} (${utils.sanitizeText(course.course_id)})</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                            <button type="button" class="cancel-btn" style="
+                                padding: 12px 24px;
+                                border: 2px solid #6c757d;
+                                background: transparent;
+                                color: #6c757d;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                            ">Cancel</button>
+                            <button type="submit" style="
+                                padding: 12px 24px;
+                                background: #28a745;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                            ">Start Session</button>
+                        </div>
+                    </form>
+                `;
+
+                const modal = ui.showModal(modalContent, {
+                    title: '🚀 Start New Session',
+                    maxWidth: '500px'
+                });
+
+                const form = modal.querySelector('#start-session-form');
+                const cancelBtn = modal.querySelector('.cancel-btn');
+                
+                cancelBtn.addEventListener('click', () => ui.hideModal());
+                
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const sessionName = form['session-name'].value.trim();
+                    const courseId = form['course-select'].value || null;
+
+                    if (sessionName.length < 3) {
+                        ui.showToast('Session name must be at least 3 characters', 'error');
+                        return;
+                    }
+
+                    // Create session (in real app, this would call Supabase)
+                    const newSession = {
+                        id: 'session_' + Date.now(),
+                        session_name: sessionName,
+                        course_id: courseId,
+                        course_name: courseId ? allCourses.find(c => c.id == courseId)?.course_name : null,
+                        created_at: new Date().toISOString()
+                    };
+
+                    sessions.updateActiveSession(newSession);
+                    ui.hideModal();
+                    ui.showToast('Session started successfully!', 'success');
+                });
+
+                // Focus the session name input
+                setTimeout(() => {
+                    const sessionNameInput = modal.querySelector('#session-name');
+                    if (sessionNameInput) {
+                        sessionNameInput.focus();
+                    }
+                }, 100);
+            },
+
+            addManually() {
+                if (!currentSession) {
+                    ui.showToast('Please start a session first', 'warning');
+                    return;
+                }
+
+                const modalContent = `
+                    <form id="add-manual-form">
+                        <div class="form-group">
+                            <label for="manual-student-select">Select Student</label>
+                            <select id="manual-student-select" required>
+                                <option value="">Choose a student</option>
+                                ${allStudents.map(student => 
+                                    `<option value="${student.usn}">${utils.sanitizeText(student.name)} (${utils.sanitizeText(student.usn)})</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                            <button type="button" class="cancel-btn" style="
+                                padding: 12px 24px;
+                                border: 2px solid #6c757d;
+                                background: transparent;
+                                color: #6c757d;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                            ">Cancel</button>
+                            <button type="submit" style="
+                                padding: 12px 24px;
+                                background: #28a745;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                            ">Add to Session</button>
+                        </div>
+                    </form>
+                `;
+
+                const modal = ui.showModal(modalContent, {
+                    title: '👤 Add Student Manually',
+                    maxWidth: '500px'
+                });
+
+                const form = modal.querySelector('#add-manual-form');
+                const cancelBtn = modal.querySelector('.cancel-btn');
+                
+                cancelBtn.addEventListener('click', () => ui.hideModal());
+                
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const selectedUSN = form['manual-student-select'].value;
+                    const student = allStudents.find(s => s.usn === selectedUSN);
+                    
+                    if (!student) {
+                        ui.showToast('Please select a student', 'error');
+                        return;
+                    }
+
+                    // Check if already present
+                    if (presentStudents.some(p => p.usn === selectedUSN)) {
+                        ui.showToast('Student is already marked present', 'warning');
+                        return;
+                    }
+
+                    // Add to present students
+                    const attendanceRecord = {
+                        student: student.name,
+                        usn: student.usn,
+                        timestamp: new Date().toISOString(),
+                        session_id: currentSession.id
+                    };
+
+                    presentStudents.push(attendanceRecord);
+                    sessions.updatePresentStudentsList(presentStudents);
+                    
+                    ui.hideModal();
+                    ui.showToast(`${student.name} added to session`, 'success');
+                });
+            },
+
+            manageStudents() {
+                const modalContent = `
+                    <div class="add-student-section" style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <h4 style="margin-bottom: 15px;"><i class="fas fa-plus"></i> Add New Student</h4>
+                        <form id="add-student-form" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
+                            <div>
+                                <label for="student-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Student Name</label>
+                                <input type="text" id="student-name" required maxlength="50" 
+                                       placeholder="Enter full name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            <div>
+                                <label for="student-usn" style="display: block; margin-bottom: 5px; font-weight: 600;">USN</label>
+                                <input type="text" id="student-usn" required maxlength="15" 
+                                       placeholder="e.g., 1AB21CS001" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                            </div>
+                            <div>
+                                <button type="submit" style="
+                                    padding: 10px 20px;
+                                    background: #28a745;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                ">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="student-list-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h4>All Students (${allStudents.length})</h4>
+                            <input type="text" id="student-search" placeholder="Search students..." style="
+                                padding: 8px 15px;
+                                border: 1px solid #ddd;
+                                border-radius: 20px;
+                                width: 200px;
+                            ">
+                        </div>
+                        <div id="students-list" style="max-height: 400px; overflow-y: auto;">
+                            ${this.renderStudentsList()}
+                        </div>
+                    </div>
+                `;
+
+                const modal = ui.showModal(modalContent, {
+                    title: '👥 Manage Students',
+                    maxWidth: '800px'
+                });
+
+                // Setup add student form
+                const addForm = modal.querySelector('#add-student-form');
+                addForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const name = addForm['student-name'].value.trim();
+                    const usn = addForm['student-usn'].value.trim().toUpperCase();
+
+                    if (name.length < 2) {
+                        ui.showToast('Name must be at least 2 characters', 'error');
+                        return;
+                    }
+
+                    if (usn.length < 6) {
+                        ui.showToast('USN must be at least 6 characters', 'error');
+                        return;
+                    }
+
+                    // Check for duplicates
+                    if (allStudents.some(student => student.usn === usn)) {
+                        ui.showToast('A student with this USN already exists', 'error');
+                        return;
+                    }
+
+                    // Add student
+                    const newStudent = { name, usn };
+                    allStudents.push(newStudent);
+                    allStudents.sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    // Reset form
+                    addForm.reset();
+                    
+                    // Update display
+                    const studentsList = modal.querySelector('#students-list');
+                    studentsList.innerHTML = this.renderStudentsList();
+                    
+                    ui.showToast('Student added successfully!', 'success');
+                });
+
+                // Setup search
+                const searchInput = modal.querySelector('#student-search');
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const studentsList = modal.querySelector('#students-list');
+                    studentsList.innerHTML = this.renderStudentsList(searchTerm);
+                });
+            },
+
+            renderStudentsList(searchTerm = '') {
+                let filteredStudents = allStudents;
+                
+                if (searchTerm) {
+                    filteredStudents = allStudents.filter(student => 
+                        student.name.toLowerCase().includes(searchTerm) || 
+                        student.usn.toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                if (filteredStudents.length === 0) {
+                    return `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p>No students found</p>
+                        </div>
+                    `;
+                }
+
+                return filteredStudents.map(student => `
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 15px;
+                        margin-bottom: 10px;
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        border-left: 4px solid #1e5aa8;
+                    ">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">${utils.sanitizeText(student.name)}</div>
+                            <div style="font-size: 0.9rem; color: #666;">${utils.sanitizeText(student.usn)}</div>
+                        </div>
+                        <button onclick="deleteStudent('${student.usn}')" style="
+                            background: #dc3545;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        " title="Delete student">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            },
+
+            sessionHistory() {
+                const modalContent = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h4>Session History</h4>
+                        <p>This feature would show all past attendance sessions.</p>
+                        <p style="margin-top: 15px; font-size: 0.9rem;">In a real implementation, this would connect to your database to show historical data.</p>
+                    </div>
+                `;
+
+                ui.showModal(modalContent, {
+                    title: '📅 Session History',
+                    maxWidth: '600px'
+                });
+            },
+
+            exportAttendance() {
+                if (!currentSession || presentStudents.length === 0) {
+                    ui.showToast('No attendance data to export', 'info');
+                    return;
+                }
+
+                const exportData = presentStudents.map(record => ({
+                    'Student Name': record.student,
+                    'USN': record.usn,
+                    'Session': currentSession.session_name,
+                    'Course': currentSession.course_name || 'N/A',
+                    'Timestamp': utils.formatTimestamp(record.timestamp)
+                }));
+
+                const filename = `attendance_${currentSession.session_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+                
+                utils.downloadCSV(exportData, filename);
+                ui.showToast('Attendance data exported successfully!', 'success');
+            },
+
+            viewStatistics() {
+                const attendanceRate = allStudents.length > 0 ? Math.round((presentStudents.length / allStudents.length) * 100) : 0;
+                
+                const modalContent = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                        <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">${allStudents.length}</div>
+                            <div>Total Students</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #17a2b8, #20c997); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">${presentStudents.length}</div>
+                            <div>Present Today</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #ffc107, #fd7e14); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">${attendanceRate}%</div>
+                            <div>Attendance Rate</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #6f42c1, #e83e8c); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">${currentSession ? 1 : 0}</div>
+                            <div>Active Sessions</div>
+                        </div>
+                    </div>
+                    
+                    ${currentSession ? `
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                            <h4 style="margin-bottom: 15px; color: #1e5aa8;">Current Session Details</h4>
+                            <p><strong>Session:</strong> ${utils.sanitizeText(currentSession.session_name)}</p>
+                            <p><strong>Course:</strong> ${currentSession.course_name || 'General'}</p>
+                            <p><strong>Started:</strong> ${utils.formatTimestamp(currentSession.created_at)}</p>
+                            <p><strong>Present Students:</strong> ${presentStudents.length} out of ${allStudents.length}</p>
+                        </div>
+                    ` : `
+                        <div style="text-align: center; padding: 20px; color: #666;">
+                            <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p>No active session</p>
+                            <p style="font-size: 0.9rem;">Start a session to begin tracking attendance</p>
+                        </div>
+                    `}
+                `;
+
+                ui.showModal(modalContent, {
+                    title: '📊 Statistics',
+                    maxWidth: '900px'
+                });
+            },
+
+            manageCourses() {
+                const modalContent = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-book" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                        <h4>Course Management</h4>
+                        <p>This feature would allow you to add, edit, and manage courses.</p>
+                        <div style="margin-top: 20px; text-align: left;">
+                            <h5>Current Courses:</h5>
+                            <ul style="margin-top: 10px;">
+                                ${allCourses.map(course => 
+                                    `<li style="margin: 5px 0;">${course.course_name} (${course.course_id})</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                ui.showModal(modalContent, {
+                    title: '📚 Manage Courses',
+                    maxWidth: '600px'
+                });
+            },
+
+            refreshData() {
+                ui.showToast('Refreshing data...', 'info');
+                
+                // Simulate data refresh
+                setTimeout(() => {
+                    // In a real app, this would fetch fresh data from the server
+                    ui.showToast('Data refreshed successfully!', 'success');
+                    
+                    // Update present students list
+                    sessions.updatePresentStudentsList(presentStudents);
+                }, 1000);
+            }
+        };
+
+        // ===== GLOBAL HELPER FUNCTIONS =====
+        window.removeStudentFromSession = function(usn) {
+            if (!currentSession) return;
+            
+            if (!confirm('Remove this student from the current session?')) {
+                return;
+            }
+
+            // Remove from present students
+            presentStudents = presentStudents.filter(p => p.usn !== usn);
+            sessions.updatePresentStudentsList(presentStudents);
+            
+            ui.showToast('Student removed from session', 'success');
+        };
+
+        window.deleteStudent = function(usn) {
+            if (!confirm('Are you sure you want to delete this student?')) {
+                return;
+            }
+
+            // Remove from students array
+            allStudents = allStudents.filter(student => student.usn !== usn);
+            
+            ui.showToast('Student deleted successfully', 'success');
+            
+            // Refresh students modal if open
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                const studentsList = modal.querySelector('#students-list');
+                if (studentsList) {
+                    studentsList.innerHTML = handlers.renderStudentsList();
+                }
+            }
+        };
+
+        // ===== EVENT LISTENERS SETUP =====
+        function setupEventListeners() {
+            // Logout button
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handlers.logout);
+            }
+
+            // Start session button
+            const startSessionBtn = document.getElementById('start-session-btn');
+            if (startSessionBtn) {
+                startSessionBtn.addEventListener('click', handlers.startNewSession);
+            }
+
+            // Add manually button
+            const addManuallyBtn = document.getElementById('add-manually-btn');
+            if (addManuallyBtn) {
+                addManuallyBtn.addEventListener('click', handlers.addManually);
+            }
+
+            // Manage students button
+            const manageStudentsBtn = document.getElementById('manage-students-btn');
+            if (manageStudentsBtn) {
+                manageStudentsBtn.addEventListener('click', handlers.manageStudents);
+            }
+
+            // Session history button
+            const sessionHistoryBtn = document.getElementById('session-history-btn');
+            if (sessionHistoryBtn) {
+                sessionHistoryBtn.addEventListener('click', handlers.sessionHistory);
+            }
+
+            // Export button
+            const exportBtn = document.getElementById('export-attendance-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', handlers.exportAttendance);
+            }
+
+            // Statistics button
+            const statsBtn = document.getElementById('statistics-btn');
+            if (statsBtn) {
+                statsBtn.addEventListener('click', handlers.viewStatistics);
+            }
+
+            // Manage courses button
+            const manageCoursesBtn = document.getElementById('manage-courses-btn');
+            if (manageCoursesBtn) {
+                manageCoursesBtn.addEventListener('click', handlers.manageCourses);
+            }
+
+            // Refresh data button
+            const refreshBtn = document.getElementById('refresh-data-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', handlers.refreshData);
+            }
         }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Initializing QR Attendance System...');
+            
+            try {
+                // Setup event listeners
+                setupEventListeners();
+                
+                // Initialize with demo data
+                sessions.updatePresentStudentsList([]);
+                
+                // Show welcome message
+                ui.showToast('QR Attendance System loaded successfully!', 'success');
+                
+                console.log('✅ Application initialized successfully');
+                
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+                ui.showToast('Failed to initialize application', 'error');
+            }
+        });
     </script>
 </body>
 </html>
-
-
-
