@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Attendance System - Faculty Dashboard</title>
     <link rel="stylesheet" href="style.css">
+      <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://unpkg.com">
     <meta name="description" content="QR-based attendance tracking system for educational institutions">
     <meta name="robots" content="noindex, nofollow">
 </head>
@@ -14,12 +19,12 @@
    
 
     <!-- Main Header -->
-    <header class="header">
-        <h1><i class="fas fa-qrcode" aria-hidden="true"></i> QR Attendance System</h1>
-        <h2>Faculty Dashboard</h2>
-        <button class="logout-btn" id="logout-btn" aria-label="Logout from system">
-            <i class="fas fa-sign-out-alt" aria-hidden="true"></i> 
-            <span>Logout</span>
+    <h1><strong>Dayananda Sagar College Of Engineering</strong></h1>
+        <h2><i class="fas fa-chalkboard-teacher"></i> Faculty Attendance Portal</h2>
+
+        <button class="logout-btn" onclick="QRAttendanceSystem.logout()" title="Logout" aria-label="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+           <span> Logout</span>
         </button>
     </header>
 
@@ -71,26 +76,19 @@
 
         <!-- Action Buttons -->
         <section class="action-buttons" aria-label="Main actions">
-            <button class="add-manually-btn fresh-btn" 
+            <button class="add-manually-btn fresh-btn" onclick="QRAttendanceSystem.showCourseSelectionModal()"
                     id="start-session-btn" 
                     type="button"
                     aria-describedby="start-session-help">
                 <i class="fas fa-play" aria-hidden="true"></i>
                 <span>Start New Session</span>
             </button>
-            <div id="start-session-help" class="sr-only">Create a new attendance session</div>
+           <button class="add-manually-btn" onclick="QRAttendanceSystem.showAddManuallyModal()" title="Add Student Manually (Ctrl+M)">
+                    <i class="fas fa-user-plus"></i>
+                    Add Manually
+                </button>  
 
-            <button class="add-manually-btn" 
-                    id="end-session-btn" 
-                    type="button"
-                    style="display: none;"
-                    aria-describedby="end-session-help">
-                <i class="fas fa-stop" aria-hidden="true"></i>
-                <span>End Current Session</span>
-            </button>
-            <div id="end-session-help" class="sr-only">End the currently active session</div>
-
-            <button class="add-manually-btn student-list-btn" 
+            <button class="add-manually-btn onclick="QRAttendanceSystem.showStudentListModal()"  student-list-btn" 
                     id="open-students-btn" 
                     type="button"
                     aria-describedby="manage-students-help">
@@ -98,8 +96,11 @@
                 <span>Manage Students</span>
             </button>
             <div id="manage-students-help" class="sr-only">Add, edit, or remove students</div>
-
-            <button class="add-manually-btn export-btn" 
+               <button class="add-manually-btn" onclick="QRAttendanceSystem.showSessionHistoryModal()" title="View Session History (Ctrl+H)">
+                    <i class="fas fa-history"></i>
+                    Session History
+                </button>
+            <button class="add-manually-btn export-btn" onclick="QRAttendanceSystem.exportAttendanceCSV()"
                     id="export-attendance-btn" 
                     type="button"
                     aria-describedby="export-help">
@@ -108,7 +109,7 @@
             </button>
             <div id="export-help" class="sr-only">Download attendance data as CSV</div>
 
-            <button class="add-manually-btn" 
+            <button class="add-manually-btn" onclick="QRAttendanceSystem.showStatisticsModal()"
                     id="statistics-btn" 
                     type="button"
                     aria-describedby="statistics-help">
@@ -116,7 +117,10 @@
                 <span>View Statistics</span>
             </button>
             <div id="statistics-help" class="sr-only">View attendance analytics and reports</div>
-
+        <button class="add-manually-btn" onclick="QRAttendanceSystem.showCoursesModal()" title="Manage Courses">
+                    <i class="fas fa-book"></i>
+                    Manage Courses
+                </button>
             <button class="add-manually-btn" 
                     id="refresh-data-btn" 
                     type="button"
@@ -208,5 +212,6 @@
     </script>
 </body>
 </html>
+
 
 
