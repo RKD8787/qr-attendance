@@ -1,10 +1,10 @@
-// ===== QR ATTENDANCE SYSTEM - COMPLETE FIXED AND IMPROVED SCRIPT.JS WITH WEBAUTHN =====
+// ===== QR ATTENDANCE SYSTEM - FIXED SCRIPT.JS =====
 
 // ===== CONFIGURATION =====
 const CONFIG = {
     // Supabase configuration (load from environment in production)
     SUPABASE_URL: 'https://zpesqzstorixfsmpntsx.supabase.co',
-    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ', // Replace with your actual anon key
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ',
     
     // Cache settings
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
@@ -238,8 +238,6 @@ const webAuthn = {
                 throw new Error('Failed to verify biometric');
             }
 
-            // In a real implementation, you would verify the assertion on the server
-            // For this demo, we'll assume verification passed if we got an assertion
             console.log('✅ WebAuthn verification successful');
             
             return {
@@ -896,7 +894,7 @@ const data = {
             const operation = async () => {
                 const { data, error } = await supabaseClient
                     .from('courses')
-                    .select('*') // Fixed: was 'select('... *')'
+                    .select('*')
                     .order('course_name', { ascending: true });
                 
                 if (error) throw error;
@@ -969,7 +967,7 @@ const data = {
                     .order('created_at', { ascending: false });
 
                 if (!includeArchived) {
-                    query = query.is('is_archived', false); // Fixed: was 'archived'
+                    query = query.eq('is_archived', false);
                 }
 
                 const { data, error } = await query;
@@ -1020,7 +1018,7 @@ const data = {
         listElement.innerHTML = '';
         
         if (attendanceData.length === 0) {
-            listElement.innerHTML = '<li style="text-align: center; color: #666; padding: 20px;">No students present yet</li>';
+            listElement.innerHTML = '<li class="no-students-message">No students present yet</li>';
             return;
         }
 
@@ -1090,7 +1088,7 @@ const sessions = {
             }
             
             if (qrContainer) {
-                qrContainer.innerHTML = '<p style="color: #666; font-style: italic;">Start a session to generate QR code</p>';
+                qrContainer.innerHTML = '<p class="qr-placeholder">Start a session to generate QR code</p>';
             }
             
             data.updatePresentStudentsList([]);
@@ -1111,42 +1109,49 @@ const sessions = {
             // Generate student URL
             const studentURL = utils.generateStudentURL(sessionId);
             
-            // Create QR code
-            if (window.QRCode) {
-                new QRCode(qrContainer, {
-                    text: studentURL,
-                    width: CONFIG.QR_SIZE,
-                    height: CONFIG.QR_SIZE,
-                    colorDark: '#1e5aa8',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel[CONFIG.QR_ERROR_LEVEL]
+            // Create QR code using QRious library
+            if (window.QRious) {
+                const qr = new QRious({
+                    element: document.createElement('canvas'),
+                    value: studentURL,
+                    size: CONFIG.QR_SIZE,
+                    foreground: '#1e5aa8',
+                    background: '#ffffff',
+                    level: CONFIG.QR_ERROR_LEVEL
                 });
+                
+                qrContainer.appendChild(qr.element);
                 
                 // Add URL display
                 const urlDisplay = document.createElement('div');
                 urlDisplay.className = 'qr-url-display';
-                urlDisplay.style.marginTop = '15px';
                 urlDisplay.innerHTML = `
-                    <small style="color: #666;">Direct URL:</small>
-                    <input type="text" value="${studentURL}" readonly style="
-                        width: 100%;
-                        padding: 8px;
-                        border: 1px solid #ddd;
-                        border-radius: 5px;
-                        font-size: 0.9rem;
-                        margin: 5px 0;
-                    ">
-                    <button onclick="copyQRURL('${studentURL}')" style="
-                        background: #1e5aa8;
-                        color: white;
-                        border: none;
-                        padding: 8px 15px;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 0.9rem;
-                    ">
-                        <i class="fas fa-copy"></i> Copy URL
-                    </button>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <small style="color: #666; display: block; margin-bottom: 5px;">Student URL:</small>
+                        <input type="text" value="${studentURL}" readonly style="
+                            width: 100%;
+                            max-width: 300px;
+                            padding: 8px;
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                            font-size: 0.85rem;
+                            margin: 5px 0;
+                            text-align: center;
+                        ">
+                        <br>
+                        <button onclick="copyQRURL('${studentURL}')" style="
+                            background: #1e5aa8;
+                            color: white;
+                            border: none;
+                            padding: 8px 15px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 0.9rem;
+                            margin-top: 5px;
+                        ">
+                            <i class="fas fa-copy"></i> Copy URL
+                        </button>
+                    </div>
                 `;
                 qrContainer.appendChild(urlDisplay);
                 
@@ -1154,7 +1159,7 @@ const sessions = {
                 ui.showToast('QR code generated successfully', 'success');
                 
             } else {
-                console.error('❌ QRCode library not loaded');
+                console.error('❌ QRious library not loaded');
                 qrContainer.innerHTML = '<p style="color: #dc3545;">QR Code library not loaded</p>';
             }
             
@@ -1548,7 +1553,6 @@ const pages = {
             try {
                 // Show loading state
                 const submitBtn = form.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
 
@@ -1594,11 +1598,27 @@ const pages = {
             });
         }
 
-        // Students management button
-        const studentsBtn = document.getElementById('open-students-btn');
-        if (studentsBtn) {
-            studentsBtn.addEventListener('click', () => {
+        // Add manually button
+        const addManuallyBtn = document.getElementById('add-manually-btn');
+        if (addManuallyBtn) {
+            addManuallyBtn.addEventListener('click', () => {
+                this.showAddManuallyModal();
+            });
+        }
+
+        // Manage students button
+        const manageStudentsBtn = document.getElementById('manage-students-btn');
+        if (manageStudentsBtn) {
+            manageStudentsBtn.addEventListener('click', () => {
                 this.showStudentsModal();
+            });
+        }
+
+        // Session history button
+        const sessionHistoryBtn = document.getElementById('session-history-btn');
+        if (sessionHistoryBtn) {
+            sessionHistoryBtn.addEventListener('click', () => {
+                this.showSessionHistoryModal();
             });
         }
 
@@ -1615,6 +1635,22 @@ const pages = {
         if (statsBtn) {
             statsBtn.addEventListener('click', () => {
                 this.showStatisticsModal();
+            });
+        }
+
+        // Manage courses button
+        const manageCoursesBtn = document.getElementById('manage-courses-btn');
+        if (manageCoursesBtn) {
+            manageCoursesBtn.addEventListener('click', () => {
+                this.showCoursesModal();
+            });
+        }
+
+        // Refresh data button
+        const refreshDataBtn = document.getElementById('refresh-data-btn');
+        if (refreshDataBtn) {
+            refreshDataBtn.addEventListener('click', () => {
+                this.refreshAllData();
             });
         }
 
@@ -1666,21 +1702,22 @@ const pages = {
     showStartSessionModal() {
         const modalContent = `
             <form id="start-session-form">
-                <div class="form-group">
-                    <label for="session-name">Session Name</label>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="session-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Session Name</label>
                     <input type="text" id="session-name" required maxlength="100" 
-                           placeholder="e.g., Morning Lecture, Lab Session 1">
+                           placeholder="e.g., Morning Lecture, Lab Session 1"
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
                 </div>
-                <div class="form-group">
-                    <label for="course-select">Course (Optional)</label>
-                    <select id="course-select">
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="course-select" style="display: block; margin-bottom: 5px; font-weight: 600;">Course (Optional)</label>
+                    <select id="course-select" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
                         <option value="">Select a course</option>
                         ${allCourses.map(course => 
                             `<option value="${course.id}">${utils.sanitizeText(course.course_name)} (${utils.sanitizeText(course.course_id)})</option>`
                         ).join('')}
                     </select>
                 </div>
-                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                <div style="display: flex; gap: 15px; justify-content: flex-end;">
                     <button type="button" onclick="ui.hideModal()" style="
                         padding: 12px 24px;
                         border: 2px solid #6c757d;
@@ -1756,38 +1793,248 @@ const pages = {
         }, 100);
     },
 
+    showAddManuallyModal() {
+        if (!currentSession) {
+            ui.showToast('Please start a session first', 'warning');
+            return;
+        }
+
+        const modalContent = `
+            <form id="manual-attendance-form">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">Select Student</label>
+                    <div style="position: relative;">
+                        <input type="text" id="student-search-manual" placeholder="Search by name or USN..." 
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <div id="student-dropdown" style="
+                            position: absolute;
+                            top: 100%;
+                            left: 0;
+                            right: 0;
+                            background: white;
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            max-height: 200px;
+                            overflow-y: auto;
+                            z-index: 1000;
+                            display: none;
+                        "></div>
+                    </div>
+                    <input type="hidden" id="selected-student-usn">
+                    <div id="selected-student-display" style="margin-top: 10px; display: none;">
+                        <div style="padding: 10px; background: #e8f5e8; border-radius: 8px; border: 1px solid #28a745;">
+                            <strong>Selected:</strong> <span id="selected-student-info"></span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: flex-end;">
+                    <button type="button" onclick="ui.hideModal()" style="
+                        padding: 12px 24px;
+                        border: 2px solid #6c757d;
+                        background: transparent;
+                        color: #6c757d;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                    ">Cancel</button>
+                    <button type="submit" id="add-manual-submit" disabled style="
+                        padding: 12px 24px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        opacity: 0.5;
+                    ">Add Attendance</button>
+                </div>
+            </form>
+        `;
+
+        const modal = ui.showModal(modalContent, {
+            title: '➕ Add Manual Attendance',
+            maxWidth: '500px'
+        });
+
+        this.setupManualAttendanceForm(modal);
+    },
+
+    setupManualAttendanceForm(modal) {
+        const searchInput = modal.querySelector('#student-search-manual');
+        const dropdown = modal.querySelector('#student-dropdown');
+        const selectedUsnInput = modal.querySelector('#selected-student-usn');
+        const selectedDisplay = modal.querySelector('#selected-student-display');
+        const selectedInfo = modal.querySelector('#selected-student-info');
+        const submitBtn = modal.querySelector('#add-manual-submit');
+        const form = modal.querySelector('#manual-attendance-form');
+
+        // Setup search with dropdown
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            
+            if (term.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            const filteredStudents = allStudents.filter(student => 
+                student.name.toLowerCase().includes(term) || 
+                student.usn.toLowerCase().includes(term)
+            ).slice(0, 10); // Limit to 10 results
+
+            if (filteredStudents.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 10px; color: #666;">No students found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+
+            dropdown.innerHTML = filteredStudents.map(student => `
+                <div class="student-dropdown-item" data-usn="${student.usn}" style="
+                    padding: 10px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #eee;
+                ">
+                    <div style="font-weight: 600;">${utils.sanitizeText(student.name)}</div>
+                    <div style="font-size: 0.9rem; color: #666;">${utils.sanitizeText(student.usn)}</div>
+                </div>
+            `).join('');
+            dropdown.style.display = 'block';
+
+            // Add click handlers for dropdown items
+            dropdown.querySelectorAll('.student-dropdown-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const usn = item.getAttribute('data-usn');
+                    const student = allStudents.find(s => s.usn === usn);
+                    
+                    if (student) {
+                        searchInput.value = student.name;
+                        selectedUsnInput.value = student.usn;
+                        selectedInfo.textContent = `${student.name} (${student.usn})`;
+                        selectedDisplay.style.display = 'block';
+                        dropdown.style.display = 'none';
+                        
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }
+                });
+
+                // Hover effects
+                item.addEventListener('mouseenter', () => {
+                    item.style.background = '#f8f9fa';
+                });
+                item.addEventListener('mouseleave', () => {
+                    item.style.background = 'white';
+                });
+            });
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const selectedUsn = selectedUsnInput.value;
+            if (!selectedUsn) {
+                ui.showToast('Please select a student', 'error');
+                return;
+            }
+
+            const student = allStudents.find(s => s.usn === selectedUsn);
+            if (!student) {
+                ui.showToast('Selected student not found', 'error');
+                return;
+            }
+
+            try {
+                // Check if attendance already exists
+                const { data: existingAttendance } = await supabaseClient
+                    .from('attendance')
+                    .select('id')
+                    .eq('session_id', currentSession.id)
+                    .eq('usn', student.usn)
+                    .single();
+
+                if (existingAttendance) {
+                    ui.showToast('Attendance already marked for this student', 'warning');
+                    return;
+                }
+
+                // Add attendance
+                const { error } = await supabaseClient
+                    .from('attendance')
+                    .insert([{
+                        session_id: currentSession.id,
+                        student: student.name,
+                        usn: student.usn,
+                        timestamp: new Date().toISOString(),
+                        fingerprint_verified: false,
+                        location_verified: false
+                    }]);
+
+                if (error) throw error;
+
+                ui.showToast(`Attendance added for ${student.name}`, 'success');
+                ui.hideModal();
+                data.fetchCurrentSessionAttendance();
+
+            } catch (error) {
+                console.error('Failed to add manual attendance:', error);
+                ui.showToast('Failed to add attendance. Please try again.', 'error');
+            }
+        });
+    },
+
     showStudentsModal() {
         const modalContent = `
-            <div class="add-student-section">
-                <h4><i class="fas fa-plus"></i> Add New Student</h4>
-                <form id="add-student-form" class="add-student-form">
-                    <div>
-                        <label for="student-name">Student Name</label>
+            <div class="add-student-section" style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h4 style="margin-bottom: 15px;"><i class="fas fa-plus"></i> Add New Student</h4>
+                <form id="add-student-form" style="display: flex; gap: 15px; align-items: end;">
+                    <div style="flex: 1;">
+                        <label for="student-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Student Name</label>
                         <input type="text" id="student-name" required maxlength="50" 
-                               placeholder="Enter full name">
+                               placeholder="Enter full name"
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
-                    <div>
-                        <label for="student-usn">USN</label>
+                    <div style="flex: 1;">
+                        <label for="student-usn" style="display: block; margin-bottom: 5px; font-weight: 600;">USN</label>
                         <input type="text" id="student-usn" required maxlength="15" 
-                               placeholder="e.g., 1AB21CS001">
+                               placeholder="e.g., 1AB21CS001"
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
                     <div>
-                        <button type="submit" class="add-student-btn">
-                            <i class="fas fa-plus"></i> Add Student
+                        <button type="submit" style="
+                            background: #28a745;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">
+                            <i class="fas fa-plus"></i> Add
                         </button>
                     </div>
                 </form>
             </div>
             
             <div class="student-list-container">
-                <div class="student-count-header">
-                    Total Students: ${allStudents.length}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="student-count-header" style="font-weight: 600; color: #1e5aa8;">
+                        Total Students: ${allStudents.length}
+                    </div>
+                    <div style="position: relative;">
+                        <input type="text" id="student-modal-search" placeholder="Search students..." 
+                               style="padding: 8px 35px 8px 12px; border: 1px solid #ddd; border-radius: 20px; width: 250px;">
+                        <i class="fas fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #666;"></i>
+                    </div>
                 </div>
-                <div class="search-container">
-                    <input type="text" id="student-modal-search" placeholder="Search students...">
-                    <i class="fas fa-search search-icon"></i>
-                </div>
-                <div class="student-list-display" id="students-modal-list">
+                <div class="student-list-display" id="students-modal-list" style="max-height: 400px; overflow-y: auto;">
                     ${this.renderStudentsList()}
                 </div>
             </div>
@@ -1795,7 +2042,7 @@ const pages = {
 
         const modal = ui.showModal(modalContent, {
             title: '👥 Manage Students',
-            maxWidth: '800px'
+            maxWidth: '900px'
         });
 
         // Setup add student form
@@ -1886,8 +2133,8 @@ const pages = {
 
         if (filteredStudents.length === 0) {
             return `
-                <div class="no-results">
-                    <i class="fas fa-search"></i>
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px;"></i>
                     <p>No students found</p>
                     ${searchTerm ? '<p>Try adjusting your search terms</p>' : ''}
                 </div>
@@ -1895,24 +2142,341 @@ const pages = {
         }
 
         return filteredStudents.map(student => `
-            <div class="student-item" data-usn="${student.usn}">
+            <div class="student-item" data-usn="${student.usn}" style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+                hover: background-color: #f8f9fa;
+            ">
                 <div class="student-info">
-                    <div class="student-name">${utils.sanitizeText(student.name)}</div>
-                    <div class="student-usn">${utils.sanitizeText(student.usn)}</div>
-                    ${webAuthnSupported ? `<div class="student-biometric-status" id="biometric-${student.usn}">
+                    <div style="font-weight: 600; font-size: 1.1rem;">${utils.sanitizeText(student.name)}</div>
+                    <div style="color: #666; font-size: 0.9rem;">${utils.sanitizeText(student.usn)}</div>
+                    ${webAuthnSupported ? `<div class="student-biometric-status" id="biometric-${student.usn}" style="font-size: 0.8rem; margin-top: 5px;">
                         <small><i class="fas fa-spinner fa-spin"></i> Checking biometric...</small>
                     </div>` : ''}
                 </div>
-                <div class="student-actions">
-                    ${webAuthnSupported ? `<button class="biometric-btn" onclick="manageBiometric('${student.usn}')" title="Manage biometric">
+                <div style="display: flex; gap: 10px;">
+                    ${webAuthnSupported ? `<button onclick="manageBiometric('${student.usn}')" title="Manage biometric" style="
+                        background: #17a2b8;
+                        color: white;
+                        border: none;
+                        padding: 8px 12px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">
                         <i class="fas fa-fingerprint"></i>
                     </button>` : ''}
-                    <button class="delete-student-btn" onclick="deleteStudent('${student.usn}')" title="Delete student">
+                    <button onclick="deleteStudent('${student.usn}')" title="Delete student" style="
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 8px 12px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
         `).join('');
+    },
+
+    showSessionHistoryModal() {
+        const modalContent = `
+            <div style="margin-bottom: 20px;">
+                <button id="refresh-sessions-btn" style="
+                    background: #17a2b8;
+                    color: white;
+                    border: none;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div id="sessions-list" style="max-height: 500px; overflow-y: auto;">
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                </div>
+            </div>
+        `;
+
+        const modal = ui.showModal(modalContent, {
+            title: '📅 Session History',
+            maxWidth: '800px'
+        });
+
+        this.loadSessionHistory(modal);
+
+        // Setup refresh button
+        const refreshBtn = modal.querySelector('#refresh-sessions-btn');
+        refreshBtn.addEventListener('click', () => {
+            this.loadSessionHistory(modal);
+        });
+    },
+
+    async loadSessionHistory(modal) {
+        const sessionsList = modal.querySelector('#sessions-list');
+        sessionsList.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading sessions...</div>';
+
+        try {
+            const sessions = await data.fetchAllSessions();
+            
+            if (sessions.length === 0) {
+                sessionsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <i class="fas fa-calendar-times" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>No sessions found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            sessionsList.innerHTML = sessions.map(session => `
+                <div class="session-item" style="
+                    border: 1px solid #ddd;
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin-bottom: 15px;
+                    background: ${session.id === currentSession?.id ? '#e8f5e8' : 'white'};
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <h5 style="margin: 0 0 5px 0; color: #1e5aa8;">${utils.sanitizeText(session.session_name)}</h5>
+                            <p style="margin: 0 0 5px 0; color: #666;">
+                                Course: ${session.courses?.course_name || 'General'} 
+                                ${session.courses?.course_id ? `(${session.courses.course_id})` : ''}
+                            </p>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                Created: ${utils.formatTimestamp(session.created_at)}
+                            </p>
+                            <p style="margin: 5px 0 0 0; color: #28a745; font-weight: 600;">
+                                Attendance: ${session.attendance_count || 0} students
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            ${session.id !== currentSession?.id ? `
+                                <button onclick="activateSession('${session.id}')" title="Activate session" style="
+                                    background: #28a745;
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    cursor: pointer;
+                                ">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            ` : `
+                                <span style="
+                                    background: #28a745;
+                                    color: white;
+                                    padding: 8px 12px;
+                                    border-radius: 5px;
+                                    font-size: 0.8rem;
+                                    font-weight: 600;
+                                ">ACTIVE</span>
+                            `}
+                            <button onclick="exportSessionData('${session.id}')" title="Export session data" style="
+                                background: #17a2b8;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                            ">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button onclick="deleteSession('${session.id}')" title="Delete session" style="
+                                background: #dc3545;
+                                color: white;
+                                border: none;
+                                padding: 8px 12px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                            ">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Failed to load session history:', error);
+            sessionsList.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #dc3545;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>Failed to load session history</p>
+                </div>
+            `;
+        }
+    },
+
+    showCoursesModal() {
+        const modalContent = `
+            <div class="add-course-section" style="margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h4 style="margin-bottom: 15px;"><i class="fas fa-plus"></i> Add New Course</h4>
+                <form id="add-course-form" style="display: flex; gap: 15px; align-items: end;">
+                    <div style="flex: 2;">
+                        <label for="course-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Course Name</label>
+                        <input type="text" id="course-name" required maxlength="100" 
+                               placeholder="e.g., Data Structures and Algorithms"
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="course-id" style="display: block; margin-bottom: 5px; font-weight: 600;">Course ID</label>
+                        <input type="text" id="course-id" required maxlength="20" 
+                               placeholder="e.g., CS101"
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div>
+                        <button type="submit" style="
+                            background: #28a745;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="course-list-container">
+                <div style="font-weight: 600; color: #1e5aa8; margin-bottom: 15px;">
+                    Total Courses: ${allCourses.length}
+                </div>
+                <div id="courses-modal-list" style="max-height: 400px; overflow-y: auto;">
+                    ${this.renderCoursesList()}
+                </div>
+            </div>
+        `;
+
+        const modal = ui.showModal(modalContent, {
+            title: '📚 Manage Courses',
+            maxWidth: '800px'
+        });
+
+        // Setup add course form
+        const addForm = modal.querySelector('#add-course-form');
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const courseName = addForm['course-name'].value.trim();
+            const courseId = addForm['course-id'].value.trim().toUpperCase();
+
+            if (!courseName || !courseId) {
+                ui.showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Check for duplicates
+            if (allCourses.some(course => course.course_id === courseId)) {
+                ui.showToast('A course with this ID already exists', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('courses')
+                    .insert([{
+                        course_name: utils.sanitizeText(courseName),
+                        course_id: utils.sanitizeText(courseId)
+                    }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Update local data
+                allCourses.push(data);
+                allCourses.sort((a, b) => a.course_name.localeCompare(b.course_name));
+                
+                // Clear cache
+                coursesCache.delete('courses');
+                
+                // Reset form
+                addForm.reset();
+                
+                // Update display
+                const coursesList = modal.querySelector('#courses-modal-list');
+                coursesList.innerHTML = this.renderCoursesList();
+
+                ui.showToast('Course added successfully!', 'success');
+
+            } catch (error) {
+                console.error('Failed to add course:', error);
+                ui.showToast('Failed to add course. Please try again.', 'error');
+            }
+        });
+    },
+
+    renderCoursesList() {
+        if (allCourses.length === 0) {
+            return `
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-book-open" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>No courses added yet</p>
+                </div>
+            `;
+        }
+
+        return allCourses.map(course => `
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+            ">
+                <div>
+                    <div style="font-weight: 600; font-size: 1.1rem;">${utils.sanitizeText(course.course_name)}</div>
+                    <div style="color: #666; font-size: 0.9rem;">${utils.sanitizeText(course.course_id)}</div>
+                </div>
+                <div>
+                    <button onclick="deleteCourse('${course.id}')" title="Delete course" style="
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 8px 12px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    async refreshAllData() {
+        try {
+            ui.showToast('Refreshing data...', 'info');
+            
+            // Clear caches
+            studentsCache.clear();
+            coursesCache.clear();
+            
+            // Refresh all data
+            await Promise.all([
+                data.fetchAllStudents(),
+                data.fetchAllCourses(),
+                data.fetchCurrentSessionAttendance()
+            ]);
+            
+            ui.showToast('Data refreshed successfully!', 'success');
+            
+        } catch (error) {
+            console.error('Failed to refresh data:', error);
+            ui.showToast('Failed to refresh some data', 'warning');
+        }
     },
 
     async exportAttendanceData() {
@@ -1934,6 +2498,7 @@ const pages = {
                 'USN': record.usn || 'N/A',
                 'Session': currentSession.session_name || 'N/A',
                 'Course': currentSession.courses?.course_name || 'N/A',
+                'Course ID': currentSession.courses?.course_id || 'N/A',
                 'Timestamp': utils.formatTimestamp(record.timestamp),
                 'Location Verified': record.location_verified ? 'Yes' : 'No',
                 'Biometric Verified': record.fingerprint_verified ? 'Yes' : 'No'
@@ -1953,37 +2518,68 @@ const pages = {
     showStatisticsModal() {
         const modalContent = `
             <div class="stats-container">
-                <div class="overview-grid">
-                    <div class="stat-card">
-                        <h4>Total Students</h4>
-                        <p>${allStudents.length}</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0;">Total Students</h4>
+                        <p style="margin: 0; font-size: 2rem; font-weight: bold;">${allStudents.length}</p>
                     </div>
-                    <div class="stat-card">
-                        <h4>Present Today</h4>
-                        <p>${presentStudents.length}</p>
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0;">Present Today</h4>
+                        <p style="margin: 0; font-size: 2rem; font-weight: bold;">${presentStudents.length}</p>
                     </div>
-                    <div class="stat-card">
-                        <h4>Attendance Rate</h4>
-                        <p>${allStudents.length > 0 ? Math.round((presentStudents.length / allStudents.length) * 100) : 0}%</p>
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0;">Attendance Rate</h4>
+                        <p style="margin: 0; font-size: 2rem; font-weight: bold;">${allStudents.length > 0 ? Math.round((presentStudents.length / allStudents.length) * 100) : 0}%</p>
                     </div>
-                    <div class="stat-card">
-                        <h4>Active Sessions</h4>
-                        <p>${currentSession ? 1 : 0}</p>
+                    <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 20px; border-radius: 15px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0;">Total Courses</h4>
+                        <p style="margin: 0; font-size: 2rem; font-weight: bold;">${allCourses.length}</p>
                     </div>
                 </div>
                 ${currentSession ? `
-                    <div class="session-info-card">
-                        <h4>Current Session: ${utils.sanitizeText(currentSession.session_name)}</h4>
-                        <p>Course: ${currentSession.courses?.course_name || 'General'}</p>
-                        <p>Started: ${utils.formatTimestamp(currentSession.created_at)}</p>
-                        ${webAuthnSupported ? `<p>WebAuthn Support: <span style="color: #28a745;">✓ Available</span></p>` : `<p>WebAuthn Support: <span style="color: #dc3545;">✗ Not Available</span></p>`}
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 15px; border-left: 5px solid #28a745;">
+                        <h4 style="margin: 0 0 15px 0; color: #1e5aa8;"><i class="fas fa-play-circle"></i> Current Session</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div>
+                                <strong>Session Name:</strong><br>
+                                <span>${utils.sanitizeText(currentSession.session_name)}</span>
+                            </div>
+                            <div>
+                                <strong>Course:</strong><br>
+                                <span>${currentSession.courses?.course_name || 'General'}</span>
+                            </div>
+                            <div>
+                                <strong>Started:</strong><br>
+                                <span>${utils.formatTimestamp(currentSession.created_at)}</span>
+                            </div>
+                            <div>
+                                <strong>Students Present:</strong><br>
+                                <span>${presentStudents.length}</span>
+                            </div>
+                        </div>
+                        ${webAuthnSupported ? `
+                            <div style="margin-top: 15px; padding: 10px; background: #e8f5e8; border-radius: 8px;">
+                                <i class="fas fa-fingerprint" style="color: #28a745;"></i>
+                                <strong style="color: #28a745;">WebAuthn Support:</strong> Biometric authentication available
+                            </div>
+                        ` : `
+                            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px;">
+                                <i class="fas fa-exclamation-triangle" style="color: #856404;"></i>
+                                <strong style="color: #856404;">WebAuthn:</strong> Biometric authentication not available on this device
+                            </div>
+                        `}
                     </div>
-                ` : ''}
+                ` : `
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 15px; border-left: 5px solid #ffc107; text-align: center;">
+                        <h4 style="color: #856404; margin: 0 0 10px 0;"><i class="fas fa-pause-circle"></i> No Active Session</h4>
+                        <p style="color: #856404; margin: 0;">Start a new session to begin taking attendance</p>
+                    </div>
+                `}
             </div>
         `;
 
         ui.showModal(modalContent, {
-            title: '📊 Statistics',
+            title: '📊 Statistics Dashboard',
             maxWidth: '900px'
         });
     },
@@ -2000,6 +2596,12 @@ const pages = {
         }
 
         try {
+            // Show loading state
+            const submitBtn = document.getElementById('mark-attendance-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking Attendance...';
+
             // Check if attendance already marked
             const { data: existingAttendance } = await supabaseClient
                 .from('attendance')
@@ -2010,6 +2612,8 @@ const pages = {
 
             if (existingAttendance) {
                 ui.showToast('Attendance already marked for this session', 'warning');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
                 return;
             }
 
@@ -2033,6 +2637,11 @@ const pages = {
         } catch (error) {
             console.error('Failed to mark attendance:', error);
             ui.showToast('Failed to mark attendance. Please try again.', 'error');
+            
+            // Reset button
+            const submitBtn = document.getElementById('mark-attendance-btn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Mark Attendance';
         }
     },
 
@@ -2053,15 +2662,32 @@ const pages = {
             if (detailsDiv && selectedStudentForAttendance) {
                 let verificationStatus = '';
                 if (selectedStudentForAttendance.biometricVerified) {
-                    verificationStatus = '<p><strong>✅ Biometric Verified</strong></p>';
+                    verificationStatus = '<p style="color: #28a745;"><strong>✅ Biometric Verified</strong></p>';
                 }
                 
                 detailsDiv.innerHTML = `
-                    <p><strong>Student:</strong> ${utils.sanitizeText(selectedStudentForAttendance.name)}</p>
-                    <p><strong>USN:</strong> ${utils.sanitizeText(selectedStudentForAttendance.usn)}</p>
-                    <p><strong>Session:</strong> ${utils.sanitizeText(currentSession.session_name)}</p>
-                    <p><strong>Time:</strong> ${utils.formatTimestamp(new Date())}</p>
-                    ${verificationStatus}
+                    <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; border: 2px solid #28a745;">
+                        <h4 style="color: #28a745; margin: 0 0 15px 0;"><i class="fas fa-check-circle"></i> Attendance Marked Successfully!</h4>
+                        <p><strong>Student:</strong> ${utils.sanitizeText(selectedStudentForAttendance.name)}</p>
+                        <p><strong>USN:</strong> ${utils.sanitizeText(selectedStudentForAttendance.usn)}</p>
+                        <p><strong>Session:</strong> ${utils.sanitizeText(currentSession.session_name)}</p>
+                        <p><strong>Time:</strong> ${utils.formatTimestamp(new Date())}</p>
+                        ${verificationStatus}
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button onclick="window.close()" style="
+                                background: #28a745;
+                                color: white;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                font-size: 1rem;
+                            ">
+                                <i class="fas fa-times"></i> Close Window
+                            </button>
+                        </div>
+                    </div>
                 `;
             }
         }
@@ -2242,6 +2868,155 @@ window.manageBiometric = async function(usn) {
     }
 };
 
+window.activateSession = async function(sessionId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('sessions')
+            .select(`
+                *,
+                courses(course_name, course_id)
+            `)
+            .eq('id', sessionId)
+            .single();
+
+        if (error) throw error;
+
+        sessions.updateActiveSession(data);
+        ui.hideModal();
+        ui.showToast(`Session "${data.session_name}" activated`, 'success');
+
+    } catch (error) {
+        console.error('Failed to activate session:', error);
+        ui.showToast('Failed to activate session', 'error');
+    }
+};
+
+window.exportSessionData = async function(sessionId) {
+    try {
+        // Get session details
+        const { data: sessionData, error: sessionError } = await supabaseClient
+            .from('sessions')
+            .select(`
+                *,
+                courses(course_name, course_id)
+            `)
+            .eq('id', sessionId)
+            .single();
+
+        if (sessionError) throw sessionError;
+
+        // Get attendance data
+        const { data: attendanceData, error: attendanceError } = await supabaseClient
+            .from('attendance')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('timestamp', { ascending: true });
+
+        if (attendanceError) throw attendanceError;
+
+        if (!attendanceData || attendanceData.length === 0) {
+            ui.showToast('No attendance data found for this session', 'info');
+            return;
+        }
+
+        const exportData = attendanceData.map(record => ({
+            'Student Name': record.student || 'N/A',
+            'USN': record.usn || 'N/A',
+            'Session': sessionData.session_name || 'N/A',
+            'Course': sessionData.courses?.course_name || 'N/A',
+            'Course ID': sessionData.courses?.course_id || 'N/A',
+            'Date': utils.formatTimestamp(record.timestamp).split(',')[0],
+            'Time': utils.formatTimestamp(record.timestamp).split(',')[1]?.trim() || '',
+            'Location Verified': record.location_verified ? 'Yes' : 'No',
+            'Biometric Verified': record.fingerprint_verified ? 'Yes' : 'No'
+        }));
+
+        const filename = `session_${sessionData.session_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+        
+        utils.downloadCSV(exportData, filename);
+        ui.showToast('Session data exported successfully!', 'success');
+
+    } catch (error) {
+        console.error('Export failed:', error);
+        ui.showToast('Failed to export session data', 'error');
+    }
+};
+
+window.deleteSession = async function(sessionId) {
+    if (!confirm('Are you sure you want to delete this session? This will also delete all attendance records for this session.')) {
+        return;
+    }
+
+    try {
+        // Delete attendance records first
+        const { error: attendanceError } = await supabaseClient
+            .from('attendance')
+            .delete()
+            .eq('session_id', sessionId);
+
+        if (attendanceError) throw attendanceError;
+
+        // Delete session
+        const { error: sessionError } = await supabaseClient
+            .from('sessions')
+            .delete()
+            .eq('id', sessionId);
+
+        if (sessionError) throw sessionError;
+
+        // Clear current session if it was the deleted one
+        if (currentSession && currentSession.id === sessionId) {
+            sessions.updateActiveSession(null);
+        }
+
+        ui.showToast('Session deleted successfully', 'success');
+        
+        // Refresh session history modal if open
+        const modal = document.querySelector('.modal');
+        if (modal && modal.querySelector('#sessions-list')) {
+            pages.loadSessionHistory(modal);
+        }
+
+    } catch (error) {
+        console.error('Failed to delete session:', error);
+        ui.showToast('Failed to delete session', 'error');
+    }
+};
+
+window.deleteCourse = async function(courseId) {
+    if (!confirm('Are you sure you want to delete this course?')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('courses')
+            .delete()
+            .eq('id', courseId);
+
+        if (error) throw error;
+
+        // Update local data
+        allCourses = allCourses.filter(course => course.id !== courseId);
+        coursesCache.delete('courses');
+
+        ui.showToast('Course deleted successfully', 'success');
+        
+        // Refresh courses modal if open
+        const modal = document.querySelector('.modal');
+        if (modal) {
+            const coursesList = modal.querySelector('#courses-modal-list');
+            if (coursesList) {
+                coursesList.innerHTML = pages.renderCoursesList();
+            }
+        }
+
+    } catch (error) {
+        console.error('Failed to delete course:', error);
+        ui.showToast('Failed to delete course', 'error');
+    }
+};
+
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Initializing QR Attendance System...');
@@ -2287,15 +3062,3 @@ window.addEventListener('beforeunload', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { utils, auth, data, sessions, pages, ui, webAuthn };
 }
-// Expose functions globally for HTML onclick handlers
-window.QRAttendanceSystem = {
-    logout: () => auth.logout(),
-    showCourseSelectionModal: () => pages.showStartSessionModal(),
-    showAddManuallyModal: () => pages.showAddManuallyModal(), 
-    showStudentListModal: () => pages.showStudentsModal(),
-    showSessionHistoryModal: () => pages.showSessionHistoryModal(),
-    exportAttendanceCSV: () => pages.exportAttendanceData(),
-    showStatisticsModal: () => pages.showStatisticsModal(),
-    showCoursesModal: () => pages.showCoursesModal()
-};
-
