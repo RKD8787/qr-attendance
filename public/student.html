@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Attendance - QR System</title>
     <meta name="description" content="Student portal for QR-based attendance marking">
-    
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="script.js" defer></script>
-    
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <meta name="theme-color" content="#1e5aa8">
 </head>
@@ -37,7 +37,7 @@
         <div id="student-selection-page" class="page active">
             <div class="student-selection">
                 <h2><i class="fas fa-clipboard-check"></i> Mark Your Attendance</h2>
-                
+
                 <div class="session-info-card">
                     <div class="session-details">
                         <h3 id="session-name-display">Loading session...</h3>
@@ -47,9 +47,9 @@
 
                 <div class="search-section">
                     <div class="search-container">
-                        <input type="text" 
-                               id="student-search" 
-                               placeholder="Search your name or USN..." 
+                        <input type="text"
+                               id="student-search"
+                               placeholder="Search your name or USN..."
                                autocomplete="off"
                                aria-label="Search for your name or USN">
                         <div class="search-icon" aria-hidden="true">🔍</div>
@@ -61,7 +61,7 @@
                         <h3><i class="fas fa-users"></i> Select Your Name</h3>
                         <p>Click on your name to mark attendance</p>
                     </div>
-                    
+
                     <div class="student-list" id="student-list" role="listbox" aria-label="Student list">
                         <div class="loading-students">
                             <i class="fas fa-spinner fa-spin"></i>
@@ -71,14 +71,14 @@
                 </div>
 
                 <div class="submit-section">
-                    <button type="button" class="submit-btn" 
-                            id="submit-attendance" 
+                    <button type="button" class="submit-btn"
+                            id="submit-attendance"
                             disabled
                             aria-label="Submit attendance">
                         <i class="fas fa-paper-plane"></i>
                         Submit Attendance
                     </button>
-                    
+
                     <p class="submit-help">
                         <i class="fas fa-info-circle"></i>
                         Select your name from the list above to enable submission
@@ -94,7 +94,7 @@
                 </div>
                 <h2><i class="fas fa-check-circle"></i> Attendance Submitted Successfully!</h2>
                 <p>Your attendance has been recorded. Thank you!</p>
-                
+
                 <div class="success-details">
                     <div class="detail-item">
                         <i class="fas fa-user"></i>
@@ -115,7 +115,7 @@
                 </div>
                 <h2>Oops! Something went wrong</h2>
                 <p id="error-message-text">An unexpected error occurred.</p>
-                
+
                 <div class="error-actions">
                     <button type="button" class="submit-btn" id="try-again-btn">
                         <i class="fas fa-redo"></i> Try Again
