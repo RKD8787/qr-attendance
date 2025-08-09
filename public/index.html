@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Attendance System - Faculty Dashboard</title>
-    
+
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
@@ -42,9 +42,9 @@
                 <h3 id="qr-section-title">
                     <i class="fas fa-qrcode" aria-hidden="true"></i> QR Code for Attendance
                 </h3>
-                <div id="qr-code-container" 
-                     aria-label="QR code display area" 
-                     role="img" 
+                <div id="qr-code-container"
+                     aria-label="QR code display area"
+                     role="img"
                      aria-describedby="qr-instruction">
                     <p class="qr-placeholder">Start a session to generate QR code</p>
                 </div>
@@ -59,22 +59,22 @@
                 <i class="fas fa-play" aria-hidden="true"></i>
                 <span>Start New Session</span>
             </button>
-           
+
             <button type="button" class="add-manually-btn" id="add-manually-btn" title="Add Student Manually">
                 <i class="fas fa-user-plus"></i>
                 Add Manually
-            </button>  
+            </button>
 
             <button type="button" class="add-manually-btn" id="manage-students-btn">
                 <i class="fas fa-users" aria-hidden="true"></i>
                 <span>Manage Students</span>
             </button>
-               
+
             <button type="button" class="add-manually-btn" id="session-history-btn" title="View Session History">
                 <i class="fas fa-history"></i>
                 Session History
             </button>
-            
+
             <button type="button" class="add-manually-btn export-btn" id="export-attendance-btn">
                 <i class="fas fa-file-csv" aria-hidden="true"></i>
                 <span>Export Attendance</span>
@@ -84,12 +84,12 @@
                 <i class="fas fa-chart-bar" aria-hidden="true"></i>
                 <span>View Statistics</span>
             </button>
-            
+
             <button type="button" class="add-manually-btn" id="manage-courses-btn" title="Manage Courses">
                 <i class="fas fa-book"></i>
                 Manage Courses
             </button>
-            
+
             <button type="button" class="add-manually-btn" id="refresh-data-btn">
                 <i class="fas fa-sync-alt" aria-hidden="true"></i>
                 <span>Refresh Data</span>
