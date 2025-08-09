@@ -5,26 +5,26 @@ const CONFIG = {
     // Supabase configuration (load from environment in production)
     SUPABASE_URL: 'https://zpesqzstorixfsmpntsx.supabase.co',
     SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwZXNxenN0b3JpeGZzbXBudHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyOTEzNDYsImV4cCI6MjA2Njg2NzM0Nn0.rm2MEWhfj6re-hRW1xGNEGpwexSNgmce3HpTcrQFPqQ',
-    
+
     // Cache settings
     CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
-    
+
     // Network settings
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000,
-    
+
     // UI settings
     TOAST_DURATION: 5000,
     LOADING_DELAY: 300,
-    
+
     // QR Code settings
     QR_SIZE: 300,
     QR_ERROR_LEVEL: 'M',
-    
+
     // WebAuthn settings
     WEBAUTHN_TIMEOUT: 60000, // 60 seconds
     RP_NAME: "QR Attendance System",
-    
+
     // Validation rules
     VALIDATION: {
         USN_PATTERN: /^[A-Za-z0-9]{6,15}$/,
@@ -125,7 +125,7 @@ const webAuthn = {
 
         try {
             const challenge = this.generateChallenge();
-            
+
             const publicKeyCredentialCreationOptions = {
                 challenge: challenge,
                 rp: {
@@ -151,7 +151,7 @@ const webAuthn = {
             };
 
             console.log('🔐 Starting WebAuthn registration for:', studentUSN);
-            
+
             const credential = await navigator.credentials.create({
                 publicKey: publicKeyCredentialCreationOptions
             });
@@ -184,7 +184,7 @@ const webAuthn = {
 
         } catch (error) {
             console.error('❌ WebAuthn registration failed:', error);
-            
+
             if (error.name === 'NotAllowedError') {
                 throw new Error('Biometric verification was cancelled or failed');
             } else if (error.name === 'NotSupportedError') {
@@ -216,7 +216,7 @@ const webAuthn = {
             }
 
             const challenge = this.generateChallenge();
-            
+
             const publicKeyCredentialRequestOptions = {
                 challenge: challenge,
                 allowCredentials: [{
@@ -239,7 +239,7 @@ const webAuthn = {
             }
 
             console.log('✅ WebAuthn verification successful');
-            
+
             return {
                 success: true,
                 verified: true,
@@ -248,7 +248,7 @@ const webAuthn = {
 
         } catch (error) {
             console.error('❌ WebAuthn verification failed:', error);
-            
+
             if (error.name === 'NotAllowedError') {
                 throw new Error('Biometric verification was cancelled or failed');
             } else if (error.name === 'InvalidStateError') {
@@ -283,7 +283,7 @@ const webAuthn = {
                 .eq('student_usn', studentUSN);
 
             if (error) throw error;
-            
+
             console.log('✅ WebAuthn credential deleted for:', studentUSN);
             return true;
         } catch (error) {
@@ -340,21 +340,21 @@ const utils = {
     // Network utilities
     async executeWithRetry(operation, maxRetries = CONFIG.MAX_RETRIES) {
         let lastError;
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (error) {
                 lastError = error;
                 console.warn(`Attempt ${attempt} failed:`, error.message);
-                
+
                 if (attempt < maxRetries) {
                     const delay = CONFIG.RETRY_DELAY * Math.pow(2, attempt - 1);
                     await this.sleep(delay);
                 }
             }
         }
-        
+
         throw lastError;
     },
 
@@ -421,7 +421,7 @@ const utils = {
         const csv = Papa.unparse(data);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
-        
+
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
@@ -452,7 +452,7 @@ const ui = {
     showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
         const container = this.getToastContainer();
         const toast = this.createToast(message, type, duration);
-        
+
         container.appendChild(toast);
 
         // Animate in
@@ -495,7 +495,7 @@ const ui = {
         toast.setAttribute('aria-live', 'polite');
 
         const icon = this.getToastIcon(type);
-        
+
         toast.innerHTML = `
             <div class="toast-content" style="
                 background: white;
@@ -612,7 +612,7 @@ const ui = {
         modal.className = 'modal';
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
-        
+
         modal.style.cssText = `
             display: none;
             position: fixed;
@@ -736,7 +736,7 @@ const auth = {
 
             // Check current session
             await this.checkSession();
-            
+
         } catch (error) {
             console.error('Auth initialization failed:', error);
             ui.showToast('Failed to initialize authentication system', 'error');
@@ -746,19 +746,19 @@ const auth = {
     async checkSession() {
         try {
             const { data: { session } } = await supabaseClient.auth.getSession();
-            
+
             if (session) {
                 currentUser = session.user;
-                
+
                 // Redirect to dashboard if on login page
                 if (window.location.pathname.includes('login.html')) {
                     window.location.href = 'index.html';
                 }
             } else {
                 currentUser = null;
-                
+
                 // Redirect to login if on protected page
-                if (!window.location.pathname.includes('login.html') && 
+                if (!window.location.pathname.includes('login.html') &&
                     !window.location.pathname.includes('student.html')) {
                     window.location.href = 'login.html';
                 }
@@ -770,7 +770,7 @@ const auth = {
 
     handleAuthStateChange(event, session) {
         console.log('Auth state changed:', event);
-        
+
         switch (event) {
             case 'SIGNED_IN':
                 currentUser = session.user;
@@ -779,7 +779,7 @@ const auth = {
                     window.location.href = 'index.html';
                 }
                 break;
-                
+
             case 'SIGNED_OUT':
                 currentUser = null;
                 ui.showToast('Logged out successfully', 'info');
@@ -799,7 +799,7 @@ const auth = {
 
             if (error) throw error;
             return data;
-            
+
         } catch (error) {
             console.error('Login failed:', error);
             throw error;
@@ -810,12 +810,12 @@ const auth = {
         try {
             const { error } = await supabaseClient.auth.signOut();
             if (error) throw error;
-            
+
             // Clear any cached data
             localStorage.clear();
             studentsCache.clear();
             coursesCache.clear();
-            
+
         } catch (error) {
             console.error('Logout failed:', error);
             ui.showToast('Logout failed. Please try again.', 'error');
@@ -836,7 +836,7 @@ const data = {
     async fetchAllStudents() {
         try {
             console.log('👥 Fetching students...');
-            
+
             // Check cache first
             const now = Date.now();
             if (studentsCache.has('students') && (now - lastFetchTime) < CONFIG.CACHE_DURATION) {
@@ -850,24 +850,24 @@ const data = {
                     .from('students')
                     .select('name, usn')
                     .order('name', { ascending: true });
-                
+
                 if (error) throw error;
                 return data || [];
             };
 
             const students = await utils.executeWithRetry(operation);
             allStudents = students;
-            
+
             // Update cache
             studentsCache.set('students', students);
             lastFetchTime = now;
-            
+
             console.log(`✅ Students fetched: ${students.length}`);
             return students;
-            
+
         } catch (err) {
             console.error('❌ Error fetching students:', err);
-            
+
             // Fall back to cached data if available
             if (studentsCache.has('students')) {
                 allStudents = studentsCache.get('students');
@@ -883,7 +883,7 @@ const data = {
     async fetchAllCourses() {
         try {
             console.log('📚 Fetching courses...');
-            
+
             // Check cache first
             if (coursesCache.has('courses')) {
                 allCourses = coursesCache.get('courses');
@@ -896,19 +896,19 @@ const data = {
                     .from('courses')
                     .select('*')
                     .order('course_name', { ascending: true });
-                
+
                 if (error) throw error;
                 return data || [];
             };
 
             allCourses = await utils.executeWithRetry(operation);
-            
+
             // Update cache
             coursesCache.set('courses', allCourses);
-            
+
             console.log(`✅ Courses fetched: ${allCourses.length}`);
             return allCourses;
-            
+
         } catch (err) {
             console.error('❌ Error fetching courses:', err);
             allCourses = [];
@@ -925,14 +925,14 @@ const data = {
 
         try {
             console.log('📊 Fetching attendance for session:', currentSession.session_name);
-            
+
             const operation = async () => {
                 const { data, error } = await supabaseClient
                     .from('attendance')
                     .select('student, usn, timestamp, fingerprint_verified, location_verified')
                     .eq('session_id', currentSession.id)
                     .order('timestamp', { ascending: false });
-                
+
                 if (error) throw error;
                 return data || [];
             };
@@ -940,10 +940,10 @@ const data = {
             const attendanceData = await utils.executeWithRetry(operation);
             presentStudents = attendanceData.map(record => record.student);
             this.updatePresentStudentsList(attendanceData);
-            
+
             console.log(`✅ Attendance data: ${attendanceData.length} records`);
             return attendanceData;
-            
+
         } catch (err) {
             console.error('❌ Error fetching attendance:', err);
             if (isOnline) {
@@ -956,7 +956,7 @@ const data = {
     async fetchAllSessions(includeArchived = false) {
         try {
             console.log('📅 Fetching sessions...');
-            
+
             const operation = async () => {
                 let query = supabaseClient
                     .from('sessions')
@@ -976,7 +976,7 @@ const data = {
             };
 
             allSessions = await utils.executeWithRetry(operation);
-            
+
             // Get attendance counts for each session
             await Promise.all(allSessions.map(async (session) => {
                 try {
@@ -984,7 +984,7 @@ const data = {
                         .from('attendance')
                         .select('*', { count: 'exact', head: true })
                         .eq('session_id', session.id);
-                    
+
                     if (!error) {
                         session.attendance_count = count || 0;
                     }
@@ -996,7 +996,7 @@ const data = {
 
             console.log(`✅ Sessions fetched: ${allSessions.length}`);
             return allSessions;
-            
+
         } catch (err) {
             console.error('❌ Error fetching sessions:', err);
             allSessions = [];
@@ -1008,7 +1008,7 @@ const data = {
     updatePresentStudentsList(attendanceData) {
         const listElement = document.getElementById('present-students-list');
         const countElement = document.getElementById('present-count');
-        
+
         if (!listElement || !countElement) return;
 
         // Update count
@@ -1016,7 +1016,7 @@ const data = {
 
         // Clear and populate list
         listElement.innerHTML = '';
-        
+
         if (attendanceData.length === 0) {
             listElement.innerHTML = '<li class="no-students-message">No students present yet</li>';
             return;
@@ -1025,7 +1025,7 @@ const data = {
         attendanceData.forEach(record => {
             const li = document.createElement('li');
             li.className = 'student-item';
-            
+
             // Create verification badges
             let badges = '';
             if (record.fingerprint_verified) {
@@ -1046,7 +1046,7 @@ const data = {
                     <i class="fas fa-times"></i>
                 </button>
             `;
-            
+
             listElement.appendChild(li);
         });
     }
@@ -1057,40 +1057,40 @@ const sessions = {
     updateActiveSession(sessionData) {
         console.log('🔄 Updating active session:', sessionData?.session_name || 'None');
         currentSession = sessionData;
-        
+
         const qrContainer = document.getElementById('qr-code-container');
         const sessionTitle = document.getElementById('current-session-title');
-        
+
         if (sessionData) {
             // Save session to localStorage
             localStorage.setItem('sessionId', sessionData.id);
-            
+
             // Update UI
             const courseName = sessionData.courses ? sessionData.courses.course_name : 'General';
             const courseId = sessionData.courses ? sessionData.courses.course_id : '';
-            
+
             if (sessionTitle) {
                 sessionTitle.textContent = `Active: ${sessionData.session_name} (${courseName} ${courseId})`;
             }
-            
+
             // Generate QR code
             this.generateQR(sessionData.id);
-            
+
             // Fetch current attendance
             data.fetchCurrentSessionAttendance();
-            
+
         } else {
             // Clear session
             localStorage.removeItem('sessionId');
-            
+
             if (sessionTitle) {
                 sessionTitle.textContent = 'No Active Session';
             }
-            
+
             if (qrContainer) {
                 qrContainer.innerHTML = '<p class="qr-placeholder">Start a session to generate QR code</p>';
             }
-            
+
             data.updatePresentStudentsList([]);
         }
     },
@@ -1105,10 +1105,10 @@ const sessions = {
         try {
             // Clear container
             qrContainer.innerHTML = '';
-            
+
             // Generate student URL
             const studentURL = utils.generateStudentURL(sessionId);
-            
+
             // Create QR code using QRious library
             if (window.QRious) {
                 const qr = new QRious({
@@ -1119,9 +1119,9 @@ const sessions = {
                     background: '#ffffff',
                     level: CONFIG.QR_ERROR_LEVEL
                 });
-                
+
                 qrContainer.appendChild(qr.element);
-                
+
                 // Add URL display
                 const urlDisplay = document.createElement('div');
                 urlDisplay.className = 'qr-url-display';
@@ -1154,15 +1154,15 @@ const sessions = {
                     </div>
                 `;
                 qrContainer.appendChild(urlDisplay);
-                
+
                 console.log('✅ QR code generated successfully');
                 ui.showToast('QR code generated successfully', 'success');
-                
+
             } else {
                 console.error('❌ QRious library not loaded');
                 qrContainer.innerHTML = '<p style="color: #dc3545;">QR Code library not loaded</p>';
             }
-            
+
         } catch (error) {
             console.error('❌ QR generation failed:', error);
             qrContainer.innerHTML = '<p style="color: #dc3545;">Failed to generate QR code</p>';
@@ -1174,7 +1174,7 @@ const sessions = {
             const lastSessionId = localStorage.getItem('sessionId');
             if (lastSessionId && lastSessionId !== 'null') {
                 console.log('🔄 Restoring session:', lastSessionId);
-                
+
                 const { data, error } = await supabaseClient
                     .from('sessions')
                     .select(`
@@ -1209,33 +1209,33 @@ const pages = {
     async initFacultyView() {
         try {
             console.log('📚 Initializing faculty view...');
-            
+
             // Require authentication
             if (!(await auth.requireAuth())) return;
-            
+
             // Initialize WebAuthn
             await webAuthn.init();
-            
+
             // Load initial data
             await Promise.all([
                 data.fetchAllStudents(),
                 data.fetchAllCourses()
             ]);
-            
+
             console.log(`📊 Data loaded: ${allStudents.length} students, ${allCourses.length} courses`);
-            
+
             // Initialize UI components
             this.setupEventListeners();
             this.setupNetworkMonitoring();
-            
+
             // Check for existing session
             await sessions.restoreActiveSession();
-            
+
             // Setup real-time subscriptions
             this.setupRealtimeSubscriptions();
-            
+
             console.log('✅ Faculty view initialized successfully');
-            
+
         } catch (error) {
             console.error('❌ Faculty view initialization failed:', error);
             ui.showToast('Failed to initialize dashboard', 'error');
@@ -1245,10 +1245,10 @@ const pages = {
     async initStudentView() {
         try {
             console.log('🎓 Initializing student view...');
-            
+
             // Initialize WebAuthn
             await webAuthn.init();
-            
+
             const sessionId = utils.getQueryParam('session');
             if (!sessionId) {
                 this.showErrorPage('No session ID provided. Please scan a valid QR code.');
@@ -1258,9 +1258,9 @@ const pages = {
             await data.fetchAllStudents();
             await this.loadSessionForStudent(sessionId);
             this.setupStudentSearch();
-            
+
             console.log('✅ Student view initialized successfully');
-            
+
         } catch (error) {
             console.error('❌ Student view initialization failed:', error);
             this.showErrorPage('Failed to initialize student view.');
@@ -1269,7 +1269,7 @@ const pages = {
 
     async initLoginView() {
         console.log('🔐 Initializing login view...');
-        
+
         try {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -1278,7 +1278,7 @@ const pages = {
             }
 
             this.setupLoginForm();
-            
+
         } catch (error) {
             console.error('Login view initialization error:', error);
             ui.showToast('Failed to initialize login system', 'error');
@@ -1306,7 +1306,7 @@ const pages = {
             currentSession = sessionData;
             this.updateSessionDisplay(sessionData);
             this.populateStudentListForAttendance();
-            
+
         } catch (err) {
             console.error('Error loading session:', err);
             this.showErrorPage('Failed to load session information.');
@@ -1316,11 +1316,11 @@ const pages = {
     updateSessionDisplay(sessionData) {
         const sessionTitle = document.getElementById('session-title');
         const sessionCourse = document.getElementById('session-course');
-        
+
         if (sessionTitle) {
             sessionTitle.textContent = utils.sanitizeText(sessionData.session_name);
         }
-        
+
         if (sessionCourse) {
             const courseName = sessionData.courses ? sessionData.courses.course_name : 'General Course';
             sessionCourse.textContent = utils.sanitizeText(courseName);
@@ -1330,11 +1330,11 @@ const pages = {
     populateStudentListForAttendance() {
         const studentsList = document.getElementById('students-list');
         const noStudentsMessage = document.getElementById('no-students-message');
-        
+
         if (!studentsList) return;
 
         studentsList.innerHTML = '';
-        
+
         if (allStudents.length === 0) {
             if (noStudentsMessage) {
                 noStudentsMessage.style.display = 'block';
@@ -1350,34 +1350,34 @@ const pages = {
             const li = document.createElement('li');
             li.className = 'student-item';
             li.setAttribute('data-usn', student.usn);
-            
+
             li.innerHTML = `
                 <div class="student-info">
                     <div class="student-name">${utils.sanitizeText(student.name)}</div>
                     <div class="student-usn">${utils.sanitizeText(student.usn)}</div>
                 </div>
             `;
-            
+
             li.addEventListener('click', () => {
                 // Remove previous selection
                 document.querySelectorAll('.student-item').forEach(item => {
                     item.classList.remove('selected');
                 });
-                
+
                 // Select current item
                 li.classList.add('selected');
                 selectedStudentForAttendance = student;
-                
+
                 // Show verification section if WebAuthn is supported
                 this.showVerificationSection(student);
-                
+
                 // Enable submit button
                 const submitBtn = document.getElementById('mark-attendance-btn');
                 if (submitBtn) {
                     submitBtn.disabled = false;
                 }
             });
-            
+
             studentsList.appendChild(li);
         });
     },
@@ -1388,9 +1388,9 @@ const pages = {
 
         // Check if student has registered credential
         const hasCredential = await webAuthn.hasCredential(student.usn);
-        
+
         let content = '<h4><i class="fas fa-shield-alt"></i> Security Verification</h4>';
-        
+
         if (webAuthnSupported) {
             if (hasCredential) {
                 content += `
@@ -1425,10 +1425,10 @@ const pages = {
                 </div>
             `;
         }
-        
+
         verificationSection.innerHTML = content;
         verificationSection.style.display = 'block';
-        
+
         // Attach event listeners
         this.setupVerificationButtons(student);
     },
@@ -1437,24 +1437,24 @@ const pages = {
         const registerBtn = document.getElementById('register-biometric-btn');
         const verifyBtn = document.getElementById('verify-biometric-btn');
         const biometricStatus = document.getElementById('biometric-status');
-        
+
         if (registerBtn) {
             registerBtn.addEventListener('click', async () => {
                 try {
                     registerBtn.disabled = true;
                     registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
-                    
+
                     const result = await webAuthn.registerCredential(student.usn, student.name);
-                    
+
                     if (result.success) {
                         biometricStatus.innerHTML = '<span style="color: #28a745;"><i class="fas fa-check"></i> Biometric registered successfully!</span>';
-                        
+
                         // Replace register button with verify button
                         setTimeout(() => {
                             this.showVerificationSection(student);
                         }, 2000);
                     }
-                    
+
                 } catch (error) {
                     console.error('Biometric registration failed:', error);
                     biometricStatus.innerHTML = `<span style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</span>`;
@@ -1463,21 +1463,21 @@ const pages = {
                 }
             });
         }
-        
+
         if (verifyBtn) {
             verifyBtn.addEventListener('click', async () => {
                 try {
                     verifyBtn.disabled = true;
                     verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-                    
+
                     const result = await webAuthn.verifyCredential(student.usn);
-                    
+
                     if (result.success) {
                         biometricStatus.innerHTML = '<span style="color: #28a745;"><i class="fas fa-check"></i> Biometric verified!</span>';
-                        
+
                         // Mark as biometrically verified
                         student.biometricVerified = true;
-                        
+
                         // Update submit button to show verification
                         const submitBtn = document.getElementById('mark-attendance-btn');
                         if (submitBtn) {
@@ -1485,7 +1485,7 @@ const pages = {
                             submitBtn.style.background = 'linear-gradient(135deg, #28a745, #1e7e34)';
                         }
                     }
-                    
+
                 } catch (error) {
                     console.error('Biometric verification failed:', error);
                     biometricStatus.innerHTML = `<span style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> ${error.message}</span>`;
@@ -1517,7 +1517,7 @@ const pages = {
         studentItems.forEach(item => {
             const name = item.querySelector('.student-name').textContent.toLowerCase();
             const usn = item.querySelector('.student-usn').textContent.toLowerCase();
-            
+
             if (name.includes(term) || usn.includes(term)) {
                 item.style.display = 'block';
             } else {
@@ -1530,12 +1530,12 @@ const pages = {
         const form = document.getElementById('login-form');
         const emailInput = document.getElementById('faculty-email');
         const passwordInput = document.getElementById('faculty-password');
-        
+
         if (!form) return;
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
@@ -1557,17 +1557,17 @@ const pages = {
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
 
                 await auth.login(email, password);
-                
+
             } catch (error) {
                 console.error('Login error:', error);
-                
+
                 let errorMessage = 'Invalid email or password';
                 if (error.message?.includes('network')) {
                     errorMessage = 'Network error. Please check your connection.';
                 }
-                
+
                 ui.showToast(errorMessage, 'error');
-                
+
                 // Reset button
                 const submitBtn = form.querySelector('button[type="submit"]');
                 submitBtn.disabled = false;
@@ -1693,7 +1693,7 @@ const pages = {
                 .subscribe();
 
             console.log('✅ Real-time subscriptions set up');
-            
+
         } catch (error) {
             console.error('❌ Failed to setup real-time subscriptions:', error);
         }
@@ -1704,7 +1704,7 @@ const pages = {
             <form id="start-session-form">
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="session-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Session Name</label>
-                    <input type="text" id="session-name" required maxlength="100" 
+                    <input type="text" id="session-name" required maxlength="100"
                            placeholder="e.g., Morning Lecture, Lab Session 1"
                            style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
                 </div>
@@ -1712,7 +1712,7 @@ const pages = {
                     <label for="course-select" style="display: block; margin-bottom: 5px; font-weight: 600;">Course (Optional)</label>
                     <select id="course-select" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
                         <option value="">Select a course</option>
-                        ${allCourses.map(course => 
+                        ${allCourses.map(course =>
                             `<option value="${course.id}">${utils.sanitizeText(course.course_name)} (${utils.sanitizeText(course.course_id)})</option>`
                         ).join('')}
                     </select>
@@ -1748,7 +1748,7 @@ const pages = {
         const form = modal.querySelector('#start-session-form');
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const sessionName = form['session-name'].value.trim();
             const courseId = form['course-select'].value || null;
 
@@ -1804,7 +1804,7 @@ const pages = {
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 10px; font-weight: 600;">Select Student</label>
                     <div style="position: relative;">
-                        <input type="text" id="student-search-manual" placeholder="Search by name or USN..." 
+                        <input type="text" id="student-search-manual" placeholder="Search by name or USN..."
                                style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
                         <div id="student-dropdown" style="
                             position: absolute;
@@ -1871,14 +1871,14 @@ const pages = {
         // Setup search with dropdown
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase().trim();
-            
+
             if (term.length < 2) {
                 dropdown.style.display = 'none';
                 return;
             }
 
-            const filteredStudents = allStudents.filter(student => 
-                student.name.toLowerCase().includes(term) || 
+            const filteredStudents = allStudents.filter(student =>
+                student.name.toLowerCase().includes(term) ||
                 student.usn.toLowerCase().includes(term)
             ).slice(0, 10); // Limit to 10 results
 
@@ -1905,14 +1905,14 @@ const pages = {
                 item.addEventListener('click', () => {
                     const usn = item.getAttribute('data-usn');
                     const student = allStudents.find(s => s.usn === usn);
-                    
+
                     if (student) {
                         searchInput.value = student.name;
                         selectedUsnInput.value = student.usn;
                         selectedInfo.textContent = `${student.name} (${student.usn})`;
                         selectedDisplay.style.display = 'block';
                         dropdown.style.display = 'none';
-                        
+
                         submitBtn.disabled = false;
                         submitBtn.style.opacity = '1';
                     }
@@ -1938,7 +1938,7 @@ const pages = {
         // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const selectedUsn = selectedUsnInput.value;
             if (!selectedUsn) {
                 ui.showToast('Please select a student', 'error');
@@ -1997,13 +1997,13 @@ const pages = {
                 <form id="add-student-form" style="display: flex; gap: 15px; align-items: end;">
                     <div style="flex: 1;">
                         <label for="student-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Student Name</label>
-                        <input type="text" id="student-name" required maxlength="50" 
+                        <input type="text" id="student-name" required maxlength="50"
                                placeholder="Enter full name"
                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
                     <div style="flex: 1;">
                         <label for="student-usn" style="display: block; margin-bottom: 5px; font-weight: 600;">USN</label>
-                        <input type="text" id="student-usn" required maxlength="15" 
+                        <input type="text" id="student-usn" required maxlength="15"
                                placeholder="e.g., 1AB21CS001"
                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
@@ -2022,14 +2022,14 @@ const pages = {
                     </div>
                 </form>
             </div>
-            
+
             <div class="student-list-container">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <div class="student-count-header" style="font-weight: 600; color: #1e5aa8;">
                         Total Students: ${allStudents.length}
                     </div>
                     <div style="position: relative;">
-                        <input type="text" id="student-modal-search" placeholder="Search students..." 
+                        <input type="text" id="student-modal-search" placeholder="Search students..."
                                style="padding: 8px 35px 8px 12px; border: 1px solid #ddd; border-radius: 20px; width: 250px;">
                         <i class="fas fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #666;"></i>
                     </div>
@@ -2049,7 +2049,7 @@ const pages = {
         const addForm = modal.querySelector('#add-student-form');
         addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const name = addForm['student-name'].value.trim();
             const usn = addForm['student-usn'].value.trim().toUpperCase();
 
@@ -2085,17 +2085,17 @@ const pages = {
                 // Update local data
                 allStudents.push(data);
                 allStudents.sort((a, b) => a.name.localeCompare(b.name));
-                
+
                 // Clear cache
                 studentsCache.delete('students');
-                
+
                 // Reset form
                 addForm.reset();
-                
+
                 // Update display
                 const studentsList = modal.querySelector('#students-modal-list');
                 studentsList.innerHTML = this.renderStudentsList();
-                
+
                 // Update count
                 const countHeader = modal.querySelector('.student-count-header');
                 countHeader.textContent = `Total Students: ${allStudents.length}`;
@@ -2122,11 +2122,11 @@ const pages = {
 
     renderStudentsList(searchTerm = '') {
         let filteredStudents = allStudents;
-        
+
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
-            filteredStudents = allStudents.filter(student => 
-                student.name.toLowerCase().includes(term) || 
+            filteredStudents = allStudents.filter(student =>
+                student.name.toLowerCase().includes(term) ||
                 student.usn.toLowerCase().includes(term)
             );
         }
@@ -2225,7 +2225,7 @@ const pages = {
 
         try {
             const sessions = await data.fetchAllSessions();
-            
+
             if (sessions.length === 0) {
                 sessionsList.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
@@ -2248,7 +2248,7 @@ const pages = {
                         <div style="flex: 1;">
                             <h5 style="margin: 0 0 5px 0; color: #1e5aa8;">${utils.sanitizeText(session.session_name)}</h5>
                             <p style="margin: 0 0 5px 0; color: #666;">
-                                Course: ${session.courses?.course_name || 'General'} 
+                                Course: ${session.courses?.course_name || 'General'}
                                 ${session.courses?.course_id ? `(${session.courses.course_id})` : ''}
                             </p>
                             <p style="margin: 0; color: #666; font-size: 0.9rem;">
@@ -2323,13 +2323,13 @@ const pages = {
                 <form id="add-course-form" style="display: flex; gap: 15px; align-items: end;">
                     <div style="flex: 2;">
                         <label for="course-name" style="display: block; margin-bottom: 5px; font-weight: 600;">Course Name</label>
-                        <input type="text" id="course-name" required maxlength="100" 
+                        <input type="text" id="course-name" required maxlength="100"
                                placeholder="e.g., Data Structures and Algorithms"
                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
                     <div style="flex: 1;">
                         <label for="course-id" style="display: block; margin-bottom: 5px; font-weight: 600;">Course ID</label>
-                        <input type="text" id="course-id" required maxlength="20" 
+                        <input type="text" id="course-id" required maxlength="20"
                                placeholder="e.g., CS101"
                                style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                     </div>
@@ -2348,7 +2348,7 @@ const pages = {
                     </div>
                 </form>
             </div>
-            
+
             <div class="course-list-container">
                 <div style="font-weight: 600; color: #1e5aa8; margin-bottom: 15px;">
                     Total Courses: ${allCourses.length}
@@ -2368,7 +2368,7 @@ const pages = {
         const addForm = modal.querySelector('#add-course-form');
         addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const courseName = addForm['course-name'].value.trim();
             const courseId = addForm['course-id'].value.trim().toUpperCase();
 
@@ -2398,13 +2398,13 @@ const pages = {
                 // Update local data
                 allCourses.push(data);
                 allCourses.sort((a, b) => a.course_name.localeCompare(b.course_name));
-                
+
                 // Clear cache
                 coursesCache.delete('courses');
-                
+
                 // Reset form
                 addForm.reset();
-                
+
                 // Update display
                 const coursesList = modal.querySelector('#courses-modal-list');
                 coursesList.innerHTML = this.renderCoursesList();
@@ -2459,20 +2459,20 @@ const pages = {
     async refreshAllData() {
         try {
             ui.showToast('Refreshing data...', 'info');
-            
+
             // Clear caches
             studentsCache.clear();
             coursesCache.clear();
-            
+
             // Refresh all data
             await Promise.all([
                 data.fetchAllStudents(),
                 data.fetchAllCourses(),
                 data.fetchCurrentSessionAttendance()
             ]);
-            
+
             ui.showToast('Data refreshed successfully!', 'success');
-            
+
         } catch (error) {
             console.error('Failed to refresh data:', error);
             ui.showToast('Failed to refresh some data', 'warning');
@@ -2487,7 +2487,7 @@ const pages = {
 
         try {
             const attendanceData = await data.fetchCurrentSessionAttendance();
-            
+
             if (attendanceData.length === 0) {
                 ui.showToast('No attendance data to export', 'info');
                 return;
@@ -2505,7 +2505,7 @@ const pages = {
             }));
 
             const filename = `attendance_${currentSession.session_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
-            
+
             utils.downloadCSV(exportData, filename);
             ui.showToast('Attendance data exported successfully!', 'success');
 
@@ -2637,7 +2637,7 @@ const pages = {
         } catch (error) {
             console.error('Failed to mark attendance:', error);
             ui.showToast('Failed to mark attendance. Please try again.', 'error');
-            
+
             // Reset button
             const submitBtn = document.getElementById('mark-attendance-btn');
             submitBtn.disabled = false;
@@ -2656,7 +2656,7 @@ const pages = {
         const successMessage = document.getElementById('attendance-success');
         if (successMessage) {
             successMessage.style.display = 'block';
-            
+
             // Add attendance details
             const detailsDiv = successMessage.querySelector('#attendance-details');
             if (detailsDiv && selectedStudentForAttendance) {
@@ -2664,7 +2664,7 @@ const pages = {
                 if (selectedStudentForAttendance.biometricVerified) {
                     verificationStatus = '<p style="color: #28a745;"><strong>✅ Biometric Verified</strong></p>';
                 }
-                
+
                 detailsDiv.innerHTML = `
                     <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; border: 2px solid #28a745;">
                         <h4 style="color: #28a745; margin: 0 0 15px 0;"><i class="fas fa-check-circle"></i> Attendance Marked Successfully!</h4>
@@ -2746,7 +2746,7 @@ window.copyQRURL = function(url) {
 
 window.removeStudentFromSession = async function(usn) {
     if (!currentSession) return;
-    
+
     if (!confirm('Remove this student from the current session?')) {
         return;
     }
@@ -2777,7 +2777,7 @@ window.deleteStudent = async function(usn) {
     try {
         // Delete WebAuthn credential first
         await webAuthn.deleteCredential(usn);
-        
+
         // Delete student record
         const { error } = await supabaseClient
             .from('students')
@@ -2791,7 +2791,7 @@ window.deleteStudent = async function(usn) {
         studentsCache.delete('students');
 
         ui.showToast('Student deleted successfully', 'success');
-        
+
         // Refresh students modal if open
         const modal = document.querySelector('.modal');
         if (modal) {
@@ -2817,11 +2817,11 @@ window.manageBiometric = async function(usn) {
 
     try {
         const hasCredential = await webAuthn.hasCredential(usn);
-        
+
         if (hasCredential) {
             // Show options to test or delete
             const action = confirm('Student has biometric registered. Click OK to delete registration, or Cancel to test verification.');
-            
+
             if (action) {
                 // Delete credential
                 const success = await webAuthn.deleteCredential(usn);
@@ -2932,7 +2932,7 @@ window.exportSessionData = async function(sessionId) {
         }));
 
         const filename = `session_${sessionData.session_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
-        
+
         utils.downloadCSV(exportData, filename);
         ui.showToast('Session data exported successfully!', 'success');
 
@@ -2970,7 +2970,7 @@ window.deleteSession = async function(sessionId) {
         }
 
         ui.showToast('Session deleted successfully', 'success');
-        
+
         // Refresh session history modal if open
         const modal = document.querySelector('.modal');
         if (modal && modal.querySelector('#sessions-list')) {
@@ -3001,7 +3001,7 @@ window.deleteCourse = async function(courseId) {
         coursesCache.delete('courses');
 
         ui.showToast('Course deleted successfully', 'success');
-        
+
         // Refresh courses modal if open
         const modal = document.querySelector('.modal');
         if (modal) {
@@ -3020,14 +3020,14 @@ window.deleteCourse = async function(courseId) {
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Initializing QR Attendance System...');
-    
+
     try {
         // Initialize authentication
         await auth.init();
-        
+
         // Determine which page we're on and initialize accordingly
         const currentPath = window.location.pathname;
-        
+
         if (currentPath.includes('student.html')) {
             await pages.initStudentView();
         } else if (currentPath.includes('login.html')) {
@@ -3036,9 +3036,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Default to faculty view (index.html)
             await pages.initFacultyView();
         }
-        
+
         console.log('✅ Application initialized successfully');
-        
+
     } catch (error) {
         console.error('❌ Fatal initialization error:', error);
         ui.showToast('Failed to initialize application. Please refresh the page.', 'error');
@@ -3054,7 +3054,7 @@ window.addEventListener('beforeunload', () => {
     if (studentSubscription) {
         studentSubscription.unsubscribe();
     }
-    
+
     console.log('🧹 Cleaned up subscriptions');
 });
 
