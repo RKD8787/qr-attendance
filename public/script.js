@@ -1042,7 +1042,7 @@ const data = {
                     <div class="student-badges">${badges}</div>
                     <div class="attendance-time">${utils.getRelativeTime(record.timestamp)}</div>
                 </div>
-                <button class="remove-btn" onclick="removeStudentFromSession('${record.usn}')">
+                <button class="remove-btn" data-usn="${record.usn}">
                     <i class="fas fa-times"></i>
                 </button>
             `;
@@ -1139,7 +1139,7 @@ const sessions = {
                             text-align: center;
                         ">
                         <br>
-                        <button onclick="copyQRURL('${studentURL}')" style="
+                        <button class="copy-url-btn" data-url="${studentURL}" style="
                             background: #1e5aa8;
                             color: white;
                             border: none;
@@ -1245,6 +1245,7 @@ const pages = {
     async initStudentView() {
         try {
             console.log('🎓 Initializing student view...');
+            const loadingScreen = document.getElementById('loading-screen');
 
             // Initialize WebAuthn
             await webAuthn.init();
@@ -1258,6 +1259,8 @@ const pages = {
             await data.fetchAllStudents();
             await this.loadSessionForStudent(sessionId);
             this.setupStudentSearch();
+            
+            if(loadingScreen) loadingScreen.style.display = 'none';
 
             console.log('✅ Student view initialized successfully');
 
@@ -1314,21 +1317,21 @@ const pages = {
     },
 
     updateSessionDisplay(sessionData) {
-        const sessionTitle = document.getElementById('session-title');
-        const sessionCourse = document.getElementById('session-course');
+        const sessionNameDisplay = document.getElementById('session-name-display');
+        const courseNameDisplay = document.getElementById('course-name-display');
 
-        if (sessionTitle) {
-            sessionTitle.textContent = utils.sanitizeText(sessionData.session_name);
+        if(sessionNameDisplay) {
+            sessionNameDisplay.textContent = utils.sanitizeText(sessionData.session_name);
         }
 
-        if (sessionCourse) {
+        if(courseNameDisplay) {
             const courseName = sessionData.courses ? sessionData.courses.course_name : 'General Course';
-            sessionCourse.textContent = utils.sanitizeText(courseName);
+            courseNameDisplay.textContent = utils.sanitizeText(courseName);
         }
     },
 
     populateStudentListForAttendance() {
-        const studentsList = document.getElementById('students-list');
+        const studentsList = document.getElementById('student-list');
         const noStudentsMessage = document.getElementById('no-students-message');
 
         if (!studentsList) return;
@@ -1336,20 +1339,17 @@ const pages = {
         studentsList.innerHTML = '';
 
         if (allStudents.length === 0) {
-            if (noStudentsMessage) {
-                noStudentsMessage.style.display = 'block';
-            }
+            studentsList.innerHTML = '<div class="loading-students">No students found.</div>';
             return;
         }
 
-        if (noStudentsMessage) {
-            noStudentsMessage.style.display = 'none';
-        }
-
         allStudents.forEach(student => {
-            const li = document.createElement('li');
+            const li = document.createElement('div');
             li.className = 'student-item';
             li.setAttribute('data-usn', student.usn);
+            li.setAttribute('role', 'option');
+            li.tabIndex = 0;
+
 
             li.innerHTML = `
                 <div class="student-info">
@@ -1357,27 +1357,7 @@ const pages = {
                     <div class="student-usn">${utils.sanitizeText(student.usn)}</div>
                 </div>
             `;
-
-            li.addEventListener('click', () => {
-                // Remove previous selection
-                document.querySelectorAll('.student-item').forEach(item => {
-                    item.classList.remove('selected');
-                });
-
-                // Select current item
-                li.classList.add('selected');
-                selectedStudentForAttendance = student;
-
-                // Show verification section if WebAuthn is supported
-                this.showVerificationSection(student);
-
-                // Enable submit button
-                const submitBtn = document.getElementById('mark-attendance-btn');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                }
-            });
-
+            
             studentsList.appendChild(li);
         });
     },
@@ -1479,9 +1459,9 @@ const pages = {
                         student.biometricVerified = true;
 
                         // Update submit button to show verification
-                        const submitBtn = document.getElementById('mark-attendance-btn');
+                        const submitBtn = document.getElementById('submit-attendance');
                         if (submitBtn) {
-                            submitBtn.innerHTML = '<i class="fas fa-check"></i> Mark Verified Attendance';
+                            submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Verified Attendance';
                             submitBtn.style.background = 'linear-gradient(135deg, #28a745, #1e7e34)';
                         }
                     }
@@ -1511,7 +1491,7 @@ const pages = {
     },
 
     filterStudentsList(searchTerm) {
-        const studentItems = document.querySelectorAll('.student-item');
+        const studentItems = document.querySelectorAll('#student-list .student-item');
         const term = searchTerm.toLowerCase().trim();
 
         studentItems.forEach(item => {
@@ -1519,7 +1499,7 @@ const pages = {
             const usn = item.querySelector('.student-usn').textContent.toLowerCase();
 
             if (name.includes(term) || usn.includes(term)) {
-                item.style.display = 'block';
+                item.style.display = 'flex';
             } else {
                 item.style.display = 'none';
             }
@@ -1571,9 +1551,26 @@ const pages = {
                 // Reset button
                 const submitBtn = form.querySelector('button[type="submit"]');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
             }
         });
+        
+        const passwordToggle = document.getElementById('password-toggle');
+        if (passwordToggle) {
+            passwordToggle.addEventListener('click', () => {
+                const passwordEye = document.getElementById('password-eye');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    passwordEye.classList.remove('fa-eye');
+                    passwordEye.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    passwordEye.classList.remove('fa-eye-slash');
+                    passwordEye.classList.add('fa-eye');
+                }
+            });
+        }
+
 
         // Focus email input
         if (emailInput) {
@@ -1582,85 +1579,78 @@ const pages = {
     },
 
     setupEventListeners() {
-        // Logout button
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
+        // Use event delegation for dynamically created elements
+        document.body.addEventListener('click', (e) => {
+            // Logout button
+            if (e.target.closest('#logout-btn')) {
                 auth.logout();
-            });
-        }
-
-        // Start session button
-        const startSessionBtn = document.getElementById('start-session-btn');
-        if (startSessionBtn) {
-            startSessionBtn.addEventListener('click', () => {
+            }
+            // Start session button
+            if (e.target.closest('#start-session-btn')) {
                 this.showStartSessionModal();
-            });
-        }
-
-        // Add manually button
-        const addManuallyBtn = document.getElementById('add-manually-btn');
-        if (addManuallyBtn) {
-            addManuallyBtn.addEventListener('click', () => {
+            }
+            // Add manually button
+            if (e.target.closest('#add-manually-btn')) {
                 this.showAddManuallyModal();
-            });
-        }
-
-        // Manage students button
-        const manageStudentsBtn = document.getElementById('manage-students-btn');
-        if (manageStudentsBtn) {
-            manageStudentsBtn.addEventListener('click', () => {
+            }
+            // Manage students button
+            if (e.target.closest('#manage-students-btn')) {
                 this.showStudentsModal();
-            });
-        }
-
-        // Session history button
-        const sessionHistoryBtn = document.getElementById('session-history-btn');
-        if (sessionHistoryBtn) {
-            sessionHistoryBtn.addEventListener('click', () => {
+            }
+            // Session history button
+            if (e.target.closest('#session-history-btn')) {
                 this.showSessionHistoryModal();
-            });
-        }
-
-        // Export button
-        const exportBtn = document.getElementById('export-attendance-btn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
+            }
+            // Export button
+            if (e.target.closest('#export-attendance-btn')) {
                 this.exportAttendanceData();
-            });
-        }
-
-        // Statistics button
-        const statsBtn = document.getElementById('statistics-btn');
-        if (statsBtn) {
-            statsBtn.addEventListener('click', () => {
+            }
+            // Statistics button
+            if (e.target.closest('#statistics-btn')) {
                 this.showStatisticsModal();
-            });
-        }
-
-        // Manage courses button
-        const manageCoursesBtn = document.getElementById('manage-courses-btn');
-        if (manageCoursesBtn) {
-            manageCoursesBtn.addEventListener('click', () => {
+            }
+            // Manage courses button
+            if (e.target.closest('#manage-courses-btn')) {
                 this.showCoursesModal();
-            });
-        }
-
-        // Refresh data button
-        const refreshDataBtn = document.getElementById('refresh-data-btn');
-        if (refreshDataBtn) {
-            refreshDataBtn.addEventListener('click', () => {
+            }
+            // Refresh data button
+            if (e.target.closest('#refresh-data-btn')) {
                 this.refreshAllData();
-            });
-        }
-
-        // Mark attendance button (student view)
-        const markAttendanceBtn = document.getElementById('mark-attendance-btn');
-        if (markAttendanceBtn) {
-            markAttendanceBtn.addEventListener('click', () => {
+            }
+            // Mark attendance button (student view)
+            if (e.target.closest('#submit-attendance')) {
                 this.handleAttendanceSubmission();
-            });
-        }
+            }
+            // Copy QR URL button
+            if (e.target.closest('.copy-url-btn')) {
+                const url = e.target.closest('.copy-url-btn').dataset.url;
+                navigator.clipboard.writeText(url).then(() => {
+                    ui.showToast('URL copied to clipboard!', 'success');
+                }).catch(() => {
+                    ui.showToast('Failed to copy URL', 'error');
+                });
+            }
+            // Remove student from session
+            if (e.target.closest('.remove-btn')) {
+                const usn = e.target.closest('.remove-btn').dataset.usn;
+                this.removeStudentFromSession(usn);
+            }
+            // Student list item selection (student view)
+            const studentItem = e.target.closest('#student-list .student-item');
+            if(studentItem){
+                document.querySelectorAll('#student-list .student-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                studentItem.classList.add('selected');
+                const usn = studentItem.dataset.usn;
+                selectedStudentForAttendance = allStudents.find(s => s.usn === usn);
+
+                const submitBtn = document.getElementById('submit-attendance');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+            }
+        });
     },
 
     setupNetworkMonitoring() {
@@ -1718,7 +1708,7 @@ const pages = {
                     </select>
                 </div>
                 <div style="display: flex; gap: 15px; justify-content: flex-end;">
-                    <button type="button" onclick="ui.hideModal()" style="
+                    <button type="button" class="cancel-modal-btn" style="
                         padding: 12px 24px;
                         border: 2px solid #6c757d;
                         background: transparent;
@@ -1744,6 +1734,8 @@ const pages = {
             title: '🚀 Start New Session',
             maxWidth: '500px'
         });
+
+        modal.querySelector('.cancel-modal-btn').addEventListener('click', () => ui.hideModal());
 
         const form = modal.querySelector('#start-session-form');
         form.addEventListener('submit', async (e) => {
@@ -1828,7 +1820,7 @@ const pages = {
                     </div>
                 </div>
                 <div style="display: flex; gap: 15px; justify-content: flex-end;">
-                    <button type="button" onclick="ui.hideModal()" style="
+                    <button type="button" class="cancel-modal-btn" style="
                         padding: 12px 24px;
                         border: 2px solid #6c757d;
                         background: transparent;
@@ -1855,7 +1847,8 @@ const pages = {
             title: '➕ Add Manual Attendance',
             maxWidth: '500px'
         });
-
+        
+        modal.querySelector('.cancel-modal-btn').addEventListener('click', () => ui.hideModal());
         this.setupManualAttendanceForm(modal);
     },
 
@@ -2118,6 +2111,17 @@ const pages = {
         searchInput.addEventListener('input', (e) => {
             debouncedSearch(e.target.value);
         });
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-student-btn')) {
+                const usn = e.target.closest('.delete-student-btn').dataset.usn;
+                this.deleteStudent(usn);
+            }
+            if (e.target.closest('.manage-biometric-btn')) {
+                const usn = e.target.closest('.manage-biometric-btn').dataset.usn;
+                this.manageBiometric(usn);
+            }
+        });
     },
 
     renderStudentsList(searchTerm = '') {
@@ -2148,7 +2152,6 @@ const pages = {
                 align-items: center;
                 padding: 15px;
                 border-bottom: 1px solid #eee;
-                hover: background-color: #f8f9fa;
             ">
                 <div class="student-info">
                     <div style="font-weight: 600; font-size: 1.1rem;">${utils.sanitizeText(student.name)}</div>
@@ -2158,7 +2161,7 @@ const pages = {
                     </div>` : ''}
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    ${webAuthnSupported ? `<button onclick="manageBiometric('${student.usn}')" title="Manage biometric" style="
+                    ${webAuthnSupported ? `<button class="manage-biometric-btn" data-usn="${student.usn}" title="Manage biometric" style="
                         background: #17a2b8;
                         color: white;
                         border: none;
@@ -2168,7 +2171,7 @@ const pages = {
                     ">
                         <i class="fas fa-fingerprint"></i>
                     </button>` : ''}
-                    <button onclick="deleteStudent('${student.usn}')" title="Delete student" style="
+                    <button class="delete-student-btn" data-usn="${student.usn}" title="Delete student" style="
                         background: #dc3545;
                         color: white;
                         border: none;
@@ -2217,6 +2220,21 @@ const pages = {
         refreshBtn.addEventListener('click', () => {
             this.loadSessionHistory(modal);
         });
+        
+        modal.addEventListener('click', (e) => {
+            if(e.target.closest('.activate-session-btn')) {
+                const sessionId = e.target.closest('.activate-session-btn').dataset.sessionId;
+                this.activateSession(sessionId);
+            }
+            if(e.target.closest('.export-session-btn')) {
+                const sessionId = e.target.closest('.export-session-btn').dataset.sessionId;
+                this.exportSessionData(sessionId);
+            }
+            if(e.target.closest('.delete-session-btn')) {
+                const sessionId = e.target.closest('.delete-session-btn').dataset.sessionId;
+                this.deleteSession(sessionId);
+            }
+        });
     },
 
     async loadSessionHistory(modal) {
@@ -2260,7 +2278,7 @@ const pages = {
                         </div>
                         <div style="display: flex; gap: 10px;">
                             ${session.id !== currentSession?.id ? `
-                                <button onclick="activateSession('${session.id}')" title="Activate session" style="
+                                <button class="activate-session-btn" data-session-id="${session.id}" title="Activate session" style="
                                     background: #28a745;
                                     color: white;
                                     border: none;
@@ -2280,7 +2298,7 @@ const pages = {
                                     font-weight: 600;
                                 ">ACTIVE</span>
                             `}
-                            <button onclick="exportSessionData('${session.id}')" title="Export session data" style="
+                            <button class="export-session-btn" data-session-id="${session.id}" title="Export session data" style="
                                 background: #17a2b8;
                                 color: white;
                                 border: none;
@@ -2290,7 +2308,7 @@ const pages = {
                             ">
                                 <i class="fas fa-download"></i>
                             </button>
-                            <button onclick="deleteSession('${session.id}')" title="Delete session" style="
+                            <button class="delete-session-btn" data-session-id="${session.id}" title="Delete session" style="
                                 background: #dc3545;
                                 color: white;
                                 border: none;
@@ -2350,7 +2368,7 @@ const pages = {
             </div>
 
             <div class="course-list-container">
-                <div style="font-weight: 600; color: #1e5aa8; margin-bottom: 15px;">
+                <div class="course-count-header" style="font-weight: 600; color: #1e5aa8; margin-bottom: 15px;">
                     Total Courses: ${allCourses.length}
                 </div>
                 <div id="courses-modal-list" style="max-height: 400px; overflow-y: auto;">
@@ -2408,12 +2426,22 @@ const pages = {
                 // Update display
                 const coursesList = modal.querySelector('#courses-modal-list');
                 coursesList.innerHTML = this.renderCoursesList();
+                const courseCountHeader = modal.querySelector('.course-count-header');
+                courseCountHeader.textContent = `Total Courses: ${allCourses.length}`;
+
 
                 ui.showToast('Course added successfully!', 'success');
 
             } catch (error) {
                 console.error('Failed to add course:', error);
                 ui.showToast('Failed to add course. Please try again.', 'error');
+            }
+        });
+        
+        modal.addEventListener('click', (e) => {
+            if(e.target.closest('.delete-course-btn')) {
+                const courseId = e.target.closest('.delete-course-btn').dataset.courseId;
+                this.deleteCourse(courseId);
             }
         });
     },
@@ -2441,7 +2469,7 @@ const pages = {
                     <div style="color: #666; font-size: 0.9rem;">${utils.sanitizeText(course.course_id)}</div>
                 </div>
                 <div>
-                    <button onclick="deleteCourse('${course.id}')" title="Delete course" style="
+                    <button class="delete-course-btn" data-course-id="${course.id}" title="Delete course" style="
                         background: #dc3545;
                         color: white;
                         border: none;
@@ -2597,10 +2625,10 @@ const pages = {
 
         try {
             // Show loading state
-            const submitBtn = document.getElementById('mark-attendance-btn');
+            const submitBtn = document.getElementById('submit-attendance');
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking Attendance...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
             // Check if attendance already marked
             const { data: existingAttendance } = await supabaseClient
@@ -2639,58 +2667,25 @@ const pages = {
             ui.showToast('Failed to mark attendance. Please try again.', 'error');
 
             // Reset button
-            const submitBtn = document.getElementById('mark-attendance-btn');
+            const submitBtn = document.getElementById('submit-attendance');
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> Mark Attendance';
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Attendance';
         }
     },
 
     showAttendanceSuccess() {
-        // Hide selection section
-        const selectionSection = document.getElementById('student-selection-section');
-        if (selectionSection) {
-            selectionSection.style.display = 'none';
-        }
+        const studentSelectionPage = document.getElementById('student-selection-page');
+        const successPage = document.getElementById('success-page');
+        
+        if (studentSelectionPage) studentSelectionPage.style.display = 'none';
+        if (successPage) successPage.style.display = 'block';
 
-        // Show success message
-        const successMessage = document.getElementById('attendance-success');
-        if (successMessage) {
-            successMessage.style.display = 'block';
+        const studentName = document.getElementById('success-student-name');
+        const timestamp = document.getElementById('success-timestamp');
 
-            // Add attendance details
-            const detailsDiv = successMessage.querySelector('#attendance-details');
-            if (detailsDiv && selectedStudentForAttendance) {
-                let verificationStatus = '';
-                if (selectedStudentForAttendance.biometricVerified) {
-                    verificationStatus = '<p style="color: #28a745;"><strong>✅ Biometric Verified</strong></p>';
-                }
+        if(studentName) studentName.textContent = utils.sanitizeText(selectedStudentForAttendance.name);
+        if(timestamp) timestamp.textContent = utils.formatTimestamp(new Date());
 
-                detailsDiv.innerHTML = `
-                    <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; border: 2px solid #28a745;">
-                        <h4 style="color: #28a745; margin: 0 0 15px 0;"><i class="fas fa-check-circle"></i> Attendance Marked Successfully!</h4>
-                        <p><strong>Student:</strong> ${utils.sanitizeText(selectedStudentForAttendance.name)}</p>
-                        <p><strong>USN:</strong> ${utils.sanitizeText(selectedStudentForAttendance.usn)}</p>
-                        <p><strong>Session:</strong> ${utils.sanitizeText(currentSession.session_name)}</p>
-                        <p><strong>Time:</strong> ${utils.formatTimestamp(new Date())}</p>
-                        ${verificationStatus}
-                        <div style="margin-top: 15px; text-align: center;">
-                            <button onclick="window.close()" style="
-                                background: #28a745;
-                                color: white;
-                                border: none;
-                                padding: 12px 24px;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-weight: 600;
-                                font-size: 1rem;
-                            ">
-                                <i class="fas fa-times"></i> Close Window
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-        }
     },
 
     showErrorPage(message) {
@@ -2732,290 +2727,284 @@ const pages = {
                 </div>
             </div>
         `;
-    }
-};
+    },
 
-// ===== GLOBAL HELPER FUNCTIONS =====
-window.copyQRURL = function(url) {
-    navigator.clipboard.writeText(url).then(() => {
-        ui.showToast('URL copied to clipboard!', 'success');
-    }).catch(() => {
-        ui.showToast('Failed to copy URL', 'error');
-    });
-};
+    async removeStudentFromSession(usn) {
+        if (!currentSession) return;
 
-window.removeStudentFromSession = async function(usn) {
-    if (!currentSession) return;
-
-    if (!confirm('Remove this student from the current session?')) {
-        return;
-    }
-
-    try {
-        const { error } = await supabaseClient
-            .from('attendance')
-            .delete()
-            .eq('session_id', currentSession.id)
-            .eq('usn', usn);
-
-        if (error) throw error;
-
-        ui.showToast('Student removed from session', 'success');
-        data.fetchCurrentSessionAttendance();
-
-    } catch (error) {
-        console.error('Failed to remove student:', error);
-        ui.showToast('Failed to remove student', 'error');
-    }
-};
-
-window.deleteStudent = async function(usn) {
-    if (!confirm('Are you sure you want to delete this student? This will also remove their biometric data.')) {
-        return;
-    }
-
-    try {
-        // Delete WebAuthn credential first
-        await webAuthn.deleteCredential(usn);
-
-        // Delete student record
-        const { error } = await supabaseClient
-            .from('students')
-            .delete()
-            .eq('usn', usn);
-
-        if (error) throw error;
-
-        // Update local data
-        allStudents = allStudents.filter(student => student.usn !== usn);
-        studentsCache.delete('students');
-
-        ui.showToast('Student deleted successfully', 'success');
-
-        // Refresh students modal if open
-        const modal = document.querySelector('.modal');
-        if (modal) {
-            const studentsList = modal.querySelector('#students-modal-list');
-            if (studentsList) {
-                studentsList.innerHTML = pages.renderStudentsList();
-                const countHeader = modal.querySelector('.student-count-header');
-                if (countHeader) {
-                    countHeader.textContent = `Total Students: ${allStudents.length}`;
-                }
-            }
-        }
-
-    } catch (error) {
-        console.error('Failed to delete student:', error);
-        ui.showToast('Failed to delete student', 'error');
-    }
-};
-
-window.manageBiometric = async function(usn) {
-    const student = allStudents.find(s => s.usn === usn);
-    if (!student) return;
-
-    try {
-        const hasCredential = await webAuthn.hasCredential(usn);
-
-        if (hasCredential) {
-            // Show options to test or delete
-            const action = confirm('Student has biometric registered. Click OK to delete registration, or Cancel to test verification.');
-
-            if (action) {
-                // Delete credential
-                const success = await webAuthn.deleteCredential(usn);
-                if (success) {
-                    ui.showToast(`Biometric credential deleted for ${student.name}`, 'success');
-                    // Update status in modal
-                    const statusElement = document.getElementById(`biometric-${usn}`);
-                    if (statusElement) {
-                        statusElement.innerHTML = '<small style="color: #dc3545;">No biometric registered</small>';
-                    }
-                } else {
-                    ui.showToast('Failed to delete biometric credential', 'error');
-                }
-            } else {
-                // Test verification
-                try {
-                    const result = await webAuthn.verifyCredential(usn);
-                    if (result.success) {
-                        ui.showToast(`Biometric verification successful for ${student.name}`, 'success');
-                    }
-                } catch (error) {
-                    ui.showToast(`Biometric verification failed: ${error.message}`, 'error');
-                }
-            }
-        } else {
-            // Register new credential
-            try {
-                const result = await webAuthn.registerCredential(usn, student.name);
-                if (result.success) {
-                    ui.showToast(`Biometric registered successfully for ${student.name}`, 'success');
-                    // Update status in modal
-                    const statusElement = document.getElementById(`biometric-${usn}`);
-                    if (statusElement) {
-                        statusElement.innerHTML = '<small style="color: #28a745;">✓ Biometric registered</small>';
-                    }
-                }
-            } catch (error) {
-                ui.showToast(`Biometric registration failed: ${error.message}`, 'error');
-            }
-        }
-    } catch (error) {
-        console.error('Biometric management error:', error);
-        ui.showToast('Failed to manage biometric credential', 'error');
-    }
-};
-
-window.activateSession = async function(sessionId) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('sessions')
-            .select(`
-                *,
-                courses(course_name, course_id)
-            `)
-            .eq('id', sessionId)
-            .single();
-
-        if (error) throw error;
-
-        sessions.updateActiveSession(data);
-        ui.hideModal();
-        ui.showToast(`Session "${data.session_name}" activated`, 'success');
-
-    } catch (error) {
-        console.error('Failed to activate session:', error);
-        ui.showToast('Failed to activate session', 'error');
-    }
-};
-
-window.exportSessionData = async function(sessionId) {
-    try {
-        // Get session details
-        const { data: sessionData, error: sessionError } = await supabaseClient
-            .from('sessions')
-            .select(`
-                *,
-                courses(course_name, course_id)
-            `)
-            .eq('id', sessionId)
-            .single();
-
-        if (sessionError) throw sessionError;
-
-        // Get attendance data
-        const { data: attendanceData, error: attendanceError } = await supabaseClient
-            .from('attendance')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('timestamp', { ascending: true });
-
-        if (attendanceError) throw attendanceError;
-
-        if (!attendanceData || attendanceData.length === 0) {
-            ui.showToast('No attendance data found for this session', 'info');
+        if (!confirm('Remove this student from the current session?')) {
             return;
         }
 
-        const exportData = attendanceData.map(record => ({
-            'Student Name': record.student || 'N/A',
-            'USN': record.usn || 'N/A',
-            'Session': sessionData.session_name || 'N/A',
-            'Course': sessionData.courses?.course_name || 'N/A',
-            'Course ID': sessionData.courses?.course_id || 'N/A',
-            'Date': utils.formatTimestamp(record.timestamp).split(',')[0],
-            'Time': utils.formatTimestamp(record.timestamp).split(',')[1]?.trim() || '',
-            'Location Verified': record.location_verified ? 'Yes' : 'No',
-            'Biometric Verified': record.fingerprint_verified ? 'Yes' : 'No'
-        }));
+        try {
+            const { error } = await supabaseClient
+                .from('attendance')
+                .delete()
+                .eq('session_id', currentSession.id)
+                .eq('usn', usn);
 
-        const filename = `session_${sessionData.session_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+            if (error) throw error;
 
-        utils.downloadCSV(exportData, filename);
-        ui.showToast('Session data exported successfully!', 'success');
+            ui.showToast('Student removed from session', 'success');
+            data.fetchCurrentSessionAttendance();
 
-    } catch (error) {
-        console.error('Export failed:', error);
-        ui.showToast('Failed to export session data', 'error');
-    }
-};
+        } catch (error) {
+            console.error('Failed to remove student:', error);
+            ui.showToast('Failed to remove student', 'error');
+        }
+    },
 
-window.deleteSession = async function(sessionId) {
-    if (!confirm('Are you sure you want to delete this session? This will also delete all attendance records for this session.')) {
-        return;
-    }
-
-    try {
-        // Delete attendance records first
-        const { error: attendanceError } = await supabaseClient
-            .from('attendance')
-            .delete()
-            .eq('session_id', sessionId);
-
-        if (attendanceError) throw attendanceError;
-
-        // Delete session
-        const { error: sessionError } = await supabaseClient
-            .from('sessions')
-            .delete()
-            .eq('id', sessionId);
-
-        if (sessionError) throw sessionError;
-
-        // Clear current session if it was the deleted one
-        if (currentSession && currentSession.id === sessionId) {
-            sessions.updateActiveSession(null);
+    async deleteStudent(usn) {
+        if (!confirm('Are you sure you want to delete this student? This will also remove their biometric data.')) {
+            return;
         }
 
-        ui.showToast('Session deleted successfully', 'success');
+        try {
+            // Delete WebAuthn credential first
+            await webAuthn.deleteCredential(usn);
 
-        // Refresh session history modal if open
-        const modal = document.querySelector('.modal');
-        if (modal && modal.querySelector('#sessions-list')) {
-            pages.loadSessionHistory(modal);
-        }
+            // Delete student record
+            const { error } = await supabaseClient
+                .from('students')
+                .delete()
+                .eq('usn', usn);
 
-    } catch (error) {
-        console.error('Failed to delete session:', error);
-        ui.showToast('Failed to delete session', 'error');
-    }
-};
+            if (error) throw error;
 
-window.deleteCourse = async function(courseId) {
-    if (!confirm('Are you sure you want to delete this course?')) {
-        return;
-    }
+            // Update local data
+            allStudents = allStudents.filter(student => student.usn !== usn);
+            studentsCache.delete('students');
 
-    try {
-        const { error } = await supabaseClient
-            .from('courses')
-            .delete()
-            .eq('id', courseId);
+            ui.showToast('Student deleted successfully', 'success');
 
-        if (error) throw error;
-
-        // Update local data
-        allCourses = allCourses.filter(course => course.id !== courseId);
-        coursesCache.delete('courses');
-
-        ui.showToast('Course deleted successfully', 'success');
-
-        // Refresh courses modal if open
-        const modal = document.querySelector('.modal');
-        if (modal) {
-            const coursesList = modal.querySelector('#courses-modal-list');
-            if (coursesList) {
-                coursesList.innerHTML = pages.renderCoursesList();
+            // Refresh students modal if open
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                const studentsList = modal.querySelector('#students-modal-list');
+                if (studentsList) {
+                    studentsList.innerHTML = this.renderStudentsList();
+                    const countHeader = modal.querySelector('.student-count-header');
+                    if (countHeader) {
+                        countHeader.textContent = `Total Students: ${allStudents.length}`;
+                    }
+                }
             }
+
+        } catch (error) {
+            console.error('Failed to delete student:', error);
+            ui.showToast('Failed to delete student', 'error');
+        }
+    },
+
+    async manageBiometric(usn) {
+        const student = allStudents.find(s => s.usn === usn);
+        if (!student) return;
+
+        try {
+            const hasCredential = await webAuthn.hasCredential(usn);
+
+            if (hasCredential) {
+                // Show options to test or delete
+                const action = confirm('Student has biometric registered. Click OK to delete registration, or Cancel to test verification.');
+
+                if (action) {
+                    // Delete credential
+                    const success = await webAuthn.deleteCredential(usn);
+                    if (success) {
+                        ui.showToast(`Biometric credential deleted for ${student.name}`, 'success');
+                        // Update status in modal
+                        const statusElement = document.getElementById(`biometric-${usn}`);
+                        if (statusElement) {
+                            statusElement.innerHTML = '<small style="color: #dc3545;">No biometric registered</small>';
+                        }
+                    } else {
+                        ui.showToast('Failed to delete biometric credential', 'error');
+                    }
+                } else {
+                    // Test verification
+                    try {
+                        const result = await webAuthn.verifyCredential(usn);
+                        if (result.success) {
+                            ui.showToast(`Biometric verification successful for ${student.name}`, 'success');
+                        }
+                    } catch (error) {
+                        ui.showToast(`Biometric verification failed: ${error.message}`, 'error');
+                    }
+                }
+            } else {
+                // Register new credential
+                try {
+                    const result = await webAuthn.registerCredential(usn, student.name);
+                    if (result.success) {
+                        ui.showToast(`Biometric registered successfully for ${student.name}`, 'success');
+                        // Update status in modal
+                        const statusElement = document.getElementById(`biometric-${usn}`);
+                        if (statusElement) {
+                            statusElement.innerHTML = '<small style="color: #28a745;">✓ Biometric registered</small>';
+                        }
+                    }
+                } catch (error) {
+                    ui.showToast(`Biometric registration failed: ${error.message}`, 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Biometric management error:', error);
+            ui.showToast('Failed to manage biometric credential', 'error');
+        }
+    },
+
+    async activateSession(sessionId) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('sessions')
+                .select(`
+                    *,
+                    courses(course_name, course_id)
+                `)
+                .eq('id', sessionId)
+                .single();
+
+            if (error) throw error;
+
+            sessions.updateActiveSession(data);
+            ui.hideModal();
+            ui.showToast(`Session "${data.session_name}" activated`, 'success');
+
+        } catch (error) {
+            console.error('Failed to activate session:', error);
+            ui.showToast('Failed to activate session', 'error');
+        }
+    },
+
+    async exportSessionData(sessionId) {
+        try {
+            // Get session details
+            const { data: sessionData, error: sessionError } = await supabaseClient
+                .from('sessions')
+                .select(`
+                    *,
+                    courses(course_name, course_id)
+                `)
+                .eq('id', sessionId)
+                .single();
+
+            if (sessionError) throw sessionError;
+
+            // Get attendance data
+            const { data: attendanceData, error: attendanceError } = await supabaseClient
+                .from('attendance')
+                .select('*')
+                .eq('session_id', sessionId)
+                .order('timestamp', { ascending: true });
+
+            if (attendanceError) throw attendanceError;
+
+            if (!attendanceData || attendanceData.length === 0) {
+                ui.showToast('No attendance data found for this session', 'info');
+                return;
+            }
+
+            const exportData = attendanceData.map(record => ({
+                'Student Name': record.student || 'N/A',
+                'USN': record.usn || 'N/A',
+                'Session': sessionData.session_name || 'N/A',
+                'Course': sessionData.courses?.course_name || 'N/A',
+                'Course ID': sessionData.courses?.course_id || 'N/A',
+                'Date': utils.formatTimestamp(record.timestamp).split(',')[0],
+                'Time': utils.formatTimestamp(record.timestamp).split(',')[1]?.trim() || '',
+                'Location Verified': record.location_verified ? 'Yes' : 'No',
+                'Biometric Verified': record.fingerprint_verified ? 'Yes' : 'No'
+            }));
+
+            const filename = `session_${sessionData.session_name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+
+            utils.downloadCSV(exportData, filename);
+            ui.showToast('Session data exported successfully!', 'success');
+
+        } catch (error) {
+            console.error('Export failed:', error);
+            ui.showToast('Failed to export session data', 'error');
+        }
+    },
+
+    async deleteSession(sessionId) {
+        if (!confirm('Are you sure you want to delete this session? This will also delete all attendance records for this session.')) {
+            return;
         }
 
-    } catch (error) {
-        console.error('Failed to delete course:', error);
-        ui.showToast('Failed to delete course', 'error');
+        try {
+            // Delete attendance records first
+            const { error: attendanceError } = await supabaseClient
+                .from('attendance')
+                .delete()
+                .eq('session_id', sessionId);
+
+            if (attendanceError) throw attendanceError;
+
+            // Delete session
+            const { error: sessionError } = await supabaseClient
+                .from('sessions')
+                .delete()
+                .eq('id', sessionId);
+
+            if (sessionError) throw sessionError;
+
+            // Clear current session if it was the deleted one
+            if (currentSession && currentSession.id === sessionId) {
+                sessions.updateActiveSession(null);
+            }
+
+            ui.showToast('Session deleted successfully', 'success');
+
+            // Refresh session history modal if open
+            const modal = document.querySelector('.modal');
+            if (modal && modal.querySelector('#sessions-list')) {
+                this.loadSessionHistory(modal);
+            }
+
+        } catch (error) {
+            console.error('Failed to delete session:', error);
+            ui.showToast('Failed to delete session', 'error');
+        }
+    },
+
+    async deleteCourse(courseId) {
+        if (!confirm('Are you sure you want to delete this course?')) {
+            return;
+        }
+
+        try {
+            const { error } = await supabaseClient
+                .from('courses')
+                .delete()
+                .eq('id', courseId);
+
+            if (error) throw error;
+
+            // Update local data
+            allCourses = allCourses.filter(course => course.id !== courseId);
+            coursesCache.delete('courses');
+
+            ui.showToast('Course deleted successfully', 'success');
+
+            // Refresh courses modal if open
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                const coursesList = modal.querySelector('#courses-modal-list');
+                if (coursesList) {
+                    coursesList.innerHTML = this.renderCoursesList();
+                    const courseCountHeader = modal.querySelector('.course-count-header');
+                    courseCountHeader.textContent = `Total Courses: ${allCourses.length}`;
+                }
+            }
+
+        } catch (error) {
+            console.error('Failed to delete course:', error);
+            ui.showToast('Failed to delete course', 'error');
+        }
     }
 };
+
 
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', async () => {
